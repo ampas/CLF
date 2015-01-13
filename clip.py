@@ -92,6 +92,7 @@ class ClipMetadata:
 
             # Remove text used in xml names but not class names
             elementType = elementType.replace('-', '')
+            elementType = elementType.replace('_', '')
             elementType = elementType.replace('aces:', '')
 
             elementClass = getClass(elementType)
@@ -321,6 +322,7 @@ class Config:
             else:
                 # Remove text used in xml names but not class names
                 elementType = elementType.replace('-', '')
+                elementType = elementType.replace('_', '')
                 elementType = elementType.replace('aces:', '')
 
                 elementClass = getClass(elementType)
@@ -342,6 +344,106 @@ class Config:
     # printInfo
 # Config
 
+class TransformList:
+    "An ACES Clip Transform List element"
+
+    def __init__(self, linkTransformID='', listType='TransformList'):
+        "%s - Initialize the standard class variables" % 'TransformList'
+        self._listType = listType
+        self._linkTransformID = ''
+        self._children = []
+        self._attributes = {}
+
+        if linkTransformID != '':
+            self._linkTransformID = linkTransformID
+    # __init__
+
+    # Elements
+    def addElement(self, element):
+        if element != None:
+            self._children.append(element)
+    # XXX
+    # To be implemented
+    def getElement(self, name):
+        return None
+
+    # Read / Write
+    def write(self, tree):
+        element = etree.SubElement(tree, self._listType)
+        for key, value in self._attributes.iteritems():
+            element.attrib[key] = value
+
+        for child in self._children:
+            child.write(element)
+
+        if self._linkTransformID != '':
+            linkTransform = etree.SubElement(element, 'LinkTransform')
+            linkTransform.text = self._linkTransformID
+
+        return element
+    # write
+
+    def read(self, element):
+        self._listType = element.tag
+
+        for key, value in element.attrib.iteritems():
+            self._attributes[key] = value
+
+        # Read child elements
+        for child in element:
+            elementType = child.tag
+
+            if elementType == 'LinkTransform':
+                self._linkTransformID = child.text
+            else:
+                # Remove text used in xml names but not class names
+                elementType = elementType.replace('-', '')
+                elementType = elementType.replace('_', '')
+                elementType = elementType.replace('aces:', '')
+
+                elementClass = getClass(elementType)
+
+                if elementClass != None:
+                    print( "element : %s, %s" % (elementType, elementClass) )
+                    element = elementClass()
+                    element.read(child)
+
+                    self.addElement( element )
+                else:
+                    print( "TransformList::read - Ignoring element %s" % child.tag)
+    # read
+
+    def printInfo(self):
+        print( "\t%s" % self._listType )
+
+        for key, value in self._attributes.iteritems():
+            print( "\t\tAttribute : %s, %s" % (key, value))
+
+        for child in self._children:
+            child.printInfo()
+
+        if self._linkTransformID != '':
+            print( "\t\tLink Transform : %s" % self._linkTransformID )
+    # printInfo
+# TransformList
+
+class InputTransformList(TransformList):
+    "An ACES Clip Input Transform List element"
+
+    def __init__(self, linkTransformID=''):
+        "%s - Initialize the standard class variables" % 'InputTransformList'
+        TransformList.__init__(self, linkTransformID, 'InputTransformList')
+    # __init__
+# InputTransformList
+
+class PreviewTransformList(TransformList):
+    "An ACES Clip Input Transform List element"
+
+    def __init__(self, linkTransformID=''):
+        "%s - Initialize the standard class variables" % 'PreviewTransformList'
+        TransformList.__init__(self, linkTransformID, 'PreviewTransformList')
+    # __init__
+# PreviewTransformList
 
 class TransformReference:
     "An ACES Clip Transform Reference element"
@@ -373,7 +475,7 @@ class TransformReference:
             child.write(element)
 
         if self._linkTransformID != '':
-            linkTransform = etree.SubElement(element, 'linkTransform')
+            linkTransform = etree.SubElement(element, 'LinkTransform')
             linkTransform.text = self._linkTransformID
 
         return element
@@ -388,7 +490,7 @@ class TransformReference:
         for child in element:
             elementType = child.tag
 
-            if elementType == 'linkTransform':
+            if elementType == 'LinkTransform':
                 self._linkTransformID = child.text
     # read
 
@@ -414,15 +516,6 @@ class IDTref(TransformReference):
         TransformReference.__init__(self, name, transformID, status, linkTransformID, 'IDTref')
     # __init__
 # IDTref
-
-class GradeRef(TransformReference):
-    "An ACES Clip GradeRef Transform Reference element"
-
-    def __init__(self, name='', transformID='', status='', linkTransformID=''):
-        "%s - Initialize the standard class variables" % 'GradeRef'
-        TransformReference.__init__(self, name, transformID, status, linkTransformID, 'GradeRef')
-    # __init__
-# GradeRef
 
 class LMTref(TransformReference):
     "An ACES Clip LMTref Transform Reference element"
@@ -450,6 +543,109 @@ class ODTref(TransformReference):
         TransformReference.__init__(self, name, transformID, status, linkTransformID, 'ODTref')
     # __init__
 # ODTref
+
+class GradeRef(TransformReference):
+    "An ACES Clip GradeRef Transform Reference element"
+
+    def __init__(self, name='', transformID='', status='', linkTransformID=''):
+        "%s - Initialize the standard class variables" % 'GradeRef'
+        TransformReference.__init__(self, name, transformID, status, linkTransformID, 'GradeRef')
+    # __init__
+# GradeRef
+
+class GradeRef:
+    "An ACES Clip GradeRef Transform Referenceelement"
+
+    def __init__(self, status='', convertFromWorkingSpace='', convertToWorkingSpace=''):
+        "%s - Initialize the standard class variables" % 'GradeRef'
+        self._linkTransformID = ''
+        self._children = []
+        self._attributes = {}
+
+        if status != '':
+            self._attributes['status'] = status
+        if convertToWorkingSpace != '':
+            self._convertToWorkingSpace = convertToWorkingSpace
+        if convertFromWorkingSpace != '':
+            self._convertFromWorkingSpace = convertFromWorkingSpace
+    # __init__
+
+    # Elements
+    def addElement(self, element):
+        if element != None:
+            self._children.append(element)
+    # XXX
+    # To be implemented
+    def getElement(self, name):
+        return None
+
+    # Read / Write
+    def write(self, tree):
+        element = etree.SubElement(tree, "GradeRef")
+        for key, value in self._attributes.iteritems():
+            element.attrib[key] = value
+
+        if self._convertFromWorkingSpace != '':
+            convertFromWorkingSpace = etree.SubElement(element, 'Convert_from_WorkSpace')
+            convertFromWorkingSpace.attrib['name'] = self._convertFromWorkingSpace
+
+        for child in self._children:
+            child.write(element)
+
+        if self._convertToWorkingSpace != '':
+            convertToWorkingSpace = etree.SubElement(element, 'Convert_to_WorkSpace')
+            convertToWorkingSpace.attrib['name'] = self._convertToWorkingSpace
+
+        return element
+    # write
+
+    def read(self, element):
+        for key, value in element.attrib.iteritems():
+            self._attributes[key] = value
+
+        # Read child elements
+        for child in element:
+            elementType = child.tag
+
+            if elementType == 'Convert_to_WorkSpace':
+                self._convertToWorkingSpace = child.attrib['name']
+            elif elementType == 'Convert_from_WorkSpace':
+                self._convertFromWorkingSpace = child.attrib['name']
+            else:
+                # Remove text used in xml names but not class names
+                elementType = elementType.replace('-', '')
+                elementType = elementType.replace('_', '')
+                elementType = elementType.replace('aces:', '')
+
+                elementClass = getClass(elementType)
+
+                if elementClass != None:
+                    print( "element : %s, %s" % (elementType, elementClass) )
+                    element = elementClass()
+                    element.read(child)
+
+                    self.addElement( element )
+                else:
+                    print( "GradeRef::read - Ignoring element %s" % child.tag)
+    # read
+
+    def printInfo(self):
+        print( "\tGradeRef" )
+
+        for key, value in self._attributes.iteritems():
+            print( "\t\tAttribute : %s, %s" % (key, value))
+
+        if self._convertToWorkingSpace != '':
+            print( "\t\tConvert From Working Space : %s" % self._convertToWorkingSpace )
+
+        for child in self._children:
+            child.printInfo()
+
+        if self._convertFromWorkingSpace != '':
+            print( "\t\tConvert From Working Space : %s" % self._convertFromWorkingSpace )
+    # printInfo
+# GradeRef
+
 
 class TransformLibrary:
     "An ACES Clip TransformLibrary element"
@@ -483,6 +679,7 @@ class TransformLibrary:
 
             # Remove text used in xml names but not class names
             elementType = elementType.replace('-', '')
+            elementType = elementType.replace('_', '')
             elementType = elementType.replace('aces:', '')
 
             elementClass = getClass(elementType)
@@ -527,11 +724,26 @@ def createExampleClip(clipPath):
 
     # Add Config element and sub-elements
     config = Config("1.0", "2014-11-29T23:55:13-8:00")
-    config.addElement(IDTref("TransformName1", "id1", "bypass", "IDT.something.v1.0"))
-    config.addElement(GradeRef("TransformName2", "id2", "bypass", "Grade.something.v1.0"))
-    config.addElement(LMTref("TransformName3", "id3", "bypass", "LMT.something.v1.0"))
-    config.addElement(RRTref("TransformName4", "id4", "bypass", "RRT.something.v1.0"))
-    config.addElement(ODTref("TransformName5", "id5", "bypass", "ODT.something.v1.0"))
+
+    itl = InputTransformList('inputTransformID')
+    itl.addElement(IDTref("TransformName1", "id1", "bypass", "IDT.something.v1.0"))
+
+    gr = GradeRef('', "aces_to_some_space", "some_space_to_aces")
+    cdl0 = ASCCDL(bitDepths["UINT12"], bitDepths["FLOAT16"], "cdl0ID", "Transform40", "Fwd")
+    cdl0.setSlope(0.05, 1.1, 0.9)
+    cdl0.setPower(9.0, 0.8, 0.7)
+    cdl0.setOffset(10.1, 0.01, 0.02)
+    cdl0.setSaturation(0.05)
+    gr.addElement(cdl0)
+
+    itl.addElement(gr)
+    config.addElement(itl)
+
+    ptl = PreviewTransformList('inputTransformID')
+    ptl.addElement(LMTref("TransformName3", "id3", "bypass", "LMT.something.v1.0"))
+    ptl.addElement(RRTref("TransformName4", "id4", "bypass", "RRT.something.v1.0"))
+    ptl.addElement(ODTref("TransformName5", "id5", "bypass", "ODT.something.v1.0"))
+    config.addElement(ptl)
 
     clip.addElement(config)
 

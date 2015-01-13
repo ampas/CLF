@@ -90,6 +90,7 @@ class ProcessList:
         # Read child elements
         for child in root:
             elementType = child.tag.replace('-', '')
+            elementType = child.tag.replace('_', '')
             elementClass = getClass(elementType)
             #print( elementType, elementClass )
 
@@ -908,12 +909,12 @@ class Range(ProcessNode):
 # Range
 
 class ASCCDL(ProcessNode):
-    "A Common LUT Format ASC-CDL ProcessNode element"
+    "A Common LUT Format ASC_CDL ProcessNode element"
 
     def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
         style='Fwd'):
-        "%s - Initialize the standard class variables" % 'ASC-CDL'
-        ProcessNode.__init__(self, 'ASC-CDL', inBitDepth, outBitDepth, id, name)
+        "%s - Initialize the standard class variables" % 'ASC_CDL'
+        ProcessNode.__init__(self, 'ASC_CDL', inBitDepth, outBitDepth, id, name)
         self._attributes['style'] = style
         self._values = {}
     # __init__
@@ -1061,7 +1062,7 @@ class ASCCDL(ProcessNode):
     # process
 
     def printInfoChild(self):
-        #print( "ASC-CDL" )
+        #print( "ASC_CDL" )
         if 'slope' in self._values: 
             print( "\tSlope  : %s" % self._values['slope'] )
         if 'offset' in self._values: 
