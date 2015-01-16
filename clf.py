@@ -681,6 +681,11 @@ class Array:
 
         return enclosingCubeColors[0];
     # lookup3DTrilinear
+
+    # XXX
+    # To be implemented
+    def lookup3DTetrahedral(self, position):
+        return self.lookup3DTrilinear(position)
 # Array
 
 class IndexMap:
@@ -806,15 +811,11 @@ class Range(ProcessNode):
     "A Common LUT Format Range ProcessNode element"
 
     def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
-        style='', noClamp='', Clamp=''):
+        style=''):
         "%s - Initialize the standard class variables" % 'Range'
         ProcessNode.__init__(self, 'Range', inBitDepth, outBitDepth, id, name)
         if style != '':
             self._attributes['style'] = style
-        if noClamp != '':
-            self._attributes['noClamp'] = noClamp
-        if Clamp != '':
-            self._attributes['clamp'] = Clamp
         self.valueElements = {}
     # __init__
 
@@ -845,12 +846,9 @@ class Range(ProcessNode):
         outBitDepth = self._attributes['outBitDepth']
 
         # Node attributes
-        style = ''
         clamp = True
-        if 'style' in self._attributes: style = self._attributes['style']
-        if 'noClamp' in self._attributes: clamp = not self._attributes['noClamp']
-        if 'clamp' in self._attributes: clamp = self._attributes['clamp']
-        if style == '': clamp = True
+        if 'style' in self._attributes: 
+            clamp = (self._attributes['style'] == 'clamp')
 
         # Node parameters
         minInValue = None
@@ -1274,10 +1272,8 @@ class LUT3D(ProcessNode):
             outValue = self._array.lookup3DTrilinear(outValue)
 
         # tetrahedral interpolation
-        # XXX
-        # To be implemented
         elif interpolation == 'tetrahedral':
-            outValue = self._array.lookup3DTrilinear(outValue)
+            outValue = self._array.lookup3DTetrahedral(outValue)
 
         #for i in range(min(3, len(value))):
             # Bit Depth conversion for output is ignored for LUTs
@@ -1907,7 +1903,7 @@ def createExampleCLF(clfPath):
     pl.addProcess(mpn2)
 
     # Add a range node
-    rpn1 = Range(bitDepths["FLOAT16"], bitDepths["UINT12"], "someId", "Transform3")
+    rpn1 = Range(bitDepths["FLOAT16"], bitDepths["UINT12"], "someId", "Transform3", style='noClamp')
     rpn1.setMinInValue(0.0)
     #rpn1.setMaxInValue(1.0)
     rpn1.setMinOutValue(0.0)
@@ -1960,7 +1956,7 @@ def createExampleCLF(clfPath):
     pl.addProcess(l3d1)
 
     # Add a range node
-    rpn2 = Range(bitDepths["UINT10"], bitDepths["FLOAT16"], "someId", "Transform7")
+    rpn2 = Range(bitDepths["UINT10"], bitDepths["FLOAT16"], "someId", "Transform7", style='clamp')
     pl.addProcess(rpn2)
 
     #
