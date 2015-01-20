@@ -638,6 +638,10 @@ class Array:
     def lookup3DTrilinear(self, position):
         dimensions = self._dimensions
 
+        #print( position )
+        #print( dimensions )
+        #print( len(self._values) )
+
         enclosingCubeColors = [0.0, 0.0, 0.0] * 8
 
         # clamp because we only use values between 0 and 1
@@ -655,6 +659,8 @@ class Array:
         indexBf = (position[2] * (dimensions[2]-1))
         interpB, indexB = math.modf(indexBf)
         indexB = int(indexB)
+
+        #print( "index : %d, %d, %d" % (indexR, indexG, indexB))
 
         # Sample the 8 points around the current sample position
         enclosingCubeColors[0] = self.lookup3D([indexR    , indexG    , indexB    ])
@@ -714,7 +720,7 @@ class IndexMap:
         element.set('dim', str(self._dimension))
         # XXX
         # Make this pretty at some point
-        element.text = " ".join(map(lambda a, b: "%s@%s" % (float(a),float(b)), self._values[0], self._values[1]))
+        element.text = " ".join(map(lambda a, b: "%s@%s" % (float(a),int(b)), self._values[0], self._values[1]))
 
         return element
     # write
@@ -1160,17 +1166,26 @@ class LUT1D(ProcessNode):
         print( "halfs domain   : %s" % halfDomain )
         '''
 
+        # Get LUT dimensions
+        dimensions = self.getLUTDimensions()
+
         # Actually process a value or two
         outValue = value
         for i in range(min(3, len(value))):
-            # Run through Index Map
+            # Run through single Index Map then normalize
             if len(self._indexMaps) > 1:
                 outValue[i] = self._indexMaps[i].process(outValue[i])
+                outValue[i] /= float(dimensions[0]-1)
+
+            # Run through per-channel Index Map then normalize
             elif len(self._indexMaps) > 0:
                 outValue[i] = self._indexMaps[0].process(outValue[i])
+                outValue[i] /= float(dimensions[0]-1)
 
-            # Convert input bit depth
-            outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
+            # Normalize from bit-depth
+            else:
+                # Convert input bit depth
+                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
             # Run through LUT
             if interpolation == 'linear':
@@ -1252,21 +1267,34 @@ class LUT3D(ProcessNode):
         interpolation = ''
         if 'interpolation' in self._attributes: interpolation = self._attributes['interpolation']
 
-        #print( "interpolation  : %s" % interpolation )
+        '''
+        print( "interpolation  : %s" % interpolation )
+        '''
+
+        # Get LUT dimensions
+        dimensions = self.getLUTDimensions()
 
         # Actually process a value or two
         outValue = value
+
+        # Run each channel through the index map, or base normalization
         for i in range(min(3, len(value))):
-            # Run through Index Map
+            # Run through single Index Map then normalize
             if len(self._indexMaps) > 1:
                 outValue[i] = self._indexMaps[i].process(outValue[i])
+                outValue[i] /= float(dimensions[i]-1)
+
+            # Run through per-channel Index Map then normalize
             elif len(self._indexMaps) > 0:
                 outValue[i] = self._indexMaps[0].process(outValue[i])
+                outValue[i] /= float(dimensions[i]-1)
 
-            # Convert input bit depth
-            outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
+            # Normalize from bit-depth
+            else:
+                # Convert input bit depth
+                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-        # Run through LUT
+        # Run color through LUT
         # trilinear interpolation
         if interpolation == 'trilinear':
             outValue = self._array.lookup3DTrilinear(outValue)
@@ -1934,16 +1962,17 @@ def createExampleCLF(clfPath):
 
     # Add another 1D lut node
     l1d2 = LUT1D(bitDepths["UINT10"], bitDepths["UINT10"], "someId", "Transform6")
-    l1d2.setArray(1, [0, 1023])
-    l1d2.setIndexMaps([[0, 256, 1023], [0, 512, 1023]])
+    l1d2.setArray(1, [0, 512, 1023])
+    l1d2.setIndexMaps([[0, 256, 1023], [0, 1, 2]])
     pl.addProcess(l1d2)
 
     # Add another 1D lut node
     l3d1 = LUT3D("10i", "10i", "someId", "Transform7")
-    indexMapR = [[0, 128, 1023], [0, 256, 1023]]
-    indexMapG = [[0, 1023], [0, 940]]
-    indexMapB = [[0, 64, 512, 1023], [0, 64, 128, 1023]]
-    l3d1.setIndexMaps(indexMapR, indexMapG, indexMapB)
+    #indexMapR = [[0, 128, 1023], [0, 1, 2]]
+    indexMapG = [[0, 768], [0, 1]]
+    #indexMapB = [[0, 64, 512, 1023], [0, 64, 128, 1023]]
+    #l3d1.setIndexMaps(indexMapR, indexMapG, indexMapB)
+    l3d1.setIndexMaps(indexMapG)
     l3d1.setArray([2, 2, 2], 
         [0, 0, 0,  
         0, 0, 1023,  

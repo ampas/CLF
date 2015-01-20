@@ -5,6 +5,8 @@ import clf
 import OpenImageIO as oiio
 
 def readPixelArray(inputPath):
+    print( "Loading image - path : %s" % inputPath)
+
     inputImage = oiio.ImageInput.open( inputPath )
 
     # get image specs
@@ -14,6 +16,9 @@ def readPixelArray(inputPath):
     height = inputImageSpec.height
     channels = inputImageSpec.nchannels
 
+    # Hard coding for now
+    # OIIO doesn't seem to handle half-float values well
+    type = oiio.FLOAT
     sourceData = inputImage.read_image(type)
 
     inputImage.close()
@@ -21,6 +26,8 @@ def readPixelArray(inputPath):
     return(sourceData, type, width, height, channels)
 
 def writePixelArray(outputPath, pixels, type, width, height, channels):
+    print( "Writing image - path : %s" % outputPath)
+
     # set image specs
     outputSpec = oiio.ImageSpec()
     outputSpec.set_format( oiio.FLOAT )
@@ -34,16 +41,15 @@ def writePixelArray(outputPath, pixels, type, width, height, channels):
     outputImage.write_image(outputSpec.format, pixels)
     outputImage.close()
 
-def filterImageWithCLF(inputPath, outputPath, clf, normalize=False):
-    print( "filterImageWithCLF" )
-
+def filterImageWithCLF(inputPath, outputPath, clf, normalize=False, verbose=False):
     # Get the input image pixel array
-    print( "Grabbing data from %s" % inputPath)
     pixels, type, width, height, channels = readPixelArray(inputPath)
-    print( type, width, height, type, channels )
+    #print( len(pixels), type, width, height, type, channels )
 
     # Buffer for the processed pixels
     processedPixels = array.array("f", "\0" * width * height * channels * 4)
+
+    print( "Filtering image" )
 
     # Process
     for i in range(width):
@@ -57,8 +63,10 @@ def filterImageWithCLF(inputPath, outputPath, clf, normalize=False):
                 if type == oiio.BASETYPE.UINT16:
                     ovalue = map(lambda x: x/float(pow(2,16)-1), ovalue)
 
+            #print( "Processing %04d, %04d : %s" % (i, j, ovalue))
             pvalue = clf.process(ovalue, verbose=False)
-            print( "Processed %04d, %04d : %s -> %s" % (i, j, ovalue, pvalue))
+            if verbose:
+                print( "Processed %04d, %04d : %s -> %s" % (i, j, ovalue, pvalue))
 
             processedPixels[index + 0] = pvalue[0]
             processedPixels[index + 1] = pvalue[1]
@@ -70,7 +78,7 @@ def filterImageWithCLF(inputPath, outputPath, clf, normalize=False):
 def loadCLF(clfPath):
     # Open the Common LUT Format file
     pl = clf.ProcessList(clfPath)
-    print( pl.getName() )
+    print( "Loaded LUT - title: %s, path: %s" % (pl.getName(), clfPath) )
     return pl
 
 def createCLFExample1():
@@ -104,6 +112,7 @@ def main():
     p.add_option('--clf', '-c', default=None)
     p.add_option('--ex1', action="store_true")
     p.add_option('--dontNormalize', '-d', action="store_true")
+    p.add_option('--verbose', '-v', action="store_true")
 
     options, arguments = p.parse_args()
 
@@ -115,6 +124,7 @@ def main():
     outputPath = options.output
     ex1 = options.ex1
     normalize = not options.dontNormalize
+    verbose = options.verbose == True
 
     try:
         argsStart = sys.argv.index('--') + 1
@@ -123,7 +133,8 @@ def main():
         argsStart = len(sys.argv)+1
         args = []
 
-    print( "command line : \n%s\n" % " ".join(sys.argv) )
+    if verbose:
+        print( "command line : \n%s\n" % " ".join(sys.argv) )
  
     #
     # Run 
@@ -135,7 +146,7 @@ def main():
         clf = createCLFExample1()
 
     if clf != None and outputPath != None and inputPath != None:
-        filterImageWithCLF(inputPath, outputPath, clf, normalize)
+        filterImageWithCLF(inputPath, outputPath, clf, normalize, verbose)
 
 # main
 
