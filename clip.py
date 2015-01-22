@@ -726,10 +726,10 @@ def createExampleClip(clipPath):
     config = Config("1.0", "2014-11-29T23:55:13-8:00")
 
     itl = InputTransformList('inputTransformID')
-    itl.addElement(IDTref("TransformName1", "id1", "bypass", "IDT.something.v1.0"))
+    itl.addElement(IDTref("TransformName1", "id1", "applied", "IDT.something.v1.0"))
 
     gr = GradeRef('', "aces_to_some_space", "some_space_to_aces")
-    cdl0 = ASCCDL(bitDepths["UINT12"], bitDepths["FLOAT16"], "cdl0ID", "Transform40", "Fwd")
+    cdl0 = ColorCorrection(bitDepths["UINT12"], bitDepths["FLOAT16"], "cdl0ID", "Transform40", "Fwd")
     cdl0.setSlope(0.05, 1.1, 0.9)
     cdl0.setPower(9.0, 0.8, 0.7)
     cdl0.setOffset(10.1, 0.01, 0.02)
@@ -750,14 +750,18 @@ def createExampleClip(clipPath):
     # Add transform library
     tl = TransformLibrary()
 
+    # Create an example CLF
+    pl0 = ProcessList()
+
     # Add a ASC CDL Node
-    cdl1 = ASCCDL(bitDepths["UINT12"], bitDepths["FLOAT16"], "cdl1ID", "Transform4", "Fwd")
+    cdl1 = ColorCorrection(bitDepths["UINT12"], bitDepths["FLOAT16"], "cdl1ID", "Transform4", "Fwd")
     cdl1.setSlope(0.95, 1.1, 0.9)
     cdl1.setPower(0.9, 0.8, 0.7)
     cdl1.setOffset(0.01, 0.01, 0.02)
     cdl1.setSaturation(0.95)
 
-    tl.addElement(cdl1)
+    pl0.addElement(cdl1)
+    tl.addElement(pl0)
 
     # Create an example CLF
     pl1 = ProcessList()
@@ -770,7 +774,7 @@ def createExampleClip(clipPath):
     tl.addElement(pl1)
 
     # Create an example CLF
-    pl2 = ProcessList('test.xml')
+    pl2 = ProcessList('examples/test.xml')
     tl.addElement(pl2)
 
     clip.addElement(tl)

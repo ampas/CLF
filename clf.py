@@ -372,6 +372,12 @@ def bitDepthSize(bitDepth):
     return outValue
 # bitDepthSize
 
+def bitDepthIsInteger(bitDepth):
+    return bitDepth in [bitDepths["UINT8"], bitDepths["UINT10"], bitDepths["UINT12"], bitDepths["UINT16"]]
+
+def bitDepthIsFloatingPoint(bitDepth):
+    return not bitDepth in [bitDepths["UINT8"], bitDepths["UINT10"], bitDepths["UINT12"], bitDepths["UINT16"]]
+
 class ProcessNode:
     "A Common LUT Format ProcessNode element"
 
@@ -510,10 +516,11 @@ class ProcessNode:
 class Array:
     "A Common LUT Format Array element"
 
-    def __init__(self, dimensions=[], values=[], elementType='Array'):
+    def __init__(self, dimensions=[], values=[], integers=False, elementType='Array'):
         "%s - Initialize the standard class variables" % elementType
         self._dimensions = dimensions
         self._values = values
+        self._valuesAreIntegers=integers
         self._elementType = elementType
     # __init__
 
@@ -527,13 +534,30 @@ class Array:
     def getValues(self):
         return self._values
 
+    def setValuesAreIntegers(self, integers):
+        self._valuesAreIntegers = integers
+    def getValuesAreIntegers(self):
+        return self._valuesAreIntegers
+
     # Read / Write
     def write(self, tree):
         element = etree.SubElement(tree, self._elementType)
         element.set('dim', " ".join(map(str, self._dimensions)))
-        # XXX
-        # Make this print pretty at some point
-        element.text = " ".join(map(lambda x: str(float(x)), self._values))
+        
+        # Slightly prettier printing
+        element.text = "\n"
+        valuesPerSample = self._dimensions[-1]
+        for n in range(len(self._values)/valuesPerSample):
+            sample = self._values[n*valuesPerSample:(n+1)*valuesPerSample]
+            if self._valuesAreIntegers:
+                sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+            else:
+                sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
+            element.text += sampleText + "\n"
+
+        # Hack
+        # Will correct formatting for CLFs. Not Clip though...
+        element.text += "\t\t"
 
         return element
     # write
@@ -773,7 +797,8 @@ class Matrix(ProcessNode):
     # __init__
 
     def setMatrix(self, dimensions, values):
-        values = Array(dimensions, values)
+        integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
+        values = Array(dimensions, values, integers)
         self._array = values
         self.addElement( values )
     # setMatrix
@@ -783,6 +808,10 @@ class Matrix(ProcessNode):
         if element.tag == 'Array':
             child = Array()
             child.read(element)
+
+            integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
+            child.setValuesAreIntegers(integers)
+
             self._array = child
         return child
     # readChild
@@ -916,9 +945,9 @@ class ASCCDL(ProcessNode):
     "A Common LUT Format ASC_CDL ProcessNode element"
 
     def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
-        style='Fwd'):
-        "%s - Initialize the standard class variables" % 'ASC_CDL'
-        ProcessNode.__init__(self, 'ASC_CDL', inBitDepth, outBitDepth, id, name)
+        style="Fwd", classLabel="ASC_CDL"):
+        "%s - Initialize the standard class variables" % classLabel
+        ProcessNode.__init__(self, classLabel, inBitDepth, outBitDepth, id, name)
         self._attributes['style'] = style
         self._values = {}
     # __init__
@@ -1078,6 +1107,22 @@ class ASCCDL(ProcessNode):
     # printInfoChild
 # ASCCDL
 
+class ColorCorrection(ASCCDL):
+    "A Common LUT Format ColorCorrection ProcessNode element"
+
+    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
+        style="Fwd", classLabel="ColorCorrection"):
+        "%s - Initialize the standard class variables" % 'ColorCorrection'
+        ASCCDL.__init__(self, inBitDepth, outBitDepth, id, name, style, "ColorCorrection")
+
+        # Remove the attributes that aren't part of the official CDL structure
+        self._attributes.pop("inBitDepth")
+        self._attributes.pop("outBitDepth")
+        self._attributes.pop("style")
+        self._attributes.pop("name")
+    # __init__
+# ColorCorrection
+
 class LUT1D(ProcessNode):
     "A Common LUT Format LUT 1D ProcessNode element"
 
@@ -1114,7 +1159,11 @@ class LUT1D(ProcessNode):
 
     def setArray(self, dimension, values):
         dimensions = [len(values)/dimension, dimension]
-        self._array = Array(dimensions, values)
+
+        integers = ( bitDepthIsInteger(self.getAttribute('outBitDepth')) or
+            self.getAttribute('rawHalfs') )
+
+        self._array = Array(dimensions, values, integers)
         self.addElement( self._array )
     # setArray
 
@@ -1133,6 +1182,11 @@ class LUT1D(ProcessNode):
         if element.tag == 'Array':
             child = Array()
             child.read(element)
+
+            integers = ( bitDepthIsInteger(self.getAttribute('outBitDepth')) or
+                self.getAttribute('rawHalfs') )
+            child.setValuesAreIntegers(integers)
+
             self._array = child
         elif element.tag == 'IndexMap':
             child = IndexMap()
@@ -1231,7 +1285,10 @@ class LUT3D(ProcessNode):
     def setArray(self, dimension, values):
         dimensions = dimension
         dimensions.append(3)
-        self._array = Array(dimensions, values)
+
+        integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
+
+        self._array = Array(dimensions, values, integers)
         self.addElement( self._array )
     # setArray
 
@@ -1250,6 +1307,11 @@ class LUT3D(ProcessNode):
         if element.tag == 'Array':
             child = Array()
             child.read(element)
+
+            integers = ( bitDepthIsInteger(self.getAttribute('outBitDepth')) or
+                self.getAttribute('rawHalfs') )
+            child.setValuesAreIntegers(integers)
+
             self._array = child
         elif element.tag == 'IndexMap':
             child = IndexMap()
