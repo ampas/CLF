@@ -15,7 +15,106 @@ LUTFORMAT_UNKNOWN = 'Unknown'
 LUTFORMAT_1D = '1D'
 LUTFORMAT_3D = '3D'
 
-def readSPI1D(lutPath):
+def generateLUT1DInverse(resolution, samples, minInputValue, maxInputValue):
+    lutpns = []
+
+    # Invert happens in 3 stages
+    # 1. Range values down from the min and max output values to 0-1
+    # 2. Generate the inverse LUT for these newly reranged values
+    # 3. Range the value up to the range defined by minInputValue and maxInputValue
+    # This is similar to how .CSP preluts are turned into ProcessNodes
+
+    # Get the resolution of the prelut
+    inputResolution = resolution[0]
+    channels = resolution[1]
+
+    # XXX
+    # Given that we're resampling, we should probably increase the
+    # resolution of the resampled lut relative to the source
+    outputResolution = inputResolution
+    outputResolution *= 2
+
+    # Find the minimum and maximum input
+    # XXX
+    # We take the min and max of all three preluts because the Range node
+    # only takes single value, not RGB triples. If the prelut ranges are 
+    # very different, this could introduce some artifacting
+    minOutputValue = samples[0]
+    for c in range(channels):
+        minOutputValue = min(minOutputValue, samples[c])
+
+    maxOutputValue = samples[-channels]
+    for c in range(channels):
+        maxOutputValue = max(maxOutputValue, samples[-channels+c])
+
+    #print( inputResolution, minInputValue, maxInputValue, minOutputValue, maxOutputValue )
+
+    # Create a Range node to normalize data from the range [minOut, maxOut]
+    rangepn1 = clf.Range(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "inverse_1d_range_1", "inverse_1d_range_1")
+    rangepn1.setMinInValue(minOutputValue)
+    rangepn1.setMaxInValue(maxOutputValue)
+    rangepn1.setMinOutValue(0.0)
+    rangepn1.setMaxOutValue(1.0)
+
+    lutpns.append(rangepn1)
+
+    # Generate inverse 1d LUT by running values through the
+    # - inverse normalization [0,1] back to [minOut, maxOut]
+    # - the inverse of the original LUT
+    inverseSamples = [0.0]*outputResolution*channels
+
+    for inverseLutIndex in range(outputResolution):
+
+        # Normalized LUT input
+        inputValue = float(inverseLutIndex)/(outputResolution-1)
+
+        # Invert the normalization
+        rangedValue = inputValue*(maxOutputValue - minOutputValue) + minOutputValue
+
+        inverseSample = [0.0]*channels
+
+        # For each channel
+        for channel in range(channels):
+            # Find the location of the de-normalized value in the lut
+            for lutIndex in range(inputResolution):
+                sampleIndex = lutIndex*channels + channel
+                if samples[sampleIndex] > rangedValue:
+                    break
+
+            # Get the interpolation value
+            lutIndexLow = max(0, lutIndex-1)
+            lutIndexHigh = min(inputResolution-1, lutIndex)
+            sampleIndexLow = lutIndexLow*channels + channel
+            sampleIndexHigh = lutIndexHigh*channels + channel
+
+            lutInterp = (rangedValue - samples[sampleIndexLow])/(
+                samples[sampleIndexHigh] - samples[sampleIndexLow])
+
+            # Find the output value
+            outputInterpolated = (lutInterp + lutIndexLow)/(inputResolution-1)
+
+            inverseSample[channel] = outputInterpolated
+
+        inverseSamples[inverseLutIndex*channels:(inverseLutIndex+1)*channels] = inverseSample
+
+    # Create a 1D LUT with generated sample values
+    lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "inverse_1d_lut", "inverse_1d_lut")
+    lutpn.setArray(channels, inverseSamples)
+
+    lutpns.append(lutpn)
+
+    # Create a Range node to expaand from [0,1] to [minIn, maxIn]
+    rangepn2 = clf.Range(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "inverse_1d_range_2", "inverse_1d_range_2")
+    rangepn2.setMinInValue(0.0)
+    rangepn2.setMaxInValue(1.0)
+    rangepn2.setMinOutValue(minInputValue)
+    rangepn2.setMaxOutValue(maxInputValue)
+
+    lutpns.append(rangepn2)
+
+    return lutpns
+
+def readSPI1D(lutPath, direction='forward', interpolation='linear'):
     with open(lutPath) as f:
         lines = f.read().splitlines()
 
@@ -44,7 +143,9 @@ def readSPI1D(lutPath):
             resolution[0] = int(tokens[1])
         elif tokens[0] == "Components":
             resolution[1] = int(tokens[1])
-        elif len(tokens) == 3:
+        elif tokens[0] in ["{", "}"]:
+            continue
+        else:
             samples.extend(map(float, tokens))
         #else:
         #    print( "Skipping line : %s" % tokens )
@@ -52,29 +153,42 @@ def readSPI1D(lutPath):
     #
     # Create ProcessNodes
     #
+    lutpns = []
 
-    # Remap input range
-    if minInputValue != 0.0 or maxInputValue != 1.0:
-        rangepn = clf.Range(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "range", "range")
-        rangepn.setMinInValue(minInputValue)
-        rangepn.setMaxInValue(maxInputValue)
-        rangepn.setMinOutValue(0.0)
-        rangepn.setMaxOutValue(1.0)
+    # Forward transform, pretty straightforward
+    if direction == 'forward':
+        # Remap input range
+        if minInputValue != 0.0 or maxInputValue != 1.0:
+            rangepn = clf.Range(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "range", "range")
+            rangepn.setMinInValue(minInputValue)
+            rangepn.setMaxInValue(maxInputValue)
+            rangepn.setMinOutValue(0.0)
+            rangepn.setMaxOutValue(1.0)
 
-        lutpns.append(rangepn)
+            lutpns.append(rangepn)
 
-    # LUT node
-    lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "lut1d", "lut1d")
-    lutpn.setArray(resolution[1], samples)
+        # LUT node
+        lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "lut1d", "lut1d", interpolation=interpolation)
+        lutpn.setArray(resolution[1], samples)
 
-    lutpns.append(lutpn)
+        lutpns.append(lutpn)
 
-    #return (dataFormat, resolution, samples, indexMap, minInputValue, maxInputValue)
+    # Inverse transform, LUT has to be resampled
+    else:
+        lutpnInverses = generateLUT1DInverse(resolution, samples, minInputValue, maxInputValue)
+        lutpns.extend(lutpnInverses)
+
+    #print (dataFormat, resolution, samples, indexMap, minInputValue, maxInputValue)
     return lutpns
 
-def readSPI3D(lutPath):
+def readSPI3D(lutPath, direction='forward', interpolation='linear'):
     with open(lutPath) as f:
         lines = f.read().splitlines()
+
+    # Translate between different names for the same interpolation if necessary
+    ocioToCLFInterpolation = {'linear':'trilinear'}
+    if interpolation in ocioToCLFInterpolation:
+        interpolation = ocioToCLFInterpolation[interpolation]
 
     dataFormat = LUTFORMAT_3D
     resolution = [0, 0, 0]
@@ -104,7 +218,7 @@ def readSPI3D(lutPath):
     #
     # Create ProcessNodes
     #
-    lutpn = clf.LUT3D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "lut3d", "lut3d")
+    lutpn = clf.LUT3D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "lut3d", "lut3d", interpolation=interpolation)
     lutpn.setArray(resolution, samples)
 
     #return (dataFormat, resolution, samples, indexMap, minInputValue, maxInputValue)
@@ -187,7 +301,7 @@ def generateCLFPrelut(cspPreluts):
 
     return prelutpns
 
-def readCSP(lutPath):
+def readCSP(lutPath, direction='forward', interpolation='linear'):
     with open(lutPath) as f:
         lines = f.read().splitlines()
 
@@ -291,7 +405,7 @@ def getLUTFileFormat(lutPath):
     fileFormat = os.path.split(lutPath)[1].split('.')[-1]
     return fileFormat
 
-def readLUT(lutPath):
+def convertLUTToProcessNode(lutPath, direction='forward', interpolation='linear'):
     dataFormat = LUTFORMAT_UNKNOWN
     resolution = [0, 0]
     samples = []
@@ -308,28 +422,24 @@ def readLUT(lutPath):
     if fileFormat == "spi1d":
         print( "Reading Sony 1D LUT")
         #(dataFormat, resolution, samples, indexMap, minInputValue, maxInputValue) = readSPI1D(lutPath)
-        lutpns = readSPI1D(lutPath)
+        lutpns = readSPI1D(lutPath, direction, interpolation)
 
     elif fileFormat == "spi3d":
         print( "Reading Sony 3D LUT")
-        lutpns = readSPI3D(lutPath)
+        lutpns = readSPI3D(lutPath, direction, interpolation)
 
     elif fileFormat == "csp":
         print( "Reading CSP 1D shaper + 3D LUT")
-        lutpns = readCSP(lutPath)
+        lutpns = readCSP(lutPath, direction, interpolation)
 
     else:
-        print( "Unknown LUT format : %s" % fileFormat)
+        print( "Unsupported LUT format : %s" % fileFormat)
 
     return lutpns
 
-def invertLUT1D(lut1DProcessNode):
-
-    return lut1DProcessNode
-
 def convertLUTtoCLF(lutPath, clfPath):
     # Load the LUT and convert to a CLF ProcessNode
-    lutpns = readLUT(lutPath)
+    lutpns = convertLUTToProcessNode(lutPath)
 
     # Create a CLF ProcessList and populate contents
     if lutpns != []:
@@ -346,29 +456,11 @@ def convertLUTtoCLF(lutPath, clfPath):
         # Write CLF to disk
         pl.writeFile(clfPath)        
 
-def createCLFExample1():
-    pl = clf.ProcessList()
-
-    # Populate
-    pl.setID('Type.name.version')
-    pl.setInverseOf('Type.Inverse.name.version')
-    pl.setCompCLFversion(1.2)
-    pl.setName('Example transform')
-    pl.setAttribute('Extra', 'value')
-
-    # Add another matrix node
-    mpn1 = clf.MatrixProcessNode(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "someId", "Transform2")
-    mpn1.setMatrix([3, 4, 3], [0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0, 0.0, 2.0, 0.0])
-    #mpn1.setMatrix([3, 4, 3], [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
-    pl.addProcess(mpn1)
-
-    return pl
-
 def main():
     import optparse
 
     p = optparse.OptionParser(description='Convert a LUT to the Common LUT Format',
-                                prog='clfconvert',
+                                prog='convertLUTtoCLF',
                                 version='0.01',
                                 usage='%prog [options]')
 

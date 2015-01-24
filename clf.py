@@ -546,9 +546,17 @@ class Array:
         
         # Slightly prettier printing
         element.text = "\n"
-        valuesPerSample = self._dimensions[-1]
-        for n in range(len(self._values)/valuesPerSample):
-            sample = self._values[n*valuesPerSample:(n+1)*valuesPerSample]
+
+        # Use the last value for 1D or 3D LUTs
+        if len(self._dimensions) in [2, 4]:
+            columns = self._dimensions[-1]
+
+        # Use the second dimension for Matrices
+        else:
+            columns = self._dimensions[1]
+
+        for n in range(len(self._values)/columns):
+            sample = self._values[n*columns:(n+1)*columns]
             if self._valuesAreIntegers:
                 sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
             else:
@@ -824,16 +832,22 @@ class Matrix(ProcessNode):
         dimensions = self._array.getDimensions()
         matrix = self._array.getValues()
 
-        #print( "dimensions  : %s" % dimensions )
-        #print( "matrix      : %s" % matrix )
+        '''
+        print( "value       : %s" % value )
+        print( "dimensions  : %s" % dimensions )
+        print( "matrix      : %s" % matrix )
+        '''
 
         # Actually process a value or two
-        outValue = value
+        #outValue = value
+        outValue = [0.0]*len(value)
         for i in range(len(value)):
             #outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
 
             offset = i*dimensions[1]
-            outValue[i] = matrix[0 + offset]*outValue[0] + matrix[1 + offset]*outValue[1] + matrix[2 + offset]*outValue[2]
+            outValue[i] = matrix[0 + offset]*value[0] + matrix[1 + offset]*value[1] + matrix[2 + offset]*value[2]
+            #print( "value : %d : %f = %f * %f + %f * %f + %f * %f" % (
+            #    i, outValue[i], matrix[0 + offset], value[0], matrix[1 + offset], value[1], matrix[2 + offset], value[2]))
             if dimensions[1] == 4:
                 outValue[i] += matrix[offset+3]
 
