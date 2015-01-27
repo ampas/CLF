@@ -194,20 +194,24 @@ class ProcessList:
 
         # Attributes        
         for key, value in self._attributes.iteritems():
-            print( "\tAttribute : %s, %s" % (key, value))
+            print( "%20s : %15s : %15s" % ("Attribute", key, value))
 
         # Raw value elements
         for key, value in self._valueElements.iteritems():
-            print( "\tElement : %s, %s" % (key, value))
+            print( "%20s : %15s : %15s" % ("Element", key, value))
 
         # Elements
         for element in self._elements:
             element.printInfo()
 
+        print( "" )
+        
         # Process Nodes
-        print( "\nProcess Nodes")
+        print( "Process Nodes")
         for processNode in self._processes:
             processNode.printInfo()
+            print( "" )
+
     # printInfo
 # ProcessList
 
@@ -232,7 +236,7 @@ class Comment:
     # read
 
     def printInfo(self):
-        print( "\t%s : %s" % (self._elementType, self._comment))
+        print( "%20s : %15s" % (self._elementType, self._comment))
     # printInfo
 # Comment
 
@@ -299,7 +303,7 @@ class Info:
     # read
 
     def printInfo(self):
-        print( "\tInfo" )
+        print( "%20s" % "Info" )
         for child in self._children:
             child.printInfo()
     # printInfo
@@ -455,13 +459,13 @@ class ProcessNode:
     def printInfo(self):
         print( "ProcessNode type : %s" % self._nodeType)
 
-        # Print attributes        
+        # Attributes        
         for key, value in self._attributes.iteritems():
-            print( "\tAttribute : %s, %s" % (key, value))
+            print( "%20s : %15s : %15s" % ("Attribute", key, value))
 
         # Print raw value elements
         for key, value in self._valueElements.iteritems():
-            print( "\tElement : %s, %s" % (key, value))
+            print( "%20s : %15s : %15s" % ("Element", key, value))
 
         # Print elements
         for element in self._elements:
@@ -580,9 +584,49 @@ class Array:
     # read
 
     def printInfo(self):
-        print( "\tArray" )
-        print( "\t\tdimensions : %s" % self._dimensions )
-        print( "\t\tvalues     : %s" % self._values )
+        print( "%20s" % "Array" )
+        print( "%20s : %s" % ("Dimensions", self._dimensions) )
+        #print( "\t\tvalues     : %s" % self._values )
+        print( "%20s" % "Values" )
+
+        # Use the last value for 1D or 3D LUTs
+        if len(self._dimensions) in [2, 4]:
+            columns = self._dimensions[-1]
+
+        # Use the second dimension for Matrices
+        else:
+            columns = self._dimensions[1]
+
+        rows = len(self._values)/columns
+        if rows > 10:
+            for n in (range(3)):
+                sample = self._values[n*columns:(n+1)*columns]
+                if self._valuesAreIntegers:
+                    sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+                else:
+                    sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
+                print( " "*30 + sampleText )
+
+            print( " "*30 + " "*(columns/2*16) + "    ...    " )
+
+            for n in (range(rows-3,rows)):
+                sample = self._values[n*columns:(n+1)*columns]
+                if self._valuesAreIntegers:
+                    sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+                else:
+                    sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
+                print( " "*30 + sampleText )
+        else:
+            for n in range(rows):
+                sample = self._values[n*columns:(n+1)*columns]
+                if self._valuesAreIntegers:
+                    sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+                else:
+                    sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
+                print( " "*30 + sampleText )
+
+
+
     # printInfo
 
     #
@@ -1110,6 +1154,9 @@ class ASCCDL(ProcessNode):
 
     def printInfoChild(self):
         #print( "ASC_CDL" )
+        for key, value in self._values.iteritems():
+            print( "%20s : %15s : %15s" % ("Value", key, value) )
+        '''
         if 'slope' in self._values: 
             print( "\tSlope  : %s" % self._values['slope'] )
         if 'offset' in self._values: 
@@ -1118,6 +1165,7 @@ class ASCCDL(ProcessNode):
             print( "\tPower  : %s" % self._values['power'] )
         if 'saturation' in self._values: 
             print( "\tSaturation : %s" % self._values['saturation'] )
+        '''
     # printInfoChild
 # ASCCDL
 
@@ -1531,11 +1579,13 @@ class Gamma(ProcessNode):
                 gamma[channel] = param[0]
                 offset[channel] = param[1]
 
-        print( "\tGamma  : %s" % gamma )
-        print( "\tOffset : %s" % offset )
+        values = {"gamma":gamma, "offset":offset}
+
+        for key, value in values.iteritems():
+            print( "%20s : %15s : %15s" % ("Value", key, value) )
 
         for dparam in self._dynamicParams:
-            print( "\tDynamic Parameter : %s" % dparam )
+            print( "%20s : %15s" % ("Dynamic Parameter", dparam) )
     # printInfoChild
 # Gamma
 
@@ -1651,9 +1701,16 @@ class ExposureContrast(ProcessNode):
         #print( "ExposureContrast" )
 
         param = self._params[0]
+        '''
         print( "\tExposure  : %s" % param[0] )
         print( "\tContrast  : %s" % param[1] )
         print( "\tPivot     : %s" % param[2] )
+        '''
+
+        values = {"exposure":param[0], "contrast":param[0], "pivot":param[2]}
+
+        for key, value in values.iteritems():
+            print( "%20s : %15s : %15s" % ("Value", key, value) )
 
         for dparam in self._dynamicParams:
             print( "\tDynamic Parameter : %s" % dparam )
@@ -1852,14 +1909,21 @@ class Log(ProcessNode):
                 highlight[channel] = param[3]
                 shadow[channel] = param[4]
 
+        '''
         print( "\tGamma      : %s" % gamma )
         print( "\tRef white  : %s" % refWhite )
         print( "\tRef black  : %s" % refBlack )
         print( "\tHighlight  : %s" % highlight )
         print( "\tShadow     : %s" % shadow )
+        '''
+
+        values = {"gamma":gamma, "ref white":refWhite, "ref black":refBlack, "highlight":highlight, "shadow":shadow}
+
+        for key, value in values.iteritems():
+            print( "%20s : %15s : %15s" % ("Value", key, value) )
 
         for dparam in self._dynamicParams:
-            print( "\tDynamic Parameter : %s" % dparam )
+            print( "%20s : %15s" % ("Dynamic Parameter", dparam) )
     # printInfoChild
 # Log
 
@@ -1949,12 +2013,12 @@ class Reference(ProcessNode):
     # process
 
     def printInfoChild(self):
-        print( "\tResolved Path : %s" % self._resolvedPath )
+        print( "%20s : %15s" % ("Resolved Path", self._resolvedPath) )
         if self._processList != None:
             self._processList.printInfo()
 
         for dparam in self._dynamicParams:
-            print( "\tDynamic Parameter : %s" % dparam )
+            print( "%20s : %15s" % ("Dynamic Parameter", dparam) )
     # printInfoChild
 # Reference
 
@@ -2133,11 +2197,11 @@ def createExampleCLF(clfPath):
     #
     # Reference example
     #
-    #referencePathBase = '/work/client/academy/ocio/configGeneration'
-    #referencePath = 'test.xml'
+    referencePathBase = '/work/client/academy/ocio/configGeneration'
+    referencePath = 'test.xml'
 
-    #ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", referencePath, referencePathBase)
-    #pl.addProcess(ref1)
+    ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", referencePath, referencePathBase)
+    pl.addProcess(ref1)
 
     # Add a range node
     rpn4 = Range(bitDepths["UINT10"], bitDepths["FLOAT16"], "someId", "Transform0b")

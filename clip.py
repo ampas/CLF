@@ -83,7 +83,7 @@ class ClipMetadata:
 
         # Store attributes
         for key, value in root.attrib.iteritems():
-            print( "attribute : %s, %s" % (key, value))
+            #print( "attribute : %s, %s" % (key, value))
             self.setAttribute(key, value)
 
         # Read child elements
@@ -96,7 +96,7 @@ class ClipMetadata:
             elementType = elementType.replace('aces:', '')
 
             elementClass = getClass(elementType)
-            print( "element : %s, %s" % (elementType, elementClass) )
+            #print( "element : %s, %s" % (elementType, elementClass) )
 
             if elementClass != None:
                 element = elementClass()
@@ -104,7 +104,7 @@ class ClipMetadata:
 
                 self.addElement( element )
             else:
-                print( "ProcessList::read - Treating element %s as a raw value" % child.tag)
+                print( "ProcessList::read - Treating unsupported element, %s, as a raw value" % child.tag)
                 self.addValueElement(child.tag, child.text)
     # read
 
@@ -153,15 +153,18 @@ class ClipMetadata:
 
         # Attributes        
         for key, value in self._attributes.iteritems():
-            print( "\tAttribute : %s, %s" % (key, value))
+            print( "%20s : %15s : %15s" % ("Attribute", key, value))
 
         # Raw value elements
         for key, value in self._valueElements.iteritems():
-            print( "\tElement : %s, %s" % (key, value))
+            print( "%20s : %15s : %15s" % ("Element", key, value))
+
+        print( "" )
 
         # Elements
         for element in self._elements:
             element.printInfo()
+            print( "" )
     # printInfo
 # ACESmetadata
 
@@ -190,7 +193,10 @@ class Comment:
     # read
 
     def printInfo(self):
-        print( "\t%s : %s, %s" % (self._elementType, self._comment, self._attributes))
+        print( "%20s : %15s" % (self._elementType, self._comment))
+        for key, value in self._attributes.iteritems():
+            print( "%20s : %15s : %15s" % ("Attribute", key, value))
+
     # printInfo
 # Comment
 
@@ -229,7 +235,7 @@ class Info:
     # read
 
     def printInfo(self):
-        print( "\tInfo" )
+        print( "%20s" % "Info" )
         for child in self._children:
             child.printInfo()
     # printInfo
@@ -275,7 +281,7 @@ class ClipID:
     # read
 
     def printInfo(self):
-        print( "\tInfo" )
+        print( "%20s" % "ClipID" )
         for child in self._children:
             child.printInfo()
     # printInfo
@@ -328,19 +334,20 @@ class Config:
                 elementClass = getClass(elementType)
 
                 if elementClass != None:
-                    print( "element : %s, %s" % (elementType, elementClass) )
+                    #print( "element : %s, %s" % (elementType, elementClass) )
                     element = elementClass()
                     element.read(child)
 
                     self.addElement( element )
                 else:
-                    print( "ProcessList::read - Ignoring element %s" % child.tag)
+                    print( "ProcessList::read - Ignoring unsupport element, %s" % child.tag)
     # read
 
     def printInfo(self):
-        print( "\tConfig" )
+        print( "%20s" % "Config" )
         for child in self._children:
             child.printInfo()
+            print( "" )
     # printInfo
 # Config
 
@@ -404,26 +411,27 @@ class TransformList:
                 elementClass = getClass(elementType)
 
                 if elementClass != None:
-                    print( "element : %s, %s" % (elementType, elementClass) )
+                    #print( "element : %s, %s" % (elementType, elementClass) )
                     element = elementClass()
                     element.read(child)
 
                     self.addElement( element )
                 else:
-                    print( "TransformList::read - Ignoring element %s" % child.tag)
+                    print( "TransformList::read - Ignoring unsupported element %s" % child.tag)
     # read
 
     def printInfo(self):
-        print( "\t%s" % self._listType )
+        print( "%20s" % self._listType )
 
         for key, value in self._attributes.iteritems():
-            print( "\t\tAttribute : %s, %s" % (key, value))
+            print( "%20s : %15s : %15s" % ("Attribute", key, value))
 
         for child in self._children:
             child.printInfo()
+            print( "" )
 
         if self._linkTransformID != '':
-            print( "\t\tLink Transform : %s" % self._linkTransformID )
+            print( "%20s : %15s" % ("Link Transform", self._linkTransformID) )
     # printInfo
 # TransformList
 
@@ -495,16 +503,16 @@ class TransformReference:
     # read
 
     def printInfo(self):
-        print( "\t%s" % self._transformType )
+        print( "%20s" % self._transformType )
 
         for key, value in self._attributes.iteritems():
-            print( "\t\tAttribute : %s, %s" % (key, value))
+            print( "%20s : %15s, %15s" % ("Attribute", key, value))
 
         for child in self._children:
             child.printInfo()
 
         if self._linkTransformID != '':
-            print( "\t\tLink Transform : %s" % self._linkTransformID )
+            print( "%20s : %15s" % ("Link Transform", self._linkTransformID))
     # printInfo
 # TransformReference
 
@@ -544,15 +552,6 @@ class ODTref(TransformReference):
     # __init__
 # ODTref
 
-class GradeRef(TransformReference):
-    "An ACES Clip GradeRef Transform Reference element"
-
-    def __init__(self, name='', transformID='', status='', linkTransformID=''):
-        "%s - Initialize the standard class variables" % 'GradeRef'
-        TransformReference.__init__(self, name, transformID, status, linkTransformID, 'GradeRef')
-    # __init__
-# GradeRef
-
 class GradeRef:
     "An ACES Clip GradeRef Transform Referenceelement"
 
@@ -585,16 +584,16 @@ class GradeRef:
         for key, value in self._attributes.iteritems():
             element.attrib[key] = value
 
-        if self._convertFromWorkingSpace != '':
-            convertFromWorkingSpace = etree.SubElement(element, 'Convert_from_WorkSpace')
-            convertFromWorkingSpace.attrib['name'] = self._convertFromWorkingSpace
+        if self._convertToWorkingSpace != '':
+            convertToWorkingSpace = etree.SubElement(element, 'Convert_to_WorkSpace')
+            convertToWorkingSpace.attrib['name'] = self._convertToWorkingSpace
 
         for child in self._children:
             child.write(element)
 
-        if self._convertToWorkingSpace != '':
-            convertToWorkingSpace = etree.SubElement(element, 'Convert_to_WorkSpace')
-            convertToWorkingSpace.attrib['name'] = self._convertToWorkingSpace
+        if self._convertFromWorkingSpace != '':
+            convertFromWorkingSpace = etree.SubElement(element, 'Convert_from_WorkSpace')
+            convertFromWorkingSpace.attrib['name'] = self._convertFromWorkingSpace
 
         return element
     # write
@@ -620,32 +619,33 @@ class GradeRef:
                 elementClass = getClass(elementType)
 
                 if elementClass != None:
-                    print( "element : %s, %s" % (elementType, elementClass) )
+                    #print( "element : %s, %s" % (elementType, elementClass) )
                     element = elementClass()
                     element.read(child)
 
                     self.addElement( element )
                 else:
-                    print( "GradeRef::read - Ignoring element %s" % child.tag)
+                    print( "GradeRef::read - Ignoring unsupported element %s" % child.tag)
     # read
 
     def printInfo(self):
-        print( "\tGradeRef" )
+        print( "%20s" % "GradeRef" )
 
         for key, value in self._attributes.iteritems():
-            print( "\t\tAttribute : %s, %s" % (key, value))
+            print( "%20s : %s, %s" % ("Attribute", key, value))
 
         if self._convertToWorkingSpace != '':
-            print( "\t\tConvert From Working Space : %s" % self._convertToWorkingSpace )
+            print( "%20s : %s" % ("Convert To Working", self._convertToWorkingSpace) )
+            print( "" )
 
-        for child in self._children:
-            child.printInfo()
+            for child in self._children:
+                child.printInfo()
+                print( "" )
 
         if self._convertFromWorkingSpace != '':
-            print( "\t\tConvert From Working Space : %s" % self._convertFromWorkingSpace )
+            print( "%20s : %s" % ("Convert From Working", self._convertFromWorkingSpace) )
     # printInfo
 # GradeRef
-
 
 class TransformLibrary:
     "An ACES Clip TransformLibrary element"
@@ -685,17 +685,17 @@ class TransformLibrary:
             elementClass = getClass(elementType)
 
             if elementClass != None:
-                print( "element : %s, %s" % (elementType, elementClass) )
+                #print( "element : %s, %s" % (elementType, elementClass) )
                 element = elementClass()
                 element.read(child)
 
                 self.addElement(element)
             else:
-                print( "TransformLibrary::read - Ignoring element %s" % child.tag)
+                print( "TransformLibrary::read - Ignoring unsupported element %s" % child.tag)
     # read
 
     def printInfo(self):
-        print( "\tTransformLibrary" )
+        print( "%20s" % "TransformLibrary" )
         for child in self._children:
             child.printInfo()
     # printInfo
@@ -728,7 +728,7 @@ def createExampleClip(clipPath):
     itl = InputTransformList('inputTransformID')
     itl.addElement(IDTref("TransformName1", "id1", "applied", "IDT.something.v1.0"))
 
-    gr = GradeRef('', "aces_to_some_space", "some_space_to_aces")
+    gr = GradeRef("", "some_space_to_aces", "aces_to_some_space")
     cdl0 = ColorCorrection(bitDepths["UINT12"], bitDepths["FLOAT16"], "cdl0ID", "Transform40", "Fwd")
     cdl0.setSlope(0.05, 1.1, 0.9)
     cdl0.setPower(9.0, 0.8, 0.7)
