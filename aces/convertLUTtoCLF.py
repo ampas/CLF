@@ -6,6 +6,7 @@ Functions to convert from different LUT formats to CLF
 """
 
 import array
+import math
 import os
 import sys
 
@@ -15,7 +16,10 @@ LUTFORMAT_UNKNOWN = 'Unknown'
 LUTFORMAT_1D = '1D'
 LUTFORMAT_3D = '3D'
 
-def generateLUT1DInverse(resolution, samples, minInputValue, maxInputValue):
+# Generate an inverse 1D LUT by evaluating and resampling the original 1D LUT
+# Inverse LUTs will have 2x the base LUT's number of entries. This may not be 
+# enough to characterize the inverse function well.
+def generateLUT1DInverseResampled(resolution, samples, minInputValue, maxInputValue):
     lutpns = []
 
     # Invert happens in 3 stages
@@ -87,8 +91,11 @@ def generateLUT1DInverse(resolution, samples, minInputValue, maxInputValue):
             sampleIndexLow = lutIndexLow*channels + channel
             sampleIndexHigh = lutIndexHigh*channels + channel
 
-            lutInterp = (rangedValue - samples[sampleIndexLow])/(
-                samples[sampleIndexHigh] - samples[sampleIndexLow])
+            if lutIndexLow == lutIndexHigh:
+                lutInterp = 0.0
+            else:
+                lutInterp = (rangedValue - samples[sampleIndexLow])/(
+                    samples[sampleIndexHigh] - samples[sampleIndexLow])
 
             # Find the output value
             outputInterpolated = (lutInterp + lutIndexLow)/(inputResolution-1)
@@ -114,7 +121,83 @@ def generateLUT1DInverse(resolution, samples, minInputValue, maxInputValue):
 
     return lutpns
 
-def readSPI1D(lutPath, direction='forward', interpolation='linear'):
+# Generate an inverse 1D LUT by evaluating all possible half-float values.
+# All inverse LUTs will be 65536 entries, but you don't have to worry about resolution issues
+def generateLUT1DInverseHalfDomain(resolution, samples, minInputValue, maxInputValue, rawHalfs=False):
+    lutpns = []
+
+    # Invert happens in 1 stages
+    # 1. Generate the inverse LUT for each possible half-float value
+
+    # Get the resolution of the prelut
+    inputResolution = resolution[0]
+    channels = resolution[1]
+
+    # For this inversion approach, we will always use 64k entries
+    outputResolution = 65536
+
+    #print( inputResolution, minInputValue, maxInputValue, minOutputValue, maxOutputValue )
+
+    # Generate inverse 1d LUT by running values through the
+    # - the inverse of the original LUT
+    inverseSamples = [0.0]*outputResolution*channels
+
+    for inverseLutIndex in range(outputResolution):
+
+        # LUT input
+        inputValue = clf.uint16ToHalf(inverseLutIndex)
+
+        inverseSample = [0.0]*channels
+
+        # For each channel
+        for channel in range(channels):
+            if math.isnan(inputValue):
+                outputInterpolated = inputValue
+            elif math.isinf(inputValue):
+                outputInterpolated = inputValue
+            else:
+                # Find the location of the value in the lut
+                for lutIndex in range(inputResolution):
+                    sampleIndex = lutIndex*channels + channel
+                    if samples[sampleIndex] > inputValue:
+                        break
+
+                # Get the interpolation value
+                lutIndexLow = max(0, lutIndex-1)
+                lutIndexHigh = min(inputResolution-1, lutIndex)
+                sampleIndexLow = lutIndexLow*channels + channel
+                sampleIndexHigh = lutIndexHigh*channels + channel
+
+                if lutIndexLow == lutIndexHigh:
+                    lutInterp = 0.0
+                else:
+                    lutInterp = (inputValue - samples[sampleIndexLow])/(
+                        samples[sampleIndexHigh] - samples[sampleIndexLow])
+
+                # Find the output value
+                outputInterpolated = (lutInterp + lutIndexLow)/(inputResolution-1)
+
+            if rawHalfs:
+                outputInterpolated = clf.halfToUInt16(outputInterpolated)
+
+            inverseSample[channel] = outputInterpolated
+
+        inverseSamples[inverseLutIndex*channels:(inverseLutIndex+1)*channels] = inverseSample
+
+    # Create a 1D LUT with generated sample values
+    if rawHalfs:
+        lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], 
+            "inverse_1d_lut", "inverse_1d_lut", rawHalfs=rawHalfs, halfDomain=True)
+    else:
+        lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], 
+            "inverse_1d_lut", "inverse_1d_lut", halfDomain=True)
+    lutpn.setArray(channels, inverseSamples)
+
+    lutpns.append(lutpn)
+
+    return lutpns
+
+def readSPI1D(lutPath, direction='forward', interpolation='linear', inversesUseHalfDomain=True):
     with open(lutPath) as f:
         lines = f.read().splitlines()
 
@@ -175,7 +258,12 @@ def readSPI1D(lutPath, direction='forward', interpolation='linear'):
 
     # Inverse transform, LUT has to be resampled
     else:
-        lutpnInverses = generateLUT1DInverse(resolution, samples, minInputValue, maxInputValue)
+        if inversesUseHalfDomain:
+            print( "Generating full half-domain inverse of 1D LUT")
+            lutpnInverses = generateLUT1DInverseHalfDomain(resolution, samples, minInputValue, maxInputValue, rawHalfs=True)
+        else:
+            print( "Generating resampled inverse of 1D LUT")
+            lutpnInverses = generateLUT1DInverseResampled(resolution, samples, minInputValue, maxInputValue)            
         lutpns.extend(lutpnInverses)
 
     #print (dataFormat, resolution, samples, indexMap, minInputValue, maxInputValue)
@@ -405,7 +493,7 @@ def getLUTFileFormat(lutPath):
     fileFormat = os.path.split(lutPath)[1].split('.')[-1]
     return fileFormat
 
-def convertLUTToProcessNode(lutPath, direction='forward', interpolation='linear'):
+def convertLUTToProcessNode(lutPath, direction='forward', interpolation='linear', inversesUseHalfDomain=True):
     dataFormat = LUTFORMAT_UNKNOWN
     resolution = [0, 0]
     samples = []
@@ -422,7 +510,7 @@ def convertLUTToProcessNode(lutPath, direction='forward', interpolation='linear'
     if fileFormat == "spi1d":
         print( "Reading Sony 1D LUT")
         #(dataFormat, resolution, samples, indexMap, minInputValue, maxInputValue) = readSPI1D(lutPath)
-        lutpns = readSPI1D(lutPath, direction, interpolation)
+        lutpns = readSPI1D(lutPath, direction, interpolation, inversesUseHalfDomain)
 
     elif fileFormat == "spi3d":
         print( "Reading Sony 3D LUT")
@@ -437,9 +525,9 @@ def convertLUTToProcessNode(lutPath, direction='forward', interpolation='linear'
 
     return lutpns
 
-def convertLUTtoCLF(lutPath, clfPath):
+def convertLUTtoCLF(lutPath, clfPath, inversesUseHalfDomain=True):
     # Load the LUT and convert to a CLF ProcessNode
-    lutpns = convertLUTToProcessNode(lutPath)
+    lutpns = convertLUTToProcessNode(lutPath, inversesUseHalfDomain=inversesUseHalfDomain)
 
     # Create a CLF ProcessList and populate contents
     if lutpns != []:
@@ -466,6 +554,7 @@ def main():
 
     p.add_option('--input', '-i', default=None)
     p.add_option('--output', '-o', default=None)
+    p.add_option('--inversesUseHalfDomain', '-h', action='store_true', default=False)
 
     options, arguments = p.parse_args()
 
@@ -474,6 +563,7 @@ def main():
     # 
     inputPath = options.input
     outputPath = options.output
+    inversesUseHalfDomain = options.inversesUseHalfDomain
 
     try:
         argsStart = sys.argv.index('--') + 1
@@ -488,7 +578,7 @@ def main():
     # Run 
     #
     if outputPath != None and inputPath != None:
-        convertLUTtoCLF(inputPath, outputPath)
+        convertLUTtoCLF(inputPath, outputPath, inversesUseHalfDomain=inversesUseHalfDomain)
 
 # main
 

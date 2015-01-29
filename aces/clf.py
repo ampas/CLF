@@ -382,6 +382,31 @@ def bitDepthIsInteger(bitDepth):
 def bitDepthIsFloatingPoint(bitDepth):
     return not bitDepth in [bitDepths["UINT8"], bitDepths["UINT10"], bitDepths["UINT12"], bitDepths["UINT16"]]
 
+# Utilities for bit-wise conversion between half-float and 16 bit-integer representations
+def uint16ToHalf(uint16value):
+    return np.frombuffer(np.getbuffer(np.uint16(uint16value)), dtype=np.float16)[0]
+
+def halfToUInt16(halfValue):
+    return np.frombuffer(np.getbuffer(np.float16(halfValue)), dtype=np.uint16)[0]
+
+def sampleHalfFloatDomain(f, rawHalfs=False, index=None, channels=1):
+    if index:
+        sample = [uint16ToHalf(index)]*channels
+        half = f(sample)
+        if rawHalfs:
+            for c in range(channels):
+                half[c] = halfToUInt16(half[c])
+        return half
+    else:
+        halfs = [0.0]*samples*65536
+        for index in range(65536):
+            sample = [uint16ToHalf(index)]*channels
+            halfs[index*channels:(index+1)*channels] = f(sample)
+            if rawHalfs:
+                for c in range(channels):
+                    halfs[index + c] = halfToUInt16(halfs[index + c])
+        return halfs
+
 class ProcessNode:
     "A Common LUT Format ProcessNode element"
 
@@ -659,12 +684,6 @@ class Array:
     def lookup1DLinear(self, position, channel, rawHalfs=False, halfDomain=False):
         values = self._values
         dimensions = self._dimensions
-
-        def uint16ToHalf(uint16value):
-            return np.frombuffer(np.getbuffer(np.uint16(uint16value)), dtype=np.float16)[0]
-
-        def halfToUInt16(halfValue):
-            return np.frombuffer(np.getbuffer(np.float16(halfValue)), dtype=np.uint16)[0]
 
         # Input half-float values are treated to 16 bit unsigned integers
         # Those integers are the index into the LUT

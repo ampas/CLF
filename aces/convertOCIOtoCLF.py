@@ -74,7 +74,7 @@ def convertLogToProcessNode(base, direction):
     
     return log
 
-def convertTransformsToProcessNodes( ocioTransform, lutSearchPath=None ):
+def convertTransformsToProcessNodes( ocioTransform, lutSearchPath=None, inversesUseHalfDomain=True ):
     pns = []
 
     #print( ocioTransform )
@@ -83,7 +83,7 @@ def convertTransformsToProcessNodes( ocioTransform, lutSearchPath=None ):
         print( "Group Transform" )
         children = ocioTransform.getTransforms()
         for childTransform in children:
-            childpns = convertTransformsToProcessNodes(childTransform, lutSearchPath)
+            childpns = convertTransformsToProcessNodes(childTransform, lutSearchPath, inversesUseHalfDomain)
             pns.extend( childpns )
 
     elif isinstance(ocioTransform, OCIO.FileTransform):
@@ -95,7 +95,10 @@ def convertTransformsToProcessNodes( ocioTransform, lutSearchPath=None ):
         if lutSearchPath != None:
             lutPath = os.path.join( lutSearchPath, lutPath )
 
-        lutpns = convertLUTtoCLF.convertLUTToProcessNode(lutPath, direction, interpolation)
+        print( 2.0, inversesUseHalfDomain )
+
+        lutpns = convertLUTtoCLF.convertLUTToProcessNode(lutPath, direction, interpolation, 
+            inversesUseHalfDomain=inversesUseHalfDomain)
         #print( "Created %d CLF process nodes" % len(lutpns) )
         pns.extend( lutpns )
 
@@ -117,11 +120,13 @@ def convertTransformsToProcessNodes( ocioTransform, lutSearchPath=None ):
             pns.append(logpn)
 
     else:
-        print( "Unsupported OCIO transform type : %s" % ocioTransform )
+        if ocioTransform:
+            print( "Unsupported OCIO transform type : %s" % ocioTransform )
 
     return pns
 
-def convertOCIOtoCLF(configPath, sourceColorSpaceNames, destColorSpaceNames, clfPath):
+def convertOCIOtoCLF(configPath, sourceColorSpaceNames, destColorSpaceNames, 
+    clfPath, inversesUseHalfDomain=True):
     # Load the config
     config = OCIO.Config.CreateFromFile(configPath)
 
@@ -143,7 +148,8 @@ def convertOCIOtoCLF(configPath, sourceColorSpaceNames, destColorSpaceNames, clf
         sourceTransform = sourceColorSpace.getTransform( OCIO.Constants.COLORSPACE_DIR_TO_REFERENCE )
 
         # Convert to CLF ProcessNodes
-        pns = convertTransformsToProcessNodes( sourceTransform, lutSearchPath=configLUTPath )
+        pns = convertTransformsToProcessNodes( sourceTransform, lutSearchPath=configLUTPath, 
+            inversesUseHalfDomain=inversesUseHalfDomain )
 
         # Rename and add a description to each ProcessNode
         specificDescription = "Convert %s to reference" % sourceColorSpaceName
@@ -169,8 +175,11 @@ def convertOCIOtoCLF(configPath, sourceColorSpaceNames, destColorSpaceNames, clf
         destColorSpace = config.getColorSpace(destColorSpaceName)
         destTransform = destColorSpace.getTransform( OCIO.Constants.COLORSPACE_DIR_FROM_REFERENCE )
 
+        print( 1.0, inversesUseHalfDomain )
+
         # Convert to CLF ProcessNodes
-        pns = convertTransformsToProcessNodes( destTransform, lutSearchPath=configLUTPath )
+        pns = convertTransformsToProcessNodes( destTransform, lutSearchPath=configLUTPath, 
+            inversesUseHalfDomain=inversesUseHalfDomain )
 
         # Rename and add a description to each ProcessNode
         specificDescription = "Convert reference to %s" % destColorSpaceName
@@ -222,6 +231,7 @@ def main():
     p.add_option('--source', '-s', type='string', action='append', default=[])
     p.add_option('--destination', '-d', type='string', action='append', default=[])
     p.add_option('--output', '-o', default=None)
+    p.add_option('--inversesUseHalfDomain', '-h', action='store_true', default=False)
 
     options, arguments = p.parse_args()
 
@@ -232,12 +242,14 @@ def main():
     sourceColorSpaces = options.source
     destColorSpaces = options.destination
     outputPath = options.output
+    inversesUseHalfDomain = options.inversesUseHalfDomain
 
     '''
     print( "config    : %s" % configPath )
     print( "output    : %s" % outputPath )
     print( "source    : %s" % sourceColorSpaces )
     print( "dest      : %s" % destColorSpaces )
+    print( "half dom. : %s" % inversesUseHalfDomain )
     '''
 
     try:
@@ -254,7 +266,8 @@ def main():
     #
     if( configPath != None and outputPath != None 
         and (sourceColorSpaces != [] or destColorSpaces != [] ) ):
-        convertOCIOtoCLF(configPath, sourceColorSpaces, destColorSpaces, outputPath)
+        convertOCIOtoCLF(configPath, sourceColorSpaces, 
+            destColorSpaces, outputPath, inversesUseHalfDomain=inversesUseHalfDomain)
 
 # main
 
