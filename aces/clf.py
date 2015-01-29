@@ -2216,11 +2216,11 @@ def createExampleCLF(clfPath):
     #
     # Reference example
     #
-    referencePathBase = '/work/client/academy/ocio/configGeneration'
-    referencePath = 'test.xml'
+    #referencePathBase = '/work/client/academy/ocio/configGeneration'
+    #referencePath = 'test.xml'
 
-    ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", referencePath, referencePathBase)
-    pl.addProcess(ref1)
+    #ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", referencePath, referencePathBase)
+    #pl.addProcess(ref1)
 
     # Add a range node
     rpn4 = Range(bitDepths["UINT10"], bitDepths["FLOAT16"], "someId", "Transform0b")
