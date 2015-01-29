@@ -95,8 +95,6 @@ def convertTransformsToProcessNodes( ocioTransform, lutSearchPath=None, inverses
         if lutSearchPath != None:
             lutPath = os.path.join( lutSearchPath, lutPath )
 
-        print( 2.0, inversesUseHalfDomain )
-
         lutpns = convertLUTtoCLF.convertLUTToProcessNode(lutPath, direction, interpolation, 
             inversesUseHalfDomain=inversesUseHalfDomain)
         #print( "Created %d CLF process nodes" % len(lutpns) )
@@ -174,8 +172,6 @@ def convertOCIOtoCLF(configPath, sourceColorSpaceNames, destColorSpaceNames,
         # Get the OCIO transforms
         destColorSpace = config.getColorSpace(destColorSpaceName)
         destTransform = destColorSpace.getTransform( OCIO.Constants.COLORSPACE_DIR_FROM_REFERENCE )
-
-        print( 1.0, inversesUseHalfDomain )
 
         # Convert to CLF ProcessNodes
         pns = convertTransformsToProcessNodes( destTransform, lutSearchPath=configLUTPath, 
