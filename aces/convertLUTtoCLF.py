@@ -197,7 +197,70 @@ def generateLUT1DInverseHalfDomain(resolution, samples, minInputValue, maxInputV
 
     return lutpns
 
-def readSPI1D(lutPath, direction='forward', interpolation='linear', inversesUseHalfDomain=True):
+# Generate an inverse 1D LUT using an IndexMap to hold the mapping directly.
+def generateLUT1DInverseIndexMap(resolution, samples, minInputValue, maxInputValue):
+    lutpns = []
+
+    # Invert happens in 3 stages
+    # 1. Create the index map that goes from LUT output values to index values
+    # 2. Create a LUT that maps from index values to [0,1]
+    # 3. Create a Range node to remap from [0,1] to [minInput,maxInput]
+
+    # Get the resolution of the prelut
+    inputResolution = resolution[0]
+    channels = resolution[1]
+
+    print( inputResolution, minInputValue, maxInputValue )
+
+    # Index Maps for the inverse LUT
+    indexMaps = []
+    for c in range(channels):
+        indexMapInput = [0.0]*inputResolution
+        for i in range(inputResolution):
+            indexMapInput[i] = samples[i*channels + c]
+
+        indexMapOutput = range(inputResolution)
+
+        indexMaps.append([indexMapInput, indexMapOutput])
+
+    # Sample values for the LUT - output is [0,1]
+    inverseSamples = [0.0]*inputResolution*channels
+
+    for i in range(inputResolution):
+        v = float(i)/(inputResolution-1)
+        for c in range(channels):
+            inverseSamples[i*channels + c] = v
+
+    # Create a 1D LUT with generated index map and sample values
+    lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], 
+        "inverse_1d_lut", "inverse_1d_lut")
+
+    if channels == 3:
+        lutpn.setIndexMaps(indexMaps[0], indexMaps[1], indexMaps[2])
+    else:
+        lutpn.setIndexMaps(indexMaps[0])
+
+    lutpn.setArray(channels, inverseSamples)
+
+    lutpns.append(lutpn)
+
+    # Create a Range node to expaand from [0,1] to [minIn, maxIn]
+    if minInputValue != 0.0 or maxInputValue != 1.0:
+        rangepn2 = clf.Range(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "inverse_1d_range_1", "inverse_1d_range_1")
+        rangepn2.setMinInValue(0.0)
+        rangepn2.setMaxInValue(1.0)
+        rangepn2.setMinOutValue(minInputValue)
+        rangepn2.setMaxOutValue(maxInputValue)
+
+        lutpns.append(rangepn2)
+
+    return lutpns
+
+def readSPI1D(lutPath, 
+              direction='forward', 
+              interpolation='linear',
+              useIndexMaps=True, 
+              inversesUseHalfDomain=True):
     with open(lutPath) as f:
         lines = f.read().splitlines()
 
@@ -258,7 +321,10 @@ def readSPI1D(lutPath, direction='forward', interpolation='linear', inversesUseH
 
     # Inverse transform, LUT has to be resampled
     else:
-        if inversesUseHalfDomain:
+        if useIndexMaps:
+            print( "Generating inverse of 1D LUT using Index Maps")
+            lutpnInverses = generateLUT1DInverseIndexMap(resolution, samples, minInputValue, maxInputValue)
+        elif inversesUseHalfDomain:
             print( "Generating full half-domain inverse of 1D LUT")
             lutpnInverses = generateLUT1DInverseHalfDomain(resolution, samples, minInputValue, maxInputValue, rawHalfs=True)
         else:
@@ -493,7 +559,11 @@ def getLUTFileFormat(lutPath):
     fileFormat = os.path.split(lutPath)[1].split('.')[-1]
     return fileFormat
 
-def convertLUTToProcessNode(lutPath, direction='forward', interpolation='linear', inversesUseHalfDomain=True):
+def convertLUTToProcessNode(lutPath, 
+                            direction='forward', 
+                            interpolation='linear', 
+                            useIndexMaps=True,
+                            inversesUseHalfDomain=True):
     dataFormat = LUTFORMAT_UNKNOWN
     resolution = [0, 0]
     samples = []
@@ -510,7 +580,7 @@ def convertLUTToProcessNode(lutPath, direction='forward', interpolation='linear'
     if fileFormat == "spi1d":
         print( "Reading Sony 1D LUT")
         #(dataFormat, resolution, samples, indexMap, minInputValue, maxInputValue) = readSPI1D(lutPath)
-        lutpns = readSPI1D(lutPath, direction, interpolation, inversesUseHalfDomain)
+        lutpns = readSPI1D(lutPath, direction, interpolation, useIndexMaps, inversesUseHalfDomain)
 
     elif fileFormat == "spi3d":
         print( "Reading Sony 3D LUT")
