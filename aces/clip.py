@@ -381,10 +381,14 @@ class Config:
 class TransformList:
     "An ACES Clip Transform List element"
 
-    def __init__(self, linkTransformID='', listType='TransformList'):
+    def __init__(self, 
+                 linkTransformID='', 
+                 listType='TransformList', 
+                 linkTransformListName='LinkTransform'):
         "%s - Initialize the standard class variables" % 'TransformList'
         self._listType = listType
         self._linkTransformID = ''
+        self._linkTransformListName = linkTransformListName
         self._children = []
         self._attributes = {}
 
@@ -411,7 +415,7 @@ class TransformList:
             child.write(element)
 
         if self._linkTransformID != '':
-            linkTransform = etree.SubElement(element, 'LinkTransform')
+            linkTransform = etree.SubElement(element, self._linkTransformListName)
             linkTransform.text = self._linkTransformID
 
         return element
@@ -427,7 +431,7 @@ class TransformList:
         for child in element:
             elementType = child.tag
 
-            if elementType == 'LinkTransform':
+            if elementType == self._linkTransformListName:
                 self._linkTransformID = child.text
             else:
                 # Remove text used in xml names but not class names
@@ -458,7 +462,7 @@ class TransformList:
             print( "" )
 
         if self._linkTransformID != '':
-            print( "%20s : %15s" % ("Link Transform", self._linkTransformID) )
+            print( "%20s : %15s" % (self._linkTransformListName, self._linkTransformID) )
     # printInfo
 # TransformList
 
@@ -467,7 +471,7 @@ class InputTransformList(TransformList):
 
     def __init__(self, linkTransformID=''):
         "%s - Initialize the standard class variables" % 'InputTransformList'
-        TransformList.__init__(self, linkTransformID, 'InputTransformList')
+        TransformList.__init__(self, linkTransformID, 'InputTransformList', 'LinkInputTransformList')
     # __init__
 # InputTransformList
 
@@ -476,7 +480,7 @@ class PreviewTransformList(TransformList):
 
     def __init__(self, linkTransformID=''):
         "%s - Initialize the standard class variables" % 'PreviewTransformList'
-        TransformList.__init__(self, linkTransformID, 'PreviewTransformList')
+        TransformList.__init__(self, linkTransformID, 'PreviewTransformList', 'LinkPreviewTransformList')
     # __init__
 # PreviewTransformList
 
@@ -767,7 +771,7 @@ def createExampleClip(clipPath):
     itl.addElement(gr)
     config.addElement(itl)
 
-    ptl = PreviewTransformList('inputTransformID')
+    ptl = PreviewTransformList('previewTransformID')
     ptl.addElement(LMTref("TransformName3", "id3", "bypass", "LMT.something.v1.0"))
     ptl.addElement(RRTref("TransformName4", "id4", "bypass", "RRT.something.v1.0"))
     ptl.addElement(ODTref("TransformName5", "id5", "bypass", "ODT.something.v1.0"))
