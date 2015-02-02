@@ -104,7 +104,7 @@ class ClipMetadata:
 
                 self.addElement( element )
             else:
-                print( "ProcessList::read - Treating unsupported element, %s, as a raw value" % child.tag)
+                print( "ClipMetadata::read - Treating unsupported element, %s, as a raw value" % child.tag)
                 self.addValueElement(child.tag, child.text)
     # read
 
@@ -200,6 +200,24 @@ class Comment:
     # printInfo
 # Comment
 
+class ContainerFormatVersion(Comment):
+    "An ACES Clip ContainerFormatVersion element"
+
+    def __init__(self, value=''):
+        "%s - Initialize the standard class variables" % 'ContainerFormatVersion'
+        Comment.__init__(self, value, 'ContainerFormatVersion')
+    # __init__
+# ContainerFormatVersion
+
+class ModificationTime(Comment):
+    "An ACES Clip ContainerFormatVersion element"
+
+    def __init__(self, value=''):
+        "%s - Initialize the standard class variables" % 'ModificationTime'
+        Comment.__init__(self, value, 'ModificationTime')
+    # __init__
+# ModificationTime
+
 class UUID(Comment):
     "An ACES Clip UUID element"
 
@@ -207,7 +225,7 @@ class UUID(Comment):
         "%s - Initialize the standard class variables" % 'UUID'
         Comment.__init__(self, '', 'UUID', {"type":type})
     # __init__
-# Description
+# UUID
 
 class Info:
     "An ACES Clip Info element"
@@ -721,10 +739,10 @@ def createExampleClip(clipPath):
     clip.setName('Example Clip Metadata')
 
     # Add ID data
-    clip.addValueElement("ContainerFormatVersion", str(1.0))
+    clip.addElement(ContainerFormatVersion(str(1.0)))
     #clip.addValueElement("UUID", "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6")
     clip.addElement(UUID("urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6"))
-    clip.addValueElement("ModificationTime", "2014-11-24T10:20:13-8:00")
+    clip.addElement(ModificationTime("2014-11-24T10:20:13-8:00"))
 
     # Add Info element
     clip.addElement(Info("testModule", "2015.0.01", "This is a comment"))
