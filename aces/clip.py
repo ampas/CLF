@@ -200,6 +200,15 @@ class Comment:
     # printInfo
 # Comment
 
+class UUID(Comment):
+    "An ACES Clip UUID element"
+
+    def __init__(self, type=''):
+        "%s - Initialize the standard class variables" % 'UUID'
+        Comment.__init__(self, '', 'UUID', {"type":type})
+    # __init__
+# Description
+
 class Info:
     "An ACES Clip Info element"
 
@@ -713,7 +722,8 @@ def createExampleClip(clipPath):
 
     # Add ID data
     clip.addValueElement("ContainerFormatVersion", str(1.0))
-    clip.addValueElement("UUID", "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6")
+    #clip.addValueElement("UUID", "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6")
+    clip.addElement(UUID("urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6"))
     clip.addValueElement("ModificationTime", "2014-11-24T10:20:13-8:00")
 
     # Add Info element
