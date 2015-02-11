@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Convert CLFs to LUT
+Convert LUTs to CLF
 """
 
 import os
@@ -10,7 +10,7 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from aces.convertLUTtoCLF import main
+from aces.convertCLFtoLUT import main
 
 __author__ = 'ACES Developers'
 __copyright__ = 'Copyright (C) 2014 - 2015 - ACES Developers'

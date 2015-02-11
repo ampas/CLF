@@ -391,7 +391,10 @@ def generateCLFPrelut(cspPreluts):
     # Given that we're resampling, we should probably increase the
     # resolution of the resampled lut relative to the source
     outputResolution = inputResolution
-    outputResolution *= 2
+
+    # If the prelut only affects the range, skip this step
+    if inputResolution > 2:
+        outputResolution *= 2
 
     # Find the minimum and maximum input
     # XXX
@@ -401,7 +404,7 @@ def generateCLFPrelut(cspPreluts):
     minInputValue = min(prelutR[0][0], prelutG[0][0], prelutB[0][0])
     maxInputValue = max(prelutR[0][-1], prelutG[0][-1], prelutB[0][-1])
 
-    print( inputResolution, minInputValue, maxInputValue )
+    #print( inputResolution, minInputValue, maxInputValue )
 
     # Create a Range node to normalize data from that range [min, max]
     rangepn = clf.Range(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "prelut_range", "prelut_range")
@@ -412,46 +415,48 @@ def generateCLFPrelut(cspPreluts):
 
     prelutpns.append(rangepn)
 
-    # Generate 1d LUT by running values through the
-    # - inverse normalization
-    # - the cspprelut
-    samples = [0.0]*outputResolution*3
+    # If the prelut only affects the range, skip generating a lut to represent it
+    if inputResolution > 2:
+        # Generate 1d LUT by running values through the
+        # - inverse normalization
+        # - the cspprelut
+        samples = [0.0]*outputResolution*3
 
-    for i in range(outputResolution):
-        # Normalized LUT input
-        inputValue = float(i)/(outputResolution-1)
+        for i in range(outputResolution):
+            # Normalized LUT input
+            inputValue = float(i)/(outputResolution-1)
 
-        # Invert the normalization
-        rangedValue = inputValue*(maxInputValue - minInputValue) + minInputValue
+            # Invert the normalization
+            rangedValue = inputValue*(maxInputValue - minInputValue) + minInputValue
 
-        sample = [0.0, 0.0, 0.0]
+            sample = [0.0, 0.0, 0.0]
 
-        # For each channel
-        for channel in range(len(cspPreluts)):
-            # Find the location of the de-normalized value in the prelut
-            for prelutIndex in range(inputResolution):
-                if cspPreluts[channel][0][prelutIndex] > rangedValue:
-                    break
+            # For each channel
+            for channel in range(len(cspPreluts)):
+                # Find the location of the de-normalized value in the prelut
+                for prelutIndex in range(inputResolution):
+                    if cspPreluts[channel][0][prelutIndex] > rangedValue:
+                        break
 
-            # Get the interpolation value
-            prelutIndexLow = max(0, prelutIndex-1)
-            prelutIndexHigh = min(inputResolution-1, prelutIndex)
-            prelutInterp = (rangedValue - cspPreluts[channel][0][prelutIndexLow])/(
-                cspPreluts[channel][0][prelutIndexHigh] - cspPreluts[channel][0][prelutIndexLow])
+                # Get the interpolation value
+                prelutIndexLow = max(0, prelutIndex-1)
+                prelutIndexHigh = min(inputResolution-1, prelutIndex)
+                prelutInterp = (rangedValue - cspPreluts[channel][0][prelutIndexLow])/(
+                    cspPreluts[channel][0][prelutIndexHigh] - cspPreluts[channel][0][prelutIndexLow])
 
-            # Find the output value
-            outputInterpolationRange = (cspPreluts[channel][1][prelutIndexHigh] - cspPreluts[channel][1][prelutIndexLow])
-            outputInterpolated = prelutInterp*outputInterpolationRange + cspPreluts[channel][1][prelutIndexLow]
+                # Find the output value
+                outputInterpolationRange = (cspPreluts[channel][1][prelutIndexHigh] - cspPreluts[channel][1][prelutIndexLow])
+                outputInterpolated = prelutInterp*outputInterpolationRange + cspPreluts[channel][1][prelutIndexLow]
 
-            sample[channel] = outputInterpolated
+                sample[channel] = outputInterpolated
 
-        samples[i*3:(i+1)*3] = sample
+            samples[i*3:(i+1)*3] = sample
 
-    # Create a 1D LUT with generated sample values
-    lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "prelut_lut1d", "prelut_lut1d")
-    lutpn.setArray(len(cspPreluts), samples)
+        # Create a 1D LUT with generated sample values
+        lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "prelut_lut1d", "prelut_lut1d")
+        lutpn.setArray(len(cspPreluts), samples)
 
-    prelutpns.append(lutpn)
+        prelutpns.append(lutpn)
 
     return prelutpns
 
@@ -469,51 +474,80 @@ def readCSP(lutPath, direction='forward', interpolation='linear'):
     tokens = lines[0].split()
     if tokens[0] == "CSPLUTV100":
         format = lines[1].split()[0]
-        if format == "3D":
-            dataFormat = LUTFORMAT_3D
+
+        if format in ["1D", "3D"]:
+            # Find the first line of metadata
+            metaStart = 2
+            while lines[metaStart].rstrip() != "BEGIN METADATA":
+                metaStart += 1
+            metaStart += 1
 
             metadata = ""
-            dataStart = 2
-            if lines[2].rstrip() == "BEGIN METADATA":
-                for line in lines[3:]:
-                    dataStart += 1
-                    if line.rstrip() == "END METADATA":
-                        break
-                    else:
-                        metadata += (line.rstrip())
+            dataStart = metaStart
+            for line in lines[metaStart:]:
+                dataStart += 1
+                if line.rstrip() == "END METADATA":
+                    break
+                else:
+                    metadata += (line.rstrip())
+                    #print( "metadata line : %s" % line.rstrip() )
 
-                #print( "metadata : %s" % metadata)
-                dataStart += 2
-                
-                #print( "Data starts on line : %d" % dataStart )
+            #print( "metadata : %s" % metadata)
+            dataStart += 1
+            
+            while lines[dataStart].rstrip() == '':
+                #print( "blank line")
+                dataStart += 1
 
-                # Red Index Map
-                prelutRedResolution = int(lines[dataStart+0])
-                prelutRedInput = map(float, lines[dataStart+1].split())
-                prelutRedOutput = map(float, lines[dataStart+2].split())
+            #print( "Prelut data starts on line : %d" % dataStart )
 
-                # Green Index Map
-                prelutGreenResolution = int(lines[dataStart+3])
-                prelutGreenInput = map(float, lines[dataStart+4].split())
-                prelutGreenOutput = map(float, lines[dataStart+5].split())
+            #
+            # Read Index Maps
+            #
 
-                # Blue Index Map
-                prelutBlueResolution = int(lines[dataStart+6])
-                prelutBlueInput = map(float, lines[dataStart+7].split())
-                prelutBlueOutput = map(float, lines[dataStart+8].split())
+            # Red Index Map
+            prelutRedResolution = int(lines[dataStart+0])
+            prelutRedInput = map(float, lines[dataStart+1].split())
+            prelutRedOutput = map(float, lines[dataStart+2].split())
 
-                prelut = [[prelutRedInput, prelutRedOutput],
-                    [prelutGreenInput, prelutGreenOutput],
-                    [prelutBlueInput, prelutBlueOutput]]
+            # Green Index Map
+            prelutGreenResolution = int(lines[dataStart+3])
+            prelutGreenInput = map(float, lines[dataStart+4].split())
+            prelutGreenOutput = map(float, lines[dataStart+5].split())
 
-                resolution = map(int, lines[dataStart+10].split())
+            # Blue Index Map
+            prelutBlueResolution = int(lines[dataStart+6])
+            prelutBlueInput = map(float, lines[dataStart+7].split())
+            prelutBlueOutput = map(float, lines[dataStart+8].split())
+
+            prelut = [[prelutRedInput, prelutRedOutput],
+                [prelutGreenInput, prelutGreenOutput],
+                [prelutBlueInput, prelutBlueOutput]]
+
+            #
+            # Read LUT data
+            #
+            dataStart = dataStart+10
+
+            while lines[dataStart].rstrip() == '':
+                #print( "blank line")
+                dataStart += 1
+
+            resolution = map(int, lines[dataStart].split())
+            dataStart += 1
+
+            #print( "lut data starts on line : %d" % dataStart )
+
+            # 3D LUT data
+            if format == "3D":
+                dataFormat = LUTFORMAT_3D
 
                 # CSP incremements LUT samples red, then green, then blue
                 # CLF incremements LUT samples blue, then green, then red 
                 # so we need to move samples around
                 samples = [0.0]*resolution[0]*resolution[1]*resolution[2]*3
                 cspIndex = 0
-                for line in lines[dataStart+11:]:
+                for line in lines[dataStart:]:
                     # Convert from sample number to LUT index, CSP-style
                     indexR = cspIndex%resolution[0]
                     indexG = (cspIndex/resolution[0])%resolution[1]
@@ -536,6 +570,30 @@ def readCSP(lutPath, direction='forward', interpolation='linear'):
 
                     cspIndex += 1
 
+            # 1D LUT data
+            elif format == "1D":
+                dataFormat = LUTFORMAT_1D
+
+                samples = [0.0]*resolution[0]*3
+
+                cspIndex = 0
+                for line in lines[dataStart:]:
+                    clfIndex = cspIndex
+                    clfIndex *= 3
+
+                    # Convert from text to float
+                    cspSamples = map(float, line.split())
+
+                    # Add to the sample values array
+                    if len(cspSamples) == 3:
+                        #print( "csp sample %d -> clf index : %d" % 
+                        #    (cspIndex, clfIndex/3))
+                        #print( "lut value : %3.6f %3.6f %3.6f" % (cspSamples[0], cspSamples[1], cspSamples[2]) )
+
+                        samples[clfIndex:clfIndex+3] = cspSamples
+
+                    cspIndex += 1
+
     #
     # Create ProcessNodes
     #
@@ -548,11 +606,16 @@ def readCSP(lutPath, direction='forward', interpolation='linear'):
             for prelutpn in prelutpns:
                 lutpns.append(prelutpn)
 
-    lutpn = clf.LUT3D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "lut3d", "lut3d")
-    lutpn.setArray(resolution, samples)
-    lutpns.append(lutpn)
+    if format == "3D":
+        lutpn = clf.LUT3D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "lut3d", "lut3d")
+        lutpn.setArray(resolution, samples)
+        lutpns.append(lutpn)
+    elif format == "1D":
+        lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "lut1d", "lut1d")
+        lutpn.setArray(3, samples)
+        lutpns.append(lutpn)
 
-    #return (dataFormat, resolution, samples, indexMap, minInputValue, maxInputValue)
+    #print (dataFormat, resolution, samples, prelut, minInputValue, maxInputValue)
     return lutpns
 
 def getLUTFileFormat(lutPath):
@@ -587,7 +650,7 @@ def convertLUTToProcessNode(lutPath,
         lutpns = readSPI3D(lutPath, direction, interpolation)
 
     elif fileFormat == "csp":
-        print( "Reading CSP 1D shaper + 3D LUT")
+        print( "Reading CSP 1D shaper + 1D or 3D LUT")
         lutpns = readCSP(lutPath, direction, interpolation)
 
     else:
@@ -622,17 +685,17 @@ def main():
                                 version='0.01',
                                 usage='%prog [options]')
 
-    p.add_option('--input', '-i', default=None)
-    p.add_option('--output', '-o', default=None)
-    p.add_option('--inversesUseHalfDomain', '-h', action='store_true', default=False)
+    p.add_option('--lut', '-l', default=None)
+    p.add_option('--clf', '-c', default=None)
+    p.add_option('--inversesUseHalfDomain', '', action='store_true', default=False)
 
     options, arguments = p.parse_args()
 
     #
     # Get options
     # 
-    inputPath = options.input
-    outputPath = options.output
+    lutPath = options.lut
+    clfPath = options.clf
     inversesUseHalfDomain = options.inversesUseHalfDomain
 
     try:
@@ -647,8 +710,8 @@ def main():
     #
     # Run 
     #
-    if outputPath != None and inputPath != None:
-        convertLUTtoCLF(inputPath, outputPath, inversesUseHalfDomain=inversesUseHalfDomain)
+    if lutPath != None and clfPath != None:
+        convertLUTtoCLF(lutPath, clfPath, inversesUseHalfDomain=inversesUseHalfDomain)
 
 # main
 
