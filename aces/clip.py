@@ -583,6 +583,15 @@ class ODTref(TransformReference):
     # __init__
 # ODTref
 
+class RRTODTref(TransformReference):
+    "An ACES Clip RRTODTref Transform Reference element"
+
+    def __init__(self, name='', transformID='', status='', linkTransformID=''):
+        "%s - Initialize the standard class variables" % 'RRTODTref'
+        TransformReference.__init__(self, name, transformID, status, linkTransformID, 'RRTODTref')
+    # __init__
+# ODTref
+
 class GradeRef:
     "An ACES Clip GradeRef Transform Referenceelement"
 
@@ -775,6 +784,7 @@ def createExampleClip(clipPath):
     ptl.addElement(LMTref("TransformName3", "id3", "bypass", "LMT.something.v1.0"))
     ptl.addElement(RRTref("TransformName4", "id4", "bypass", "RRT.something.v1.0"))
     ptl.addElement(ODTref("TransformName5", "id5", "bypass", "ODT.something.v1.0"))
+    ptl.addElement(RRTODTref("TransformName6", "id6", "bypass", "RRTODT.something.v1.0"))
     config.addElement(ptl)
 
     clip.addElement(config)
@@ -806,8 +816,8 @@ def createExampleClip(clipPath):
     tl.addElement(pl1)
 
     # Create an example CLF
-    pl2 = ProcessList('examples/test.xml')
-    tl.addElement(pl2)
+    #pl2 = ProcessList('examples/test.xml')
+    #tl.addElement(pl2)
 
     clip.addElement(tl)
 
