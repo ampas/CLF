@@ -1233,7 +1233,7 @@ class LUT1D(ProcessNode):
             self._indexMaps.append( indexMapG ) 
             self.addElement( indexMapG )
 
-            indexMapB = IndexMap(dlen(valuesB[0]), valuesB)
+            indexMapB = IndexMap(len(valuesB[0]), valuesB)
             self._indexMaps.append( indexMapB ) 
             self.addElement( indexMapB )
     # setIndexMaps

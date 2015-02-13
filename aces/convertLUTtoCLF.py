@@ -210,7 +210,7 @@ def generateLUT1DInverseIndexMap(resolution, samples, minInputValue, maxInputVal
     inputResolution = resolution[0]
     channels = resolution[1]
 
-    print( inputResolution, minInputValue, maxInputValue )
+    #print( inputResolution, minInputValue, maxInputValue )
 
     # Index Maps for the inverse LUT
     indexMaps = []

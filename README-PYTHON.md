@@ -53,6 +53,11 @@ convertLUTtoCLF.py
 - Converts from the different LUT formats to CLF
 - LUT formats currently supported are: spi1d, spi3d and csp
 
+convertCLFtoLUT.py
+
+- Converts from CLF to different LUT formats
+- LUT formats currently supported are: spi1d, spi3d, csp, clf
+
 convertOCIOtoCLF.py
 
 - Converts from a set of OCIO colorspace definitions to CLF
