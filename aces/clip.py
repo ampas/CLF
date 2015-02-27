@@ -9,8 +9,12 @@ def xmlPrettyWrite(document, path):
     # Pretty saving to to disk
     documentString = etree.tostring(document.getroot(), encoding='UTF-8')
 
-    from xml.dom import minidom
-    prettyString = minidom.parseString(documentString).toprettyxml()
+    try:
+        from xml.dom import minidom
+        prettyString = minidom.parseString(documentString).toprettyxml()
+    except:
+        print( "Pretty printing failed - writing non-pretty string")
+        prettyString = documentString
    
     fp = open(path, 'wb')
     fp.write(prettyString)
@@ -25,8 +29,19 @@ def getClass( cls ):
     else:
         return None
 
+def normalize(name):
+    if name[0] == "{":
+        uri, tag = name[1:].split("}")
+        return tag
+    else:
+        return name
+
 class ClipMetadata:
     "An ACES Clip Metadata element"
+
+    # Class variables
+    prefix = "aces"
+    nsuri = "http://www.oscars.org/aces/ref/acesmetadata"
 
     def __init__(self, clipPath=None):
         "%s - Initialize the standard class variables" % 'ACESmetadata'
@@ -34,8 +49,6 @@ class ClipMetadata:
         self._valueElements = {}
         self._elements = []
 
-        self._prefix = "aces"
-        self._nsuri = "http://www.oscars.org/aces/ref/acesmetadata"
         
         if clipPath!= None:
             self.readFile(clipPath)
@@ -43,10 +56,10 @@ class ClipMetadata:
 
     # Read / Write
     def write(self):
-        #tree = etree.Element("%s:ACESmetadata" % self._prefix)
-        tree = etree.Element("ACESmetadata")
+        tree = etree.Element("%s:ACESmetadata" % ClipMetadata.prefix)
+        #tree = etree.Element("ACESmetadata")
 
-        #tree.set("xmlns:%s" % self._prefix, self._nsuri)
+        tree.set("xmlns:%s" % ClipMetadata.prefix, ClipMetadata.nsuri)
 
         # Add attributes        
         for key, value in self._attributes.iteritems():
@@ -94,6 +107,7 @@ class ClipMetadata:
             elementType = elementType.replace('-', '')
             elementType = elementType.replace('_', '')
             elementType = elementType.replace('aces:', '')
+            elementType = normalize(elementType)
 
             elementClass = getClass(elementType)
             #print( "element : %s, %s" % (elementType, elementClass) )
@@ -244,7 +258,7 @@ class Info:
 
     # Read / Write
     def write(self, tree):
-        element = etree.SubElement(tree, 'Info')
+        element = etree.SubElement(tree, "%s:Info" % ClipMetadata.prefix)
         for child in self._children:
             child.write(element)
         return element
@@ -254,6 +268,7 @@ class Info:
         # Read child elements
         for child in element:
             elementType = child.tag
+            #print( "Info child element type: %s" % elementType )
 
             if elementType == 'Application':
                 self._children.append( Comment(child.text, 'Application', child.attrib) )
@@ -286,7 +301,7 @@ class ClipID:
 
     # Read / Write
     def write(self, tree):
-        element = etree.SubElement(tree, 'ClipID')
+        element = etree.SubElement(tree, "%s:ClipID" % ClipMetadata.prefix)
         for child in self._children:
             child.write(element)
         return element
@@ -337,7 +352,7 @@ class Config:
 
     # Read / Write
     def write(self, tree):
-        element = etree.SubElement(tree, 'Config')
+        element = etree.SubElement(tree, "%s:Config" % ClipMetadata.prefix)
         for child in self._children:
             child.write(element)
         return element
@@ -357,6 +372,7 @@ class Config:
                 elementType = elementType.replace('-', '')
                 elementType = elementType.replace('_', '')
                 elementType = elementType.replace('aces:', '')
+                elementType = normalize(elementType)
 
                 elementClass = getClass(elementType)
 
@@ -367,7 +383,7 @@ class Config:
 
                     self.addElement( element )
                 else:
-                    print( "ProcessList::read - Ignoring unsupport element, %s" % child.tag)
+                    print( "Config::read - Ignoring unsupport element, %s" % child.tag)
     # read
 
     def printInfo(self):
@@ -407,7 +423,9 @@ class TransformList:
 
     # Read / Write
     def write(self, tree):
-        element = etree.SubElement(tree, self._listType)
+        element = etree.SubElement(tree, "%s:%s" % (ClipMetadata.prefix, self._listType) )
+        #element = etree.SubElement(tree, self._listType )
+
         for key, value in self._attributes.iteritems():
             element.attrib[key] = value
 
@@ -422,7 +440,7 @@ class TransformList:
     # write
 
     def read(self, element):
-        self._listType = element.tag
+        self._listType = normalize(element.tag)
 
         for key, value in element.attrib.iteritems():
             self._attributes[key] = value
@@ -438,6 +456,7 @@ class TransformList:
                 elementType = elementType.replace('-', '')
                 elementType = elementType.replace('_', '')
                 elementType = elementType.replace('aces:', '')
+                elementType = normalize(elementType)
 
                 elementClass = getClass(elementType)
 
@@ -506,7 +525,9 @@ class TransformReference:
 
     # Read / Write
     def write(self, tree):
-        element = etree.SubElement(tree, self._transformType)
+        element = etree.SubElement(tree, "%s:%s" % (ClipMetadata.prefix, self._transformType))
+        #element = etree.SubElement(tree, self._transformType)
+
         for key, value in self._attributes.iteritems():
             element.attrib[key] = value
 
@@ -521,7 +542,7 @@ class TransformReference:
     # write
 
     def read(self, element):
-        self._transformType = element.tag
+        self._transformType = normalize(element.tag)
         for key, value in element.attrib.iteritems():
             self._attributes[key] = value
 
@@ -706,7 +727,8 @@ class TransformLibrary:
 
     # Read / Write
     def write(self, tree):
-        element = etree.SubElement(tree, 'TransformLibrary')
+        element = etree.SubElement(tree, "%s:%s" % (ClipMetadata.prefix, 'TransformLibrary'))
+        #element = etree.SubElement(tree,'TransformLibrary')
         for child in self._children:
             child.write(element)
         return element

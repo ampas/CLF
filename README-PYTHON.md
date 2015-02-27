@@ -75,7 +75,6 @@ clip.py
 
 - Provides simple Python interface to read, write and query Clip Metadata.
 - Implements the TB-2014-009 specification included in the ACES 1.0 release
-- Does not implement XML namespace support
 - Includes examples of
 	- Creating ClipMetadata and various sub-components
 	- Reading a Clip Metadata file
