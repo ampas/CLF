@@ -221,7 +221,9 @@ def convertOCIOtoCLF(configPath,
 
         # Write CLF to disk
         print( "Writing CLF : %s" % clfPath)
-        pl.writeFile(clfPath)        
+        pl.writeFile(clfPath)
+    else:
+        print( "No ProcessNodes created for this transform. Skipping writing CLF." )        
 
 def main():
     import optparse
@@ -235,8 +237,8 @@ def main():
     p.add_option('--source', '-s', type='string', action='append', default=[])
     p.add_option('--destination', '-d', type='string', action='append', default=[])
     p.add_option('--output', '-o', default=None)
-    p.add_option('--inversesUseHalfDomain', '-h', action='store_true', default=False)
-    p.add_option('--inversesUseIndexMaps', '-i', action='store_true', default=False)
+    p.add_option('--inversesUseHalfDomain', '', action='store_true', default=False)
+    p.add_option('--inversesUseIndexMaps', '', action='store_true', default=False)
 
     options, arguments = p.parse_args()
 
@@ -250,14 +252,14 @@ def main():
     inversesUseHalfDomain = options.inversesUseHalfDomain
     inversesUseIndexMaps = options.inversesUseIndexMaps
 
-    '''
+    
     print( "config    : %s" % configPath )
     print( "output    : %s" % outputPath )
     print( "source    : %s" % sourceColorSpaces )
     print( "dest      : %s" % destColorSpaces )
     print( "half dom. : %s" % inversesUseHalfDomain )
     print( "index map : %s" % inversesUseIndexMaps )
-    '''
+    
 
     try:
         argsStart = sys.argv.index('--') + 1

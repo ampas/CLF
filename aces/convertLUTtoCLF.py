@@ -259,7 +259,7 @@ def generateLUT1DInverseIndexMap(resolution, samples, minInputValue, maxInputVal
 def readSPI1D(lutPath, 
               direction='forward', 
               interpolation='linear',
-              useIndexMaps=True, 
+              inversesUseIndexMaps=True, 
               inversesUseHalfDomain=True):
     with open(lutPath) as f:
         lines = f.read().splitlines()
@@ -321,7 +321,7 @@ def readSPI1D(lutPath,
 
     # Inverse transform, LUT has to be resampled
     else:
-        if useIndexMaps:
+        if inversesUseIndexMaps:
             print( "Generating inverse of 1D LUT using Index Maps")
             lutpnInverses = generateLUT1DInverseIndexMap(resolution, samples, minInputValue, maxInputValue)
         elif inversesUseHalfDomain:
@@ -625,7 +625,7 @@ def getLUTFileFormat(lutPath):
 def convertLUTToProcessNode(lutPath, 
                             direction='forward', 
                             interpolation='linear', 
-                            useIndexMaps=True,
+                            inversesUseIndexMaps=False,
                             inversesUseHalfDomain=True):
     dataFormat = LUTFORMAT_UNKNOWN
     resolution = [0, 0]
@@ -643,7 +643,7 @@ def convertLUTToProcessNode(lutPath,
     if fileFormat == "spi1d":
         print( "Reading Sony 1D LUT")
         #(dataFormat, resolution, samples, indexMap, minInputValue, maxInputValue) = readSPI1D(lutPath)
-        lutpns = readSPI1D(lutPath, direction, interpolation, useIndexMaps, inversesUseHalfDomain)
+        lutpns = readSPI1D(lutPath, direction, interpolation, inversesUseIndexMaps, inversesUseHalfDomain)
 
     elif fileFormat == "spi3d":
         print( "Reading Sony 3D LUT")
@@ -658,9 +658,20 @@ def convertLUTToProcessNode(lutPath,
 
     return lutpns
 
-def convertLUTtoCLF(lutPath, clfPath, inversesUseHalfDomain=True):
+def convertLUTtoCLF(lutPath, 
+                    clfPath,
+                    inverse=False,
+                    inversesUseIndexMaps=False, 
+                    inversesUseHalfDomain=True):
+    direction = 'forward'
+    if inverse:
+        direction = 'inverse'
+
     # Load the LUT and convert to a CLF ProcessNode
-    lutpns = convertLUTToProcessNode(lutPath, inversesUseHalfDomain=inversesUseHalfDomain)
+    lutpns = convertLUTToProcessNode(lutPath,
+        direction=direction, 
+        inversesUseIndexMaps=inversesUseIndexMaps, 
+        inversesUseHalfDomain=inversesUseHalfDomain)
 
     # Create a CLF ProcessList and populate contents
     if lutpns != []:
@@ -687,6 +698,8 @@ def main():
 
     p.add_option('--lut', '-l', default=None)
     p.add_option('--clf', '-c', default=None)
+    p.add_option('--inverse', '', action='store_true', default=False)
+    p.add_option('--inversesUseIndexMaps', '', action='store_true', default=False)
     p.add_option('--inversesUseHalfDomain', '', action='store_true', default=False)
 
     options, arguments = p.parse_args()
@@ -696,6 +709,8 @@ def main():
     # 
     lutPath = options.lut
     clfPath = options.clf
+    inverse = options.inverse
+    inversesUseIndexMaps = options.inversesUseIndexMaps
     inversesUseHalfDomain = options.inversesUseHalfDomain
 
     try:
@@ -711,7 +726,11 @@ def main():
     # Run 
     #
     if lutPath != None and clfPath != None:
-        convertLUTtoCLF(lutPath, clfPath, inversesUseHalfDomain=inversesUseHalfDomain)
+        convertLUTtoCLF(lutPath, 
+            clfPath, 
+            inverse=inverse,
+            inversesUseIndexMaps=inversesUseIndexMaps,
+            inversesUseHalfDomain=inversesUseHalfDomain)
 
 # main
 
