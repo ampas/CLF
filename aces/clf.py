@@ -1114,9 +1114,9 @@ class ASCCDL(ProcessNode):
         print( "saturation : %s" % saturation )
         '''
 
-        # Actually process a value or two
+        # Support CLF spec and Autodesk CTF style keywords
         outValue = value
-        if style == 'Fwd':
+        if style == 'Fwd' or style == 'v1.2_Fwd':
             for i in range(3):
                 outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
                 outValue[i] = pow( clamp( outValue[i] * slope[i] + offset[i] ), power[i])
@@ -1126,7 +1126,7 @@ class ASCCDL(ProcessNode):
                 outValue[i] = clamp( luma + saturation * (outValue[i] - luma) )
                 outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-        elif style == 'FwdNoClamp':
+        elif style == 'FwdNoClamp' or style == 'noClampFwd':
             for i in range(3):
                 outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
                 tmp = outValue[i] * slope[i] + offset[i]
@@ -1140,7 +1140,7 @@ class ASCCDL(ProcessNode):
                 outValue[i] = luma + saturation * (outValue[i] - luma)
                 outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-        elif style == 'Rev':
+        elif style == 'Rev' or style == 'v1.2_Rev':
             for i in range(3):
                 outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
                 outValue[i] = clamp( outValue[i] )
@@ -1154,7 +1154,7 @@ class ASCCDL(ProcessNode):
                 outValue[i] = clamp( outValue[i] )
                 outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-        elif style == 'RevNoClamp':
+        elif style == 'RevNoClamp' or style == 'noClampRev':
             for i in range(3):
                 outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
 
