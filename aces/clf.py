@@ -41,7 +41,7 @@ class ProcessList:
     # __init__
 
     # Read / Write
-    def write(self, element=None):
+    def write(self, element=None, writeSelfContained=False):
         if element != None:
             tree = etree.SubElement(element, 'ProcessList')
         else:
@@ -51,7 +51,7 @@ class ProcessList:
         for key, value in self._attributes.iteritems():
             tree.set(key, "%s" % value)
 
-        # Add elements
+        # Add raw value elements
         for key, value in self._valueElements.iteritems():
             valueElement = etree.SubElement(tree, key)
             valueElement.text = str(value)
@@ -60,8 +60,11 @@ class ProcessList:
         for element in self._elements:
             element.write(tree)
 
-        # Add Process elements
+        # Add ProcessNode elements
         for process in self._processes:
+            # Choose whether to write Reference node or nodes referred to
+            if isinstance(process, Reference):
+                process.setWriteReferencedNodes(writeSelfContained)
             process.write(tree)
         
         document = etree.ElementTree(tree)
@@ -69,8 +72,8 @@ class ProcessList:
         return document
     # write
 
-    def writeFile(self, clfPath):
-        document = self.write()
+    def writeFile(self, clfPath, writeSelfContained=False):
+        document = self.write(writeSelfContained=writeSelfContained)
         # Non pretty-saving to disk
         #document.write(scriptPath)
         
@@ -164,6 +167,8 @@ class ProcessList:
     # Processes
     def addProcess(self, process):
         self._processes.append(process)
+    def getProcesses(self):
+        return self._processes
     def getProcess(self, name):
         for processNode in self._processes:
             if processNode.getAttribute('name') == name:
@@ -478,6 +483,7 @@ class ProcessNode:
                 if childElement != None:
                     self.addElement( childElement )
 
+        # Initialize data structures after reading all attributes and child elements
         self.readInitialize()
     # read
 
@@ -1954,7 +1960,7 @@ def resolvePath(path, basePath, alias):
     if 'path' != '':
         if 'basePath' != '':
             fullPath = os.path.join(basePath, path)
-            print( fullPath )
+            #print( fullPath )
         else:
             fullPath = path
     return fullPath
@@ -1964,7 +1970,7 @@ class Reference(ProcessNode):
     "A Common LUT Format Reference ProcessNode element"
 
     def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="",
-        path='', basePath='', alias=''):
+        path='', basePath='', alias='', writeReferencedNodes=False):
         "%s - Initialize the standard class variables" % 'Reference'
         ProcessNode.__init__(self, 'Reference', inBitDepth, outBitDepth, id, name)
         if alias != '':
@@ -1975,6 +1981,8 @@ class Reference(ProcessNode):
             self._attributes['basePath'] = basePath
 
         self._dynamicParams = []
+        self._writeReferencedNodes = writeReferencedNodes
+
         self.setPaths(path, basePath, alias)
     # __init__
 
@@ -1986,18 +1994,29 @@ class Reference(ProcessNode):
             self._processList = None
     # setPaths
 
+    def setWriteReferencedNodes(self, writeReferencedNodes):
+        self._writeReferencedNodes = writeReferencedNodes
+    def getWriteReferencedNodes(self):
+        return self._writeReferencedNodes
+
     def setDynamicParam(self, name):
         self._dynamicParams.append(name)
 
     # Read / Write
     def write(self, tree):
-        node = ProcessNode.write(self, tree)
+        if self._writeReferencedNodes:
+            processes = self._processList.getProcesses()
+            for process in processes:
+                process.write(tree)
+            return tree
+        else:
+            node = ProcessNode.write(self, tree)
 
-        for dparam in self._dynamicParams:
-            DynamicParameterNode = etree.SubElement(node, 'DynamicParameter')
-            DynamicParameterNode.attrib['param'] = dparam
+            for dparam in self._dynamicParams:
+                DynamicParameterNode = etree.SubElement(node, 'DynamicParameter')
+                DynamicParameterNode.attrib['param'] = dparam
 
-        return node
+            return node
     # write
 
     def readChild(self, element):
@@ -2215,15 +2234,6 @@ def createExampleCLF(clfPath):
     log6.setLogParams(0.45, 444.0, 0.0, 0.18, 0.0)
     pl.addProcess(log6)
 
-    #
-    # Reference example
-    #
-    #referencePathBase = '/work/client/academy/ocio/configGeneration'
-    #referencePath = 'test.xml'
-
-    #ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", referencePath, referencePathBase)
-    #pl.addProcess(ref1)
-
     # Add a range node
     rpn4 = Range(bitDepths["UINT10"], bitDepths["FLOAT16"], "someId", "Transform0b")
     pl.addProcess(rpn4)
@@ -2246,6 +2256,16 @@ def createExampleCLF(clfPath):
     l1d4.setArray(1, map(uint16ToHalf, range(65536)))
     pl.addProcess(l1d4)
 
+    #
+    # Reference example
+    #
+    #referencePathBase = '/work/client/academy/ocio/configGeneration/examples'
+    #referencePath = 'test.xml'
+
+    #ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", 
+    #    referencePath, referencePathBase)
+    #pl.addProcess(ref1)
+
     # Write
     pl.writeFile(clfPath)
 
@@ -2258,7 +2278,7 @@ def copyExampleCLF(clf1Path, clf2Path):
 
     #pl.printInfo()
 
-    pl.writeFile(clf2Path)
+    pl.writeFile(clf2Path, writeSelfContained=True)
 
     return pl
 # copyExampleCLF
