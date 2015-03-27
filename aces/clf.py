@@ -420,6 +420,7 @@ class ProcessNode:
         self._nodeType = nodeType
         self._elements = []
         self._valueElements = {}
+        self._dynamicParams = []
 
         self._attributes = {}
         self._attributes['inBitDepth'] = inBitDepth
@@ -443,7 +444,12 @@ class ProcessNode:
             valueElement = etree.SubElement(node, key)
             valueElement.text = str(value)
 
-        # Add  elements
+        # Add dynamic parameters
+        for dparam in self._dynamicParams:
+            DynamicParameterNode = etree.SubElement(node, 'DynamicParameter')
+            DynamicParameterNode.attrib['param'] = dparam
+
+        # Add elements
         for element in self._elements:
             element.write(node)
 
@@ -537,6 +543,12 @@ class ProcessNode:
             return self._valueElements[key]
         else:
             return None
+
+    # Dynamic Parameters
+    def setDynamicParam(self, name):
+        self._dynamicParams.append(name)
+    def getDynamicParam(self, name):
+        return (name in self._dynamicParams)
 
     # Node values
     def getNodeType(self):
@@ -1474,14 +1486,10 @@ class Gamma(ProcessNode):
         ProcessNode.__init__(self, 'Gamma', inBitDepth, outBitDepth, id, name)
         self._attributes['style'] = style
         self._params = []
-        self._dynamicParams = []
     # __init__
 
     def setGamma(self, gamma, offset=0.0, channel=None ):
         self._params.append([gamma, offset, channel])
-
-    def setDynamicParam(self, name):
-        self._dynamicParams.append(name)
 
     # Read / Write
     def write(self, tree):
@@ -1494,10 +1502,6 @@ class Gamma(ProcessNode):
                 GammaParamNode.attrib['offset'] = str(param[1])
             if param[2] != None:
                 GammaParamNode.attrib['channel'] = param[2]
-
-        for dparam in self._dynamicParams:
-            DynamicParameterNode = etree.SubElement(node, 'DynamicParameter')
-            DynamicParameterNode.attrib['param'] = dparam
 
         return node
     # write
@@ -1625,14 +1629,10 @@ class ExposureContrast(ProcessNode):
         ProcessNode.__init__(self, 'ExposureContrast', inBitDepth, outBitDepth, id, name)
         self._attributes['style'] = style
         self._params = [[0.0, 1.0, 1.0]]
-        self._dynamicParams = []
     # __init__
 
     def setExposureContrastPivot(self, exposure, contrast, pivot ):
         self._params[0] = [exposure, contrast, pivot]
-
-    def setDynamicParam(self, name):
-        self._dynamicParams.append(name)
 
     # Read / Write
     def write(self, tree):
@@ -1643,10 +1643,6 @@ class ExposureContrast(ProcessNode):
             ECParamsNode.attrib['exposure'] = str(param[0])
             ECParamsNode.attrib['contrast'] = str(param[1])
             ECParamsNode.attrib['pivot'] = str(param[2])
-
-        for dparam in self._dynamicParams:
-            DynamicParameterNode = etree.SubElement(node, 'DynamicParameter')
-            DynamicParameterNode.attrib['param'] = dparam
 
         return node
     # write
@@ -1753,14 +1749,10 @@ class Log(ProcessNode):
         ProcessNode.__init__(self, 'Log', inBitDepth, outBitDepth, id, name)
         self._attributes['style'] = style
         self._params = []
-        self._dynamicParams = []
     # __init__
 
     def setLogParams(self, gamma=0.6, refWhite=685, refBlack=95, highlight=1.0, shadow=0.0, channel=None ):
         self._params.append([gamma, refWhite, refBlack, highlight, shadow, channel])
-
-    def setDynamicParam(self, name):
-        self._dynamicParams.append(name)
 
     # Read / Write
     def write(self, tree):
@@ -1775,10 +1767,6 @@ class Log(ProcessNode):
             LogParamsNode.attrib['shadow'] = str(param[4])
             if param[5] != None:
                 LogParamsNode.attrib['channel'] = param[5]
-
-        for dparam in self._dynamicParams:
-            DynamicParameterNode = etree.SubElement(node, 'DynamicParameter')
-            DynamicParameterNode.attrib['param'] = dparam
 
         return node
     # write
@@ -1980,7 +1968,6 @@ class Reference(ProcessNode):
         if basePath != '':
             self._attributes['basePath'] = basePath
 
-        self._dynamicParams = []
         self._writeReferencedNodes = writeReferencedNodes
 
         self.setPaths(path, basePath, alias)
@@ -1999,9 +1986,6 @@ class Reference(ProcessNode):
     def getWriteReferencedNodes(self):
         return self._writeReferencedNodes
 
-    def setDynamicParam(self, name):
-        self._dynamicParams.append(name)
-
     # Read / Write
     def write(self, tree):
         if self._writeReferencedNodes:
@@ -2011,11 +1995,6 @@ class Reference(ProcessNode):
             return tree
         else:
             node = ProcessNode.write(self, tree)
-
-            for dparam in self._dynamicParams:
-                DynamicParameterNode = etree.SubElement(node, 'DynamicParameter')
-                DynamicParameterNode.attrib['param'] = dparam
-
             return node
     # write
 
@@ -2247,6 +2226,7 @@ def createExampleCLF(clfPath):
     # Interpolation between LUT values happens with the half-float values
     l1d3 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1d3Id", "Transform5b", rawHalfs=True)
     l1d3.setArray(1, [0.0, 0.1, 1.0])
+    #l1d3.setDynamicParam("LOOK_SWITCH")
     pl.addProcess(l1d3)
 
     # Add a 1D lut node that uses the 'halfDomain' flag
