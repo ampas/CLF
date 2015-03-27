@@ -565,8 +565,9 @@ class ProcessNode:
         return self._nodeType
 
     # Color processing
-    def process(self, value):
-        print( "ProcessNode::process - processing bypassed")
+    def process(self, value, verbose=False):
+        if verbose:
+            print( "ProcessNode::process - processing bypassed")
         return value
 # ProcessNode
 
@@ -869,7 +870,7 @@ class IndexMap:
     # read
 
     # Process values
-    def process(self, value):
+    def process(self, value, verbose=False):
         inputValues = self._values[0]
         outputValues = self._values[1]
 
@@ -924,7 +925,7 @@ class Matrix(ProcessNode):
         return child
     # readChild
 
-    def process(self, value):
+    def process(self, value, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -989,7 +990,7 @@ class Range(ProcessNode):
         return None
     # readChild
 
-    def process(self, value):
+    def process(self, value, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -1116,7 +1117,7 @@ class ASCCDL(ProcessNode):
         return None
     # readChild
 
-    def process(self, value):
+    def process(self, value, verbose=False):
         # Pass through if there aren't at least three channels
         if len(value) < 3:
             return value
@@ -1314,7 +1315,7 @@ class LUT1D(ProcessNode):
         return child
     # readChild
 
-    def process(self, value):
+    def process(self, value, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -1431,7 +1432,7 @@ class LUT3D(ProcessNode):
         return child
     # readChild
 
-    def process(self, value):
+    def process(self, value, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -1530,7 +1531,7 @@ class Gamma(ProcessNode):
         return None
     # readChild
 
-    def process(self, value):
+    def process(self, value, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -1664,7 +1665,7 @@ class ExposureContrast(ProcessNode):
         return None
     # readChild
 
-    def process(self, value):
+    def process(self, value, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -1787,7 +1788,7 @@ class Log(ProcessNode):
         return None
     # readChild
 
-    def process(self, value):
+    def process(self, value, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -2003,12 +2004,14 @@ class Reference(ProcessNode):
         return None
     # readInitialize
 
-    def process(self, value):
+    def process(self, value, verbose=False):
         outValue = value
-        print( "Reference processing - begin" )
+        if verbose:
+            print( "Reference processing - begin" )
         if self._processList != None:
-            outValue = self._processList.process(outValue, verbose=True)
-        print( "Reference processing - end\n" )
+            outValue = self._processList.process(outValue, verbose=verbose)
+        if verbose:
+            print( "Reference processing - end\n" )
         return outValue
     # process
 
@@ -2018,6 +2021,90 @@ class Reference(ProcessNode):
             self._processList.printInfo()
     # printInfoChild
 # Reference
+
+#
+# Duiker Research extensions
+#
+class Group(ProcessNode):
+    "A Common LUT Format Group ProcessNode element"
+
+    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name=""):
+        "%s - Initialize the standard class variables" % 'Group'
+        ProcessNode.__init__(self, 'Group', inBitDepth, outBitDepth, id, name)
+        self._processes = []
+    # __init__
+
+    # Processes
+    def addProcess(self, process):
+        self._processes.append(process)
+    def getProcesses(self):
+        return self._processes
+    def getProcess(self, name):
+        for processNode in self._processes:
+            if processNode.getAttribute('name') == name:
+                return processNode
+        return None
+
+    # Read / Write
+    def write(self, tree, writeSelfContained=False):
+        node = ProcessNode.write(self, tree)
+
+        # Add ProcessNode elements
+        for process in self._processes:
+            # Choose whether to write Reference node or nodes referred to
+            if isinstance(process, Reference):
+                process.setWriteReferencedNodes(writeSelfContained)
+            process.write(node)
+        
+        return node
+    # write
+
+    def readChild(self, child):
+        elementType = child.tag.replace('-', '')
+        elementType = child.tag.replace('_', '')
+        elementClass = getClass(elementType)
+        #print( elementType, elementClass )
+
+        if elementClass != None:
+            element = elementClass()
+            element.read(child)
+
+            processNodeClass = getClass("ProcessNode")
+            if issubclass(elementClass, processNodeClass):
+                self.addProcess( element )
+            else:
+                self.addElement( element )
+        else:
+            print( "Group::read - Ignoring element : %s" % child.tag)
+
+        return None
+    # readChild
+
+    def process(self, value, verbose=False):
+        result = value
+        for processNode in self._processes:
+            #print( "processing : %s" % result )
+            if processNode.getAttribute('bypass') == None:
+                result = processNode.process(result, verbose=verbose)
+                if verbose:
+                    print( "Group - %s (%s) - result value : %s" % 
+                        (processNode.getAttribute('name'), processNode.getNodeType(), 
+                            " ".join(map(lambda x: "%3.6f" % x, result)) ) )
+            else:
+                if verbose:
+                    print( "%s (%s) - bypassing" % 
+                        (processNode.getAttribute('name'), processNode.getNodeType()))
+        return result
+    # process
+
+    def printInfoChild(self):
+        # Process Nodes
+        print( "Process Nodes")
+        for processNode in self._processes:
+            processNode.printInfo()
+            print( "" )
+    # printInfoChild
+# Group
 
 #
 # Tests
@@ -2223,6 +2310,29 @@ def createExampleCLF(clfPath):
     #ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", 
     #    referencePath, referencePathBase)
     #pl.addProcess(ref1)
+
+
+    #
+    # Group example
+    #
+    group1 = Group(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform22")
+
+    # Add a Gamma Node
+    ggamma4 = Gamma(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "gammaG1ID", "TransformG1", "moncurveFwd")
+    ggamma4.setGamma(0.454545, 0.001)
+    group1.addProcess(ggamma4)
+
+    # Add a range node
+    grpn1 = Range(bitDepths["FLOAT16"], bitDepths["UINT10"], "someId", "TransformG2", style='noClamp')
+    grpn1.setMinInValue(0.0)
+    grpn1.setMinOutValue(0.0)
+    group1.addProcess(grpn1)
+
+    # Add a description
+    gds1 = Description("A description string for the group")
+    group1.addElement(gds1)
+
+    pl.addProcess(group1)
 
     # Write
     pl.writeFile(clfPath)
