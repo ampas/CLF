@@ -473,14 +473,20 @@ class ProcessNode:
 
         # Read child elements
         for child in element:
-            elementType = child.tag
+            childType = child.tag
             #print( elementType )
 
-            # Read generic elements 
-            if elementType == 'Description':
+            # Read Description elements 
+            if childType == 'Description':
                 description = Description()
                 description.read(child)
                 self.addElement( description )
+
+            # Read DynamicParameter elements
+            elif childType == 'DynamicParameter':
+                for key, value in child.attrib.iteritems():
+                    if key == 'param':
+                        self._dynamicParams.append(value)
 
             # Otherwise, allow the subclasses to read elements
             else:
@@ -503,6 +509,10 @@ class ProcessNode:
         # Print raw value elements
         for key, value in self._valueElements.iteritems():
             print( "%20s : %15s : %15s" % ("Element", key, value))
+
+        # Print dynamic parameter elements
+        for dparam in self._dynamicParams:
+            print( "%20s : %15s" % ("Dynamic Parameter", dparam) )
 
         # Print elements
         for element in self._elements:
@@ -1517,10 +1527,6 @@ class Gamma(ProcessNode):
                 elif key == 'channel':
                     param[2] = value
             self._params.append(param)
-        elif element.tag == 'DynamicParameter':
-            for key, value in element.attrib.iteritems():
-                if key == 'param':
-                    self._dynamicParams.append(value)
         return None
     # readChild
 
@@ -1614,9 +1620,6 @@ class Gamma(ProcessNode):
 
         for key, value in values.iteritems():
             print( "%20s : %15s : %15s" % ("Value", key, value) )
-
-        for dparam in self._dynamicParams:
-            print( "%20s : %15s" % ("Dynamic Parameter", dparam) )
     # printInfoChild
 # Gamma
 
@@ -1658,10 +1661,6 @@ class ExposureContrast(ProcessNode):
                 elif key == 'pivot':
                     param[2] = float(value)
             self._params[0] = param
-        elif element.tag == 'DynamicParameter':
-            for key, value in element.attrib.iteritems():
-                if key == 'param':
-                    self._dynamicParams.append(value)
         return None
     # readChild
 
@@ -1734,9 +1733,6 @@ class ExposureContrast(ProcessNode):
 
         for key, value in values.iteritems():
             print( "%20s : %15s : %15s" % ("Value", key, value) )
-
-        for dparam in self._dynamicParams:
-            print( "\tDynamic Parameter : %s" % dparam )
     # printInfoChild
 # ExposureContrast
 
@@ -1788,10 +1784,6 @@ class Log(ProcessNode):
                 elif key == 'channel':
                     param[5] = value
             self._params.append(param)
-        elif element.tag == 'DynamicParameter':
-            for key, value in element.attrib.iteritems():
-                if key == 'param':
-                    self._dynamicParams.append(value)
         return None
     # readChild
 
@@ -1936,9 +1928,6 @@ class Log(ProcessNode):
 
         for key, value in values.iteritems():
             print( "%20s : %15s : %15s" % ("Value", key, value) )
-
-        for dparam in self._dynamicParams:
-            print( "%20s : %15s" % ("Dynamic Parameter", dparam) )
     # printInfoChild
 # Log
 
@@ -1998,14 +1987,6 @@ class Reference(ProcessNode):
             return node
     # write
 
-    def readChild(self, element):
-        if element.tag == 'DynamicParameter':
-            for key, value in element.attrib.iteritems():
-                if key == 'param':
-                    self._dynamicParams.append(value)
-        return None
-    # readChild
-
     def readInitialize(self):
         alias = ''
         path = ''
@@ -2035,9 +2016,6 @@ class Reference(ProcessNode):
         print( "%20s : %15s" % ("Resolved Path", self._resolvedPath) )
         if self._processList != None:
             self._processList.printInfo()
-
-        for dparam in self._dynamicParams:
-            print( "%20s : %15s" % ("Dynamic Parameter", dparam) )
     # printInfoChild
 # Reference
 
@@ -2226,7 +2204,7 @@ def createExampleCLF(clfPath):
     # Interpolation between LUT values happens with the half-float values
     l1d3 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1d3Id", "Transform5b", rawHalfs=True)
     l1d3.setArray(1, [0.0, 0.1, 1.0])
-    #l1d3.setDynamicParam("LOOK_SWITCH")
+    l1d3.setDynamicParam("LOOK_SWITCH")
     pl.addProcess(l1d3)
 
     # Add a 1D lut node that uses the 'halfDomain' flag
