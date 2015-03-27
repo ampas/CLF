@@ -545,11 +545,17 @@ class ProcessNode:
 class Array:
     "A Common LUT Format Array element"
 
-    def __init__(self, dimensions=[], values=[], integers=False, elementType='Array'):
+    def __init__(self, 
+        dimensions=[], 
+        values=[], 
+        integers=False, 
+        rawHalfs=False,
+        elementType='Array'):
         "%s - Initialize the standard class variables" % elementType
         self._dimensions = dimensions
         self._values = values
         self._valuesAreIntegers=integers
+        self._rawHalfs = rawHalfs
         self._elementType = elementType
     # __init__
 
@@ -568,6 +574,11 @@ class Array:
     def getValuesAreIntegers(self):
         return self._valuesAreIntegers
 
+    def setRawHalfs(self, rawHalfs):
+        self._rawHalfs = rawHalfs
+    def getRawHalfs(self):
+        return self._rawHalfs
+
     # Read / Write
     def write(self, tree):
         element = etree.SubElement(tree, self._elementType)
@@ -584,9 +595,15 @@ class Array:
         else:
             columns = self._dimensions[1]
 
+        integers = self._valuesAreIntegers or self._rawHalfs
+
         for n in range(len(self._values)/columns):
             sample = self._values[n*columns:(n+1)*columns]
-            if self._valuesAreIntegers:
+
+            if self._rawHalfs:
+                sample = map(halfToUInt16, sample)
+
+            if integers:
                 sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
             else:
                 sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
@@ -605,7 +622,11 @@ class Array:
             if key == 'dim':
                 self._dimensions = map(int, value.split())
 
-        self._values = map(float, element.text.split())
+        if self._rawHalfs:
+            cast = lambda x: float(uint16ToHalf(x))
+        else:
+            cast = float
+        self._values = map(cast, element.text.split())
     # read
 
     def printInfo(self):
@@ -649,9 +670,6 @@ class Array:
                 else:
                     sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
                 print( " "*30 + sampleText )
-
-
-
     # printInfo
 
     #
@@ -681,7 +699,7 @@ class Array:
     # lookup1D
 
     # 1D linear
-    def lookup1DLinear(self, position, channel, rawHalfs=False, halfDomain=False):
+    def lookup1DLinear(self, position, channel, halfDomain=False):
         values = self._values
         dimensions = self._dimensions
 
@@ -690,10 +708,7 @@ class Array:
         if halfDomain:
             index = halfToUInt16(position)
             value = self.lookup1D(index, channel)
-            if rawHalfs:
-                result = uint16ToHalf(value)
-            else:
-                result = value
+            result = value
 
         # Normal lookup and interpolation
         else:
@@ -705,13 +720,7 @@ class Array:
             value1 = self.lookup1D(indexLow, channel)
             value2 = self.lookup1D(indexHigh, channel)
 
-            # Interpolation between LUT values happens after converting the LUT values to half-float
-            if rawHalfs:
-                value1 = uint16ToHalf(value1)
-                value2 = uint16ToHalf(value2)
-
             result = (1-interp)*value1 + interp*value2
-            #print( result, index, indexLow, indexHigh, value1, value2, interp )
         return result
     # lookup1DLinear
 
@@ -1241,10 +1250,10 @@ class LUT1D(ProcessNode):
     def setArray(self, dimension, values):
         dimensions = [len(values)/dimension, dimension]
 
-        integers = ( bitDepthIsInteger(self.getAttribute('outBitDepth')) or
-            self.getAttribute('rawHalfs') )
+        integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
+        rawHalfs = (self.getAttribute('rawHalfs') != None)
 
-        self._array = Array(dimensions, values, integers)
+        self._array = Array(dimensions, values, rawHalfs=rawHalfs, integers=integers)
         self.addElement( self._array )
     # setArray
 
@@ -1261,11 +1270,12 @@ class LUT1D(ProcessNode):
     def readChild(self, element):
         child = None
         if element.tag == 'Array':
-            child = Array()
+            rawHalfs = (self.getAttribute('rawHalfs') != None)
+
+            child = Array(rawHalfs=rawHalfs)
             child.read(element)
 
-            integers = ( bitDepthIsInteger(self.getAttribute('outBitDepth')) or
-                self.getAttribute('rawHalfs') )
+            integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
             child.setValuesAreIntegers(integers)
 
             self._array = child
@@ -1285,15 +1295,8 @@ class LUT1D(ProcessNode):
         interpolation = ''
         if 'interpolation' in self._attributes: interpolation = self._attributes['interpolation']
 
-        if 'rawHalfs' in self._attributes:
-            rawHalfs = self._attributes['rawHalfs']
-        else:
-            rawHalfs = False
-
-        if 'halfDomain' in self._attributes:
-            halfDomain = self._attributes['halfDomain']
-        else:
-            halfDomain = False
+        rawHalfs = (self.getAttribute('rawHalfs') != None)
+        halfDomain = (self.getAttribute('halfDomain') != None)
         
         '''
         print( "interpolation  : %s" % interpolation )
@@ -1324,7 +1327,7 @@ class LUT1D(ProcessNode):
 
             # Run through LUT
             if interpolation == 'linear':
-                outValue[i] = self._array.lookup1DLinear(outValue[i], i, rawHalfs, halfDomain)
+                outValue[i] = self._array.lookup1DLinear(outValue[i], i, halfDomain)
 
             # Bit Depth conversion for output is ignored for LUTs
             # as LUT values are assumed to target a specific bit depth
@@ -1389,8 +1392,7 @@ class LUT3D(ProcessNode):
             child = Array()
             child.read(element)
 
-            integers = ( bitDepthIsInteger(self.getAttribute('outBitDepth')) or
-                self.getAttribute('rawHalfs') )
+            integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
             child.setValuesAreIntegers(integers)
 
             self._array = child
@@ -1446,10 +1448,10 @@ class LUT3D(ProcessNode):
         elif interpolation == 'tetrahedral':
             outValue = self._array.lookup3DTetrahedral(outValue)
 
+        # Bit Depth conversion for output is ignored for LUTs
+        # as LUT values are assumed to target a specific bit depth
         #for i in range(min(3, len(value))):
-            # Bit Depth conversion for output is ignored for LUTs
-            # as LUT values are assumed to target a specific bit depth
-            #outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+        #   outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
         return outValue
     # process
 # LUT3D
@@ -2227,19 +2229,21 @@ def createExampleCLF(clfPath):
     pl.addProcess(rpn4)
 
     # Add a 1D lut node that uses the 'rawHalfs' flag
+    # The half float values are converted to 16 bit integer values when written to disk. 
+    # The values converted back to half-float on read.
     # The 16 bit integer value '0' maps to the half-float value 0.0
-    # The 16 bit integer values '14360' maps to the half-float value 0.51172
+    # The 16 bit integer values '11878' maps to the half-float value 0.1
     # The 16 bit integer values '15360' maps to the half-float value 1.0
-    # Interpolation between LUT values happens after converting the LUT values to half-float
+    # Interpolation between LUT values happens with the half-float values
     l1d3 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1d3Id", "Transform5b", rawHalfs=True)
-    l1d3.setArray(1, [0, 8360, 15360])
+    l1d3.setArray(1, [0.0, 0.1, 1.0])
     pl.addProcess(l1d3)
 
     # Add a 1D lut node that uses the 'halfDomain' flag
     # Half-float values are used as the index into the LUT
     l1d4 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1d4Id", "Transform5c", rawHalfs=True, halfDomain=True)
     # Creating the identity LUT
-    l1d4.setArray(1, range(65536))
+    l1d4.setArray(1, map(uint16ToHalf, range(65536)))
     pl.addProcess(l1d4)
 
     # Write
