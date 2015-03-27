@@ -181,7 +181,7 @@ class ProcessList:
         for processNode in self._processes:
             #print( "processing : %s" % result )
             if processNode.getAttribute('bypass') == None:
-                result = processNode.process(result)
+                result = processNode.process(result, verbose=verbose)
                 if verbose:
                     print( "%s (%s) - result value : %s" % 
                         (processNode.getAttribute('name'), processNode.getNodeType(), 
@@ -469,6 +469,9 @@ class ProcessNode:
         #print( "%s - ProcessNode::read" % element.tag)
         # Store attributes
         for key, value in element.attrib.iteritems():
+            # Convert text to booleans where appropriate
+            if value in ["True", "False"]:
+                value = (value == "True")
             self.setAttribute(key, value)
 
         # Read child elements
@@ -1256,6 +1259,7 @@ class LUT1D(ProcessNode):
         if halfDomain != '':
             self._attributes['halfDomain'] = halfDomain
 
+
         self._array = None
         self._indexMaps = []
     # __init__
@@ -1280,7 +1284,7 @@ class LUT1D(ProcessNode):
         dimensions = [len(values)/dimension, dimension]
 
         integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
-        rawHalfs = (self.getAttribute('rawHalfs') != None)
+        rawHalfs = not (self.getAttribute('rawHalfs') in [None, False])
 
         self._array = Array(dimensions, values, rawHalfs=rawHalfs, integers=integers)
         self.addElement( self._array )
@@ -1299,7 +1303,7 @@ class LUT1D(ProcessNode):
     def readChild(self, element):
         child = None
         if element.tag == 'Array':
-            rawHalfs = (self.getAttribute('rawHalfs') != None)
+            rawHalfs = not (self.getAttribute('rawHalfs') in [None, False])
 
             child = Array(rawHalfs=rawHalfs)
             child.read(element)
@@ -1324,8 +1328,8 @@ class LUT1D(ProcessNode):
         interpolation = ''
         if 'interpolation' in self._attributes: interpolation = self._attributes['interpolation']
 
-        rawHalfs = (self.getAttribute('rawHalfs') != None)
-        halfDomain = (self.getAttribute('halfDomain') != None)
+        rawHalfs = not (self.getAttribute('rawHalfs') in [None, False])
+        halfDomain = not (self.getAttribute('halfDomain') in [None, False])
         
         '''
         print( "interpolation  : %s" % interpolation )
@@ -2178,7 +2182,7 @@ def createExampleCLF(clfPath):
     pl.addProcess(cdl1)
 
     # Add a 1D lut node
-    l1d1 = LUT1D(bitDepths["FLOAT16"], bitDepths["UINT10"], "someId", "Transform5")
+    l1d1 = LUT1D(bitDepths["UINT12"], bitDepths["UINT10"], "someId", "Transform5")
     l1d1.setArray(3, [
         0, 0, 0, 
         1023, 1023, 1023])
@@ -2279,8 +2283,22 @@ def createExampleCLF(clfPath):
     pl.addProcess(log6)
 
     # Add a range node
-    rpn4 = Range(bitDepths["UINT10"], bitDepths["FLOAT16"], "someId", "Transform0b")
-    pl.addProcess(rpn4)
+    #rpn4 = Range(bitDepths["UINT10"], bitDepths["FLOAT16"], "someId", "Transform0b")
+    #pl.addProcess(rpn4)
+
+    #
+    # Reference example
+    #
+    #referencePathBase = '/work/client/academy/ocio/configGeneration/examples'
+    #referencePath = 'test.xml'
+
+    #ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", 
+    #    referencePath, referencePathBase)
+    #pl.addProcess(ref1)
+
+    #
+    # More advanced LUT usage
+    #
 
     # Add a 1D lut node that uses the 'rawHalfs' flag
     # The half float values are converted to 16 bit integer values when written to disk. 
@@ -2301,16 +2319,142 @@ def createExampleCLF(clfPath):
     l1d4.setArray(1, map(uint16ToHalf, range(65536)))
     pl.addProcess(l1d4)
 
-    #
-    # Reference example
-    #
-    #referencePathBase = '/work/client/academy/ocio/configGeneration/examples'
-    #referencePath = 'test.xml'
 
-    #ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", 
-    #    referencePath, referencePathBase)
-    #pl.addProcess(ref1)
+    #
+    # Functions that could be sampled into a 1D LUT
+    #
 
+    # Example function 1
+    f1 = lambda x: x*x
+
+    # Example function 2
+    def f2(x):
+        #print( x )
+        if math.isnan(x) or math.isinf(x):
+            return x
+        elif x < 0.0:
+            return 0.0
+        else:
+            return x ** 0.5
+
+    # Example function 3
+    def lift(x, l):
+        return x + l
+    f3 = lambda x: lift(x, 0.05)
+
+    #
+    # Create a 1D lut based on sampling a function
+    #
+    def simpleSampledLUT(id, transformId, channels, resolution, f=lambda x: x):
+        l1d = LUT1D(bitDepths["FLOAT16"], 
+            bitDepths["FLOAT16"], 
+            id, 
+            transformId)
+
+        lutValues = [0.0]*resolution*channels
+
+        for i in range(resolution):
+            sample = float(i)/(resolution-1)
+            for c in range(channels):
+                lutValueIndex = i*channels + c
+                lutValues[lutValueIndex] = f(sample)
+                #print( "%d, %d, %d: %f -> %f" % (i, c, lutValueIndex, sample, f(sample)))
+
+        l1d.setArray(channels, lutValues)
+        return l1d
+
+    l1dS1 = simpleSampledLUT("anID", "aTransformID", 1, 11, f3)
+    pl.addProcess(l1dS1)
+
+    #
+    # Create a 1D lut based on sampling a function, for all possible half-float values
+    #
+    def simpleSampledLUTHalfDomain(id, transformId, channels, f=lambda x: x, rawHalfs=False):
+        l1dH = LUT1D(bitDepths["FLOAT16"], 
+            bitDepths["FLOAT16"], 
+            id, 
+            transformId,
+            halfDomain=True,
+            rawHalfs=rawHalfs)
+
+        resolution = 65536
+        lutValues = [0.0]*resolution*channels
+
+        for i in range(resolution):
+            # Figure out which half value corresponds to the specific 16 bit integer value
+            sample = uint16ToHalf(i)
+
+            # Apply the function to the sample value
+            # Could/should probably take the channel as input, or process an RGB triple
+            # Adding that is an exercise left to the reader, as they say
+            fvalue = f(sample)
+
+            # Store the values
+            for c in range(channels):
+                lutValueIndex = i*channels + c
+                lutValues[lutValueIndex] = fvalue
+                #print( "%d, %d, %d: %f -> %f" % (i, c, lutValueIndex, sample, fvalue))
+
+        l1dH.setArray(channels, lutValues)
+
+        return l1dH
+
+    l1dS2 = simpleSampledLUTHalfDomain("anID", "aTransformID", 1, f2, rawHalfs=False)
+    pl.addProcess(l1dS2)
+
+    #
+    # 3D LUT example
+    #
+    def simple3DLUT(id, transformId, resolution, f=lambda x, y, z: [x, y, z]):
+        l3d = LUT3D(bitDepths["FLOAT16"], 
+            bitDepths["FLOAT16"], 
+            id, 
+            transformId)
+
+        channels = 3
+        lutValues = [0.0]*resolution[0]*resolution[1]*resolution[2]*channels
+
+        for x in range(resolution[0]):
+            samplex = float(x)/(resolution[0]-1)
+
+            for y in range(resolution[1]):
+                sampley = float(y)/(resolution[1]-1)
+
+                for z in range(resolution[2]):
+                    samplez = float(z)/(resolution[2]-1)
+
+                    # Red changes fastest
+                    lutValueIndex = (((x*resolution[0] +y)*resolution[1] + z))*channels
+
+                    fvalue = f(samplex, sampley, samplez)
+                    lutValues[lutValueIndex:lutValueIndex+channels] = fvalue
+
+                    #sample = [samplex, sampley, samplez]
+                    #print( "%d, %d, %d, %d: %s -> %s" % (x, y, z, lutValueIndex, sample, fvalue))
+
+        l3d.setArray(resolution, lutValues)
+        return l3d
+
+    #
+    # Functions that could be sampled into a 3D LUT
+    #
+    f3D1 = lambda x, y, z: [x*x, y**0.5, z*2]
+
+    def simplesat(r, g, b, sat):
+        l = 0.3*r + 0.59*g + 0.11*b
+        rO = r*sat + (1-sat)*l
+        gO = g*sat + (1-sat)*l
+        bO = b*sat + (1-sat)*l
+        return [rO, gO, bO]
+
+    f3D2 = lambda x, y, z: simplesat(x, y, z, 0.25)
+
+    l3dS1 = simple3DLUT("anID", "saturationMod", [4, 4, 4], f3D2)
+    pl.addProcess(l3dS1)
+
+    #
+    # Duiker Research-specific extensions 
+    #
 
     #
     # Group example
