@@ -7,9 +7,12 @@ Clip Metadata Implementation
 
 Usage
 -----
+The full specification for the Clip Metadata format is available here
+https://github.com/ampas/aces-dev/tree/master/documents
 
 Python
 ******
+Example usage is included in tests/UnitTestsClip.py
 
 Command Line
 ************

@@ -1,5 +1,10 @@
 from ProcessNode import *
 
+#
+# These ProcessNode imports should also be used in the ProcessList
+# and Group Nodes
+#
+
 # ProcessNodes
 from Range import Range
 from Matrix import Matrix

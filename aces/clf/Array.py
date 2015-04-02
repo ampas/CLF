@@ -165,7 +165,7 @@ class Array:
         values = self._values
         dimensions = self._dimensions
 
-        # Input half-float values are treated to 16 bit unsigned integers
+        # Input half-float values are treated as 16 bit unsigned integers
         # Those integers are the index into the LUT
         if halfDomain:
             index = halfToUInt16(position)
@@ -185,6 +185,11 @@ class Array:
             result = (1-interp)*value1 + interp*value2
         return result
     # lookup1DLinear
+
+    # XXX
+    # To be implemented
+    def lookup1DCubic(self, position, channel, halfDomain=False):
+        return self.lookup1DLinear(position, channel, halfDomain=False)
 
     def lookup3D(self, index3):
         values = self._values

@@ -7,15 +7,38 @@ CLF Implementation
 
 Usage
 -----
+Common LUT Format files contain a single ProcessList with an arbitrary 
+number of ProcessNodes.
+
+The full specification for the format is available here
+https://github.com/ampas/aces-dev/tree/master/documents
 
 Python
 ******
+More extensive examples are included in tests/UnitTestsCLF.py
+
+import clf
+
+# Create a ProcessList
+pl = clf.ProcessList()
+
+# Set a name
+pl.setName('Example transform')
+
+# Add a Matrix ProcessNode
+mpn1 = clf.MatrixProcessNode(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "someId", "Transform2")
+mpn1.setMatrix([3, 4, 3], [0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0, 0.0, 2.0, 0.0])
+pl.addProcess(mpn1)
+
+# Write the CLF to disk
+pl.writeFile("/some/path/test.clf")
+
+# Process a color with the ProcessList
+processValue = [0.5, 0, 1.0]
+processedValue = pl.process(processedValue, verbose=True)
 
 Command Line
 ************
-
-Build
------
 
 Mac OS X - Required packages
 ****************************
@@ -56,6 +79,11 @@ from ProcessList import ProcessList
 from Comment import Description, InputDescriptor, OutputDescriptor
 from Info import Info
 from ProcessNode import ProcessNode, bitDepths
+
+#
+# These ProcessNode imports should also be used in the ProcessList
+# and Group Nodes
+#
 
 # ProcessNodes
 from Range import Range
