@@ -8,7 +8,7 @@ class ExposureContrast(ProcessNode):
     "A Common LUT Format ExposureContrast ProcessNode element"
 
     def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
-        style='Fwd'):
+        style='linear'):
         "%s - Initialize the standard class variables" % 'ExposureContrast'
         ProcessNode.__init__(self, 'ExposureContrast', inBitDepth, outBitDepth, id, name)
         self._attributes['style'] = style

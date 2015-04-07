@@ -8,7 +8,7 @@ class Gamma(ProcessNode):
     "A Common LUT Format Gamma ProcessNode element"
 
     def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
-        style='Fwd'):
+        style='basicFwd'):
         "%s - Initialize the standard class variables" % 'Gamma'
         ProcessNode.__init__(self, 'Gamma', inBitDepth, outBitDepth, id, name)
         self._attributes['style'] = style

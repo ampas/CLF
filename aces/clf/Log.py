@@ -10,7 +10,7 @@ class Log(ProcessNode):
     "A Common LUT Format Log ProcessNode element"
 
     def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
-        style='Fwd'):
+        style='log10'):
         "%s - Initialize the standard class variables" % 'Log'
         ProcessNode.__init__(self, 'Log', inBitDepth, outBitDepth, id, name)
         self._attributes['style'] = style
