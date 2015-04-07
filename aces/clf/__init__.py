@@ -26,7 +26,7 @@ pl = clf.ProcessList()
 pl.setName('Example transform')
 
 # Add a Matrix ProcessNode
-mpn1 = clf.MatrixProcessNode(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "someId", "Transform2")
+mpn1 = clf.Matrix(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "someId", "Transform2")
 mpn1.setMatrix([3, 4, 3], [0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0, 0.0, 2.0, 0.0])
 pl.addProcess(mpn1)
 
@@ -78,7 +78,7 @@ Having the explicit imports here feels off, but also necessary...
 from ProcessList import ProcessList
 from Comment import Description, InputDescriptor, OutputDescriptor
 from Info import Info
-from ProcessNode import ProcessNode, bitDepths
+from ProcessNode import ProcessNode, bitDepths, bitDepthToNormalized, normalizedToBitDepth
 
 #
 # These ProcessNode imports should also be used in the ProcessList
