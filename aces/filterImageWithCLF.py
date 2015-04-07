@@ -339,7 +339,6 @@ def main():
         filterImageWithCLF(inputPath, 
             outputPath, 
             processList, 
-            normalize, 
             verbose,
             outputBitDepth=outputBitDepth)
 # main
