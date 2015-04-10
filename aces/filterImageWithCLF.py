@@ -163,6 +163,11 @@ def writePixelArray(outputPath,
     # Automatic conversion from CLF bit depth to OIIO 'type'
     type = clfBitDepthToOIIOBitDepth[bitDepth]
 
+    #
+    # Convert the pixel values as necessary
+    #  'pixels' is assumed to refer to a float array
+    #
+
     # Convert float values to 8-bit unsigned integer
     if type == oiio.UINT8:
         pixels8 = np.zeros(width*height*channels, dtype=np.uint8)
@@ -194,12 +199,22 @@ def writePixelArray(outputPath,
         print( "Packing half-float values" )
         pixels = npHalfArrayToOIIOFloatPixels(width, height, channels, pixels)
 
+    #
     # set image specs
+    #
     outputSpec = oiio.ImageSpec()
     outputSpec.set_format( type )
     outputSpec.width = width
     outputSpec.height = height
     outputSpec.nchannels = channels
+
+    # Mapping between bit depth and 'oiio:BitsPerSample' metadata value
+    bitDepthValue = {
+        clf.bitDepths["UINT8"] : 8,
+        clf.bitDepths["UINT10"] : 10,
+        clf.bitDepths["UINT12"] : 12,
+        clf.bitDepths["UINT16"] : 16
+    }
 
     # Add the metadata tags
     for attr in metadata:
@@ -208,14 +223,21 @@ def writePixelArray(outputPath,
 
         # Reset specific values. Ex. bits per sample
         if attr.name == "oiio:BitsPerSample":
-            if bitDepth == clf.bitDepths["UINT10"]:
-                value = 10
-            elif bitDepth == clf.bitDepths["UINT12"]:
-                value = 12
+            #print( "Resetting bits per sample. bit depth value : %s. Metadata value : %d" % (
+            #    bitDepth, value) )
+            value = bitDepthValue[bitDepth]
 
         outputSpec.attribute( attr.name, attr.type, value )
 
+    # Ugly special case
+    if type in [oiio.UINT8, oiio.UINT16] and not ("oiio:BitsPerSample" in metanames):
+        #print( "Setting bits per sample. bit depth value : %s. Metadata value : %d" % (
+        #    bitDepth, bitDepthValue[bitDepth]) )
+        outputSpec.attribute("oiio:BitsPerSample", bitDepthValue[bitDepth])
+
+    #
     # Create, write and close the image
+    #
     outputImage = oiio.ImageOutput.create(outputPath)
     outputImage.open (outputPath, outputSpec, oiio.Create)
     outputImage.write_image(outputSpec.format, pixels)
@@ -229,13 +251,32 @@ def filterImageWithCLF(inputPath,
     outputPath, 
     processList, 
     verbose=False,
-    outputBitDepth=None):
+    outBitDepth=None):
 
     #
     # Get the input image pixel array
     #
     pixels, inBitDepth, width, height, channels, metadata = readPixelArray(inputPath)
     #print( len(pixels), bitDepth, width, height, channels )
+
+    # Determine outBitDepth
+    if not outBitDepth or not (outBitDepth in clf.bitDepths.values()):
+        outBitDepth = inBitDepth
+
+    #
+    # Create Range ProcessNodes to convert data to the correct bit depth
+    # for input to the CLF and then for output to file
+    #
+    processListInBitDepth = processList.getInBitDepth()
+    processListOutBitDepth = processList.getOutBitDepth()
+
+    InRange = None
+    if processListInBitDepth != inBitDepth:
+        InRange = clf.Range(inBitDepth, processListInBitDepth)
+
+    OutRange = None
+    if processListOutBitDepth != outBitDepth:
+        OutRange = clf.Range(processListOutBitDepth, outBitDepth)
 
     #
     # Filter image
@@ -253,32 +294,29 @@ def filterImageWithCLF(inputPath,
             #ovalue = list(pixels[index:index+3])
             ovalue = pixels[index:index+channels]
 
+            pvalue = list(ovalue)
+            # Reset values if input image and CLF input bit depths don't match
+            if InRange:
+                pvalue = InRange.process(pvalue)
+
+            # Process values
             #print( "Processing %04d, %04d : %s" % (i, j, ovalue))
-            pvalue = processList.process(ovalue, verbose=False)
+            pvalue = processList.process(pvalue)
+
+            # Reset values if output image and CLF output bit depths don't match
+            if OutRange:
+                pvalue = OutRange.process(pvalue)
+
             if verbose:
                 print( "Processed %04d, %04d : %s -> %s" % (i, j, list(ovalue), pvalue))
 
             for c in range(channels):
                 processedPixels[index + c] = pvalue[c]
 
-    # Reset values if output and input bit depths don't match
-    if outputBitDepth and outputBitDepth in clf.bitDepths.values():
-        print( "Preparing for output bit depth. %s -> %s" % (inBitDepth, outputBitDepth) )
-        for i in range(width):
-            for j in range(height):
-                for c in range(channels):
-                    index = (j*width + i)*channels + c
-                    inValue = processedPixels[index]
-                    normValue = clf.bitDepthToNormalized(inValue, inBitDepth)
-                    outValue = clf.normalizedToBitDepth(normValue, outputBitDepth)
-                    processedPixels[index] = outValue                
-    else:
-        outputBitDepth = inBitDepth
-
     #
     # Write the processed pixel array to the output
     #
-    writePixelArray(outputPath, processedPixels, outputBitDepth, width, height, channels, metadata)
+    writePixelArray(outputPath, processedPixels, outBitDepth, width, height, channels, metadata)
 # filterImageWithCLF
 
 #
@@ -320,9 +358,10 @@ def main():
         print( "command line : \n%s\n" % " ".join(sys.argv) )
  
     if not outputBitDepth in clf.bitDepths.values():
-        print( "Output bit depth %s is not a valid CLF bit depth. It will be ignored." )
+        print( "Output bit depth %s is not a valid CLF bit depth. It will be ignored." % outputBitDepth)
         print( "Valid values are %s." % ", ".join(clf.bitDepths.values()) )
         outputBitDepth = None
+        return
 
     #
     # Load a CLF
@@ -340,7 +379,7 @@ def main():
             outputPath, 
             processList, 
             verbose,
-            outputBitDepth=outputBitDepth)
+            outBitDepth=outputBitDepth)
 # main
 
 if __name__ == '__main__':

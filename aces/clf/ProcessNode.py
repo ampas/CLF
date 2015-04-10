@@ -228,5 +228,16 @@ class ProcessNode:
         if verbose:
             print( "ProcessNode::process - processing bypassed")
         return value
+
+    # Setters and getters
+    def setInBitDepth(self, name):
+        self.setAttribute('inBitDepth', name)
+    def getInBitDepth(self):
+        return self.getAttribute('inBitDepth')
+
+    def setOutBitDepth(self, name):
+        self.setAttribute('outBitDepth', name)
+    def getOutBitDepth(self):
+        return self.getAttribute('outBitDepth')
 # ProcessNode
 

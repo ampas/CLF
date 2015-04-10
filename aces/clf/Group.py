@@ -40,8 +40,9 @@ class Group(ProcessNode):
         self._processes = []
 
         # Remove in and out bit depth attributes
-        del self._attributes['inBitDepth']
-        del self._attributes['outBitDepth']
+        # XXX Ignoring for now. Should be revisited when discussed by the project committee
+        #del self._attributes['inBitDepth']
+        #del self._attributes['outBitDepth']
     # __init__
 
     # Processes

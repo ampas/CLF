@@ -65,6 +65,18 @@ class ProcessList:
             self.readFile(clfPath)
     # __init__
 
+    def __iter__(self):
+        return iter(self._processes)
+    # __iter__
+
+    def __getitem__(self, key): 
+        return self._processes[key]
+    # __getitem__
+
+    def __len__(self):
+        return len(self._processes)
+    # __len__
+
     # Read / Write
     def write(self, element=None, writeSelfContained=False):
         if element != None:
@@ -171,6 +183,25 @@ class ProcessList:
     def getCompCLFversion(self):
         return self.getAttribute('compCLFversion')
 
+    # Setters and getters
+    def setInBitDepth(self, name):
+        if len(self._processes) > 0:
+            self._processes[0].setAttribute('inBitDepth', name)
+    def getInBitDepth(self):
+        if len(self._processes) > 0:
+            return self._processes[0].getAttribute('inBitDepth')
+        else:
+            return None
+
+    def setOutBitDepth(self, name):
+        if len(self._processes) > 0:
+            self._processes[-1].setAttribute('outBitDepth', name)
+    def getOutBitDepth(self):
+        if len(self._processes) > 0:
+            return self._processes[-1].getAttribute('outBitDepth')
+        else:
+            return None
+
     # Elements
     def addElement(self, element):
         if element != None:
@@ -202,7 +233,7 @@ class ProcessList:
 
     # Color processing
     def process(self, value, verbose=False):
-        result = list(value)
+        result = list(map(float,value))
         for processNode in self._processes:
             #print( "processing : %s" % result )
             if processNode.getAttribute('bypass') == None:
