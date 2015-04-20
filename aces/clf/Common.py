@@ -57,4 +57,4 @@ def doubleToHex(doubleValue):
     return struct.pack(">d", doubleValue).encode("hex")
 
 def hexToDouble(hex64Value):
-    return struct.unpack(">d", hex32Value.decode("hex"))[0]
+    return struct.unpack(">d", hex64Value.decode("hex"))[0]
