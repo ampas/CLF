@@ -107,7 +107,7 @@ The original author of this CLF implementation is:
 
 Dependencies
 ------------
-The *Python* package depends on the following libraries:
+The CLF (aces/clf) module can be used independently. The tools that work with CLF depend on the following libraries:
 
 - **OpenImageIO**: http://openimageio.org
 - **OpenColorIO**: http://opencolorio.org/
