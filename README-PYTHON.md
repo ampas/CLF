@@ -1,30 +1,30 @@
-ACES 1.0.0
-==========
+Academy / ASC Common LUT Format (CLF)
+=====================================
 
-Informations about ACES
------------------------
+
+Context
+--- 
+This bundle contains an implementation of the Academy / ASC Common LUT Format (CLF). The format was developed as part of the Academy's ACES project.
 
 The **ACES** project home page is here: http://www.oscars.org/aces
 
-Python Utilities
-----------------
+Documentation on the format can be found here: https://github.com/ampas/aces-dev/tree/master/documents
 
-This bundle contains reference implementations of the Academy / ASC Common LUT Format (CLF) and the ACES Clip Metadata formats. 
+Goals
+-----
 
-Documentation on the formats can be found here: https://github.com/ampas/aces-dev/tree/master/documents
+The Python implementation of CLF:
 
-The Python implementations:
-
-- Include reading, writing and querying data structures
+- Includes reading, writing and querying data structures
 	- And processing data where appropriate
-- Are meant to be open, accessible, easily understood
-- Are not meant to be fast
-	- Each really needs a C/C++ implementation
+- Is meant to be open, accessible, easily understood
+- Is NOT meant to be fast
+	- A C/C++ implementation is needed
 
 CLF
 --- 
 ### Library
-clf.py
+aces/clf/
 
 - Provides simple Python interface to read, write and query CLFs, and process colors with CLFs
 - Implements the S-2014-006 specification included in the ACES 1.0 release
@@ -32,33 +32,34 @@ clf.py
 	- Documented here: http://docs.autodesk.com/flamepremium2015/index.html?url=files/GUID-460BA05D-3AB7-4BE2-AD30-01F9D3440CD8.htm,topicNumber=d30e147706
 	- Some extensions have proprietary behavior which is not open.
 		- Ex. The Reference ProcessNode
+- Implements the Duiker Research extensions
 - Does little checking for validity of the ProcessList data
-- Includes examples of
+- Includes unit tests demonstrating
 	- Creating a ProcessList and various ProcessNodes
 	- Reading a CLF
 	- Writing a CLF
 	- Processing colors with a CLF 
 
 ### Tools
-clfinfo.py
+clfinfo
 
 - Prints information about a CLF to the terminal
 
-filterImageWithCLF.py
+filterImageWithCLF
 
 - Reads an image, applies a CLF to the image, writes a new image 
 
-convertLUTtoCLF.py
+convertLUTtoCLF
 
 - Converts from the different LUT formats to CLF
 - LUT formats currently supported are: spi1d, spi3d and csp
 
-convertCLFtoLUT.py
+convertCLFtoLUT
 
 - Converts from CLF to different LUT formats
 - LUT formats currently supported are: spi1d, spi3d, csp, clf
 
-convertOCIOtoCLF.py
+convertOCIOtoCLF
 
 - Converts from a set of OCIO colorspace definitions to CLF
 - Accepts source color spaces and destination color spaces.
@@ -68,55 +69,41 @@ convertOCIOtoCLF.py
 	- Not all flags are supported.
 		- Ex. 'inverse' for Matrix Transforms
 
-Clip Metadata
--------------
-### Library
-clip.py
-
-- Provides simple Python interface to read, write and query Clip Metadata.
-- Implements the TB-2014-009 specification included in the ACES 1.0 release
-- Includes examples of
-	- Creating ClipMetadata and various sub-components
-	- Reading a Clip Metadata file
-	- Writing a Clip Metadata file
-- Does little checking for validity of the data
-- No support for formatting dates, uuids or other data stored in fields
-
-### Tools
-clipinfo.py
-
-- Prints information about a Clip to the terminal
+Extensions
+---------------------
+- Autodesk extensions
+	- Gamma ProcessNode
+	- Log ProcessNode
+	- Reference ProcessNode
+		- With some separation of Autodesk-specific functionality like the 'alias' attribute
+	- ExposureContrast ProcessNode
+	- 'bypass' Attribute
+	- DynamicParameter Element
+- Duiker Research extensions
+	- Group ProcessNode
+		- Useful for organizing list of nodes that represent a single filter/transform
 
 Would be nice to have
 ---------------------
-### CLF
 
-- A Group ProcessNode that can group lists of other process nodes
-	- Useful for organizing list of nodes that represent a filter/transform generated elsewhere
-- An 'inverse' style for LUT1D
-- Official acceptance of Autodesk extensions
-	- Gamma
-	- Log
-	- Reference
-		- With some separation of Autodesk-specific functionality like the 'alias' attribute
-	- 'bypass' flag
-- These Autodesk extensions seem less general, but still useful to them:
-	- DynamicParameter
-	- ExposureContrast
-
-### Clip
-
-- Example integration of Clip support into application
-- Questions to answer about how file should work in a multi-user scenario
-
+- An 'inverse' style for ProcessNodes such as LUT1D, Matrix, Range, ASC CDL.
 
 Thanks
 ------
 These scripts and modules were the product of work and conversations with a number of people. Thanks go to:
 
+- Walter Arrighetti
+- Scott Dyer
+- Alex Forsythe
 - Jim Houston
 - Thomas Mansencal
 - Doug Walker
+
+Author
+------
+The original author of this CLF implementation is:
+
+- Haarm-Pieter Duiker
 
 Dependencies
 ------------
