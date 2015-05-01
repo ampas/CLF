@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import division
+
 """
 The Academy / ASC Common LUT Format Sample Implementations are provided by the
 Academy under the following terms and conditions:
