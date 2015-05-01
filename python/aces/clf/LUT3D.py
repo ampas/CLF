@@ -83,13 +83,16 @@ class LUT3D(ProcessNode):
             self.addElement( indexMapB )
     # setIndexMaps
 
-    def setArray(self, dimension, values):
+    def setArray(self, dimension, values, floatEncoding='string'):
         dimensions = dimension
         dimensions.append(3)
 
         integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
 
-        self._array = Array(dimensions, values, integers)
+        self._array = Array(dimensions, 
+            values, 
+            integers,
+            floatEncoding=floatEncoding)
         self.addElement( self._array )
     # setArray
 

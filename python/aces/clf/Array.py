@@ -63,12 +63,14 @@ class Array:
         values=[], 
         integers=False, 
         rawHalfs=False,
+        floatEncoding='string',
         elementType='Array'):
         "%s - Initialize the standard class variables" % elementType
         self._dimensions = dimensions
         self._values = values
         self._valuesAreIntegers=integers
         self._rawHalfs = rawHalfs
+        self._floatEncoding = floatEncoding
         self._elementType = elementType
     # __init__
 
@@ -92,6 +94,11 @@ class Array:
     def getRawHalfs(self):
         return self._rawHalfs
 
+    def setFloatEncoding(self, floatEncoding):
+        self._floatEncoding = floatEncoding
+    def getFloatEncoding(self):
+        return self._floatEncoding
+
     # Read / Write
     def write(self, tree):
         element = etree.SubElement(tree, self._elementType)
@@ -108,16 +115,49 @@ class Array:
         else:
             columns = self._dimensions[1]
 
-        integers = self._valuesAreIntegers or self._rawHalfs
+        integers = self._valuesAreIntegers
 
         for n in range(len(self._values)/columns):
             sample = self._values[n*columns:(n+1)*columns]
 
-            if self._rawHalfs:
-                sample = map(halfToUInt16, sample)
-
+            # Integer values
             if integers:
                 sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+
+            # Float Values
+            # Floats encoded using bitwise equivalent hex or integer values
+            if self._rawHalfs or self._floatEncoding != 'string':
+                # Encoding options: 
+                # integer16bit, integer32bit, integer64bit, hex16bit, hex32bit, hex64bit
+                if self._floatEncoding in ['integer16bit', 'integer32bit', 'integer64bit', 
+                    'hex16bit', 'hex32bit', 'hex64bit']:
+                    element.set('floatEncoding', self._floatEncoding)
+
+                if self._rawHalfs or self._floatEncoding == 'integer16bit':
+                    sample = map(halfToUInt16, sample)
+                    sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+                elif self._floatEncoding == 'integer32bit':
+                    sample = map(float32ToUInt32, sample)
+                    sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+                elif self._floatEncoding == 'integer64bit':
+                    sample = map(doubleToUInt64, sample)
+                    sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+
+                elif self._floatEncoding == 'hex16bit':
+                    sample = map(halfToHex, sample)
+                    sampleText = " ".join(map(lambda x: "%15s" % str(x), sample))
+                elif self._floatEncoding == 'hex32bit':
+                    sample = map(float32ToHex, sample)
+                    sampleText = " ".join(map(lambda x: "%15s" % str(x), sample))
+                elif self._floatEncoding == 'hex64bit':
+                    sample = map(doubleToHex, sample)
+                    sampleText = " ".join(map(lambda x: "%16s" % str(x), sample))
+
+                # An unknown encoding. Will be ignored.
+                else:
+                    sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
+
+            # Floats printed as strings
             else:
                 sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
             element.text += sampleText + "\n"
@@ -134,9 +174,21 @@ class Array:
         for key, value in element.attrib.iteritems():
             if key == 'dim':
                 self._dimensions = map(int, value.split())
+            elif key == 'floatEncoding':
+                self._floatEncoding = value
 
-        if self._rawHalfs:
+        if self._rawHalfs or self._floatEncoding == 'integer16bit':
             cast = lambda x: float(uint16ToHalf(x))
+        elif self._floatEncoding == 'integer32bit':
+            cast = uint32ToFloat32
+        elif self._floatEncoding == 'integer64bit':
+            cast = uint64ToDouble
+        elif self._floatEncoding == 'hex16bit':
+            cast = hexToHalf
+        elif self._floatEncoding == 'hex32bit':
+            cast = hexToFloat32
+        elif self._floatEncoding == 'hex64bit':
+            cast = hexToDouble
         else:
             cast = float
         self._values = map(cast, element.text.split())

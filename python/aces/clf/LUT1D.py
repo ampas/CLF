@@ -89,13 +89,17 @@ class LUT1D(ProcessNode):
             self.addElement( indexMapB )
     # setIndexMaps
 
-    def setArray(self, dimension, values):
+    def setArray(self, dimension, values, floatEncoding='string'):
         dimensions = [len(values)/dimension, dimension]
 
         integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
         rawHalfs = not (self.getAttribute('rawHalfs') in [None, False])
 
-        self._array = Array(dimensions, values, rawHalfs=rawHalfs, integers=integers)
+        self._array = Array(dimensions, 
+            values, 
+            rawHalfs=rawHalfs, 
+            integers=integers,
+            floatEncoding=floatEncoding)
         self.addElement( self._array )
     # setArray
 

@@ -60,9 +60,12 @@ class Matrix(ProcessNode):
         ProcessNode.__init__(self, 'Matrix', inBitDepth, outBitDepth, id, name)
     # __init__
 
-    def setMatrix(self, dimensions, values):
+    def setMatrix(self, dimensions, values, floatEncoding='string'):
         integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
-        values = Array(dimensions, values, integers)
+        values = Array(dimensions, 
+            values, 
+            integers,
+            floatEncoding=floatEncoding)
         self._array = values
         self.addElement( values )
     # setMatrix

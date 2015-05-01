@@ -69,8 +69,6 @@ testclf.unittests()
 
 """
 
-from __future__ import division
-
 import sys
 import os
 import unittest
@@ -391,6 +389,206 @@ class TestCLF(unittest.TestCase):
         group1.addElement(gds1)
 
         pl.addProcess(group1)
+
+        #
+        # 'floatEncoding' options for Arrays
+        #
+
+        # Range node to bring the general range into float 0-1
+        rpn10 = Range(bitDepths["UINT10"], bitDepths["FLOAT16"], "someId", "Transform3", style='noClamp')
+        pl.addProcess(rpn10)
+
+        #
+        # All 'floatEncoding' options, with the Matrix ProcessNode
+        #
+        # Add a matrix node
+        mpn10 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
+        mpn10.setMatrix([3, 3, 3], 
+            [2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5],
+            floatEncoding='integer16bit')
+        pl.addProcess(mpn10)
+
+        # Add another matrix node
+        mpn11 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
+        mpn11.setMatrix([3, 4, 3], 
+            [0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0, 0.0, 2.0, 0.0],
+            floatEncoding='integer32bit')
+        pl.addProcess(mpn11)
+
+        # Add another matrix node
+        mpn12 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
+        mpn12.setMatrix([3, 3, 3], 
+            [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+            floatEncoding='integer64bit')
+        pl.addProcess(mpn12)
+
+        # Add a matrix node
+        mpn13 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
+        mpn13.setMatrix([3, 3, 3], 
+            [2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5],
+            floatEncoding='hex16bit')
+        pl.addProcess(mpn13)
+
+        # Add another matrix node
+        mpn14 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
+        mpn14.setMatrix([3, 4, 3], 
+            [0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0, 0.0, 2.0, 0.0],
+            floatEncoding='hex32bit')
+        pl.addProcess(mpn14)
+
+        # Add another matrix node
+        mpn15 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
+        mpn15.setMatrix([3, 3, 3], 
+            [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+            floatEncoding='hex64bit')
+        pl.addProcess(mpn15)
+
+        # Add another matrix node
+        mpn16 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
+        mpn16.setMatrix([3, 3, 3], 
+            [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0])
+        pl.addProcess(mpn16)
+
+        #
+        # All 'floatEncoding' options, with the LUT1D ProcessNode
+        #
+        l1d10 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
+        l1d10.setArray(1, 
+            [0.0, 0.25, 0.5, 0.75, 1.0],
+            floatEncoding='integer16bit')
+        pl.addProcess(l1d10)
+
+        l1d11 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
+        l1d11.setArray(1, 
+            [0.0, 0.25, 0.5, 0.75, 1.0],
+            floatEncoding='integer32bit')
+        pl.addProcess(l1d11)
+
+        l1d12 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
+        l1d12.setArray(1, 
+            [0.0, 0.25, 0.5, 0.75, 1.0],
+            floatEncoding='integer64bit')
+        pl.addProcess(l1d12)
+
+        l1d13 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
+        l1d13.setArray(1, 
+            [0.0, 0.25, 0.5, 0.75, 1.0],
+            floatEncoding='hex16bit')
+        pl.addProcess(l1d13)
+
+        l1d14 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
+        l1d14.setArray(1, 
+            [0.0, 0.25, 0.5, 0.75, 1.0],
+            floatEncoding='hex32bit')
+        pl.addProcess(l1d14)
+
+        l1d15 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
+        l1d15.setArray(1, 
+            [0.0, 0.25, 0.5, 0.75, 1.0],
+            floatEncoding='hex64bit')
+        pl.addProcess(l1d15)
+
+        l1d16 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
+        l1d16.setArray(1, 
+            [0.0, 0.25, 0.5, 0.75, 1.0])
+        pl.addProcess(l1d16)
+
+        #
+        # All 'floatEncoding' options, with the LUT3D ProcessNode
+        #
+        l3d10 = LUT3D("16f", "16f", "someId", "Transform")
+        l3d10.setArray([2, 2, 2], 
+            [0, 0, 0,  
+            0, 0, 1,  
+            0, 1, 0,  
+            0, 1, 1,
+            1, 0, 0,  
+            1, 0, 1,  
+            1, 1, 0,  
+            1, 1, 1],
+            floatEncoding='integer16bit')
+        pl.addProcess(l3d10)
+
+        l3d11 = LUT3D("16f", "16f", "someId", "Transform")
+        l3d11.setArray([2, 2, 2], 
+            [0, 0, 0,  
+            0, 0, 1,  
+            0, 1, 0,  
+            0, 1, 1,
+            1, 0, 0,  
+            1, 0, 1,  
+            1, 1, 0,  
+            1, 1, 1],
+            floatEncoding='integer32bit')
+        pl.addProcess(l3d11)
+
+        l3d12 = LUT3D("16f", "16f", "someId", "Transform")
+        l3d12.setArray([2, 2, 2], 
+            [0, 0, 0,  
+            0, 0, 1,  
+            0, 1, 0,  
+            0, 1, 1,
+            1, 0, 0,  
+            1, 0, 1,  
+            1, 1, 0,  
+            1, 1, 1],
+            floatEncoding='integer64bit')
+        pl.addProcess(l3d12)
+
+        l3d13 = LUT3D("16f", "16f", "someId", "Transform")
+        l3d13.setArray([2, 2, 2], 
+            [0, 0, 0,  
+            0, 0, 1,  
+            0, 1, 0,  
+            0, 1, 1,
+            1, 0, 0,  
+            1, 0, 1,  
+            1, 1, 0,  
+            1, 1, 1],
+            floatEncoding='hex16bit')
+        pl.addProcess(l3d13)
+
+        l3d14 = LUT3D("16f", "16f", "someId", "Transform")
+        l3d14.setArray([2, 2, 2], 
+            [0, 0, 0,  
+            0, 0, 1,  
+            0, 1, 0,  
+            0, 1, 1,
+            1, 0, 0,  
+            1, 0, 1,  
+            1, 1, 0,  
+            1, 1, 1],
+            floatEncoding='hex32bit')
+        pl.addProcess(l3d14)
+
+        l3d15 = LUT3D("16f", "16f", "someId", "Transform")
+        l3d15.setArray([2, 2, 2], 
+            [0, 0, 0,  
+            0, 0, 1,  
+            0, 1, 0,  
+            0, 1, 1,
+            1, 0, 0,  
+            1, 0, 1,  
+            1, 1, 0,  
+            1, 1, 1],
+            floatEncoding='hex64bit')
+        pl.addProcess(l3d15)
+
+        l3d16 = LUT3D("16f", "16f", "someId", "Transform")
+        l3d16.setArray([2, 2, 2], 
+            [0, 0, 0,  
+            0, 0, 1,  
+            0, 1, 0,  
+            0, 1, 1,
+            1, 0, 0,  
+            1, 0, 1,  
+            1, 1, 0,  
+            1, 1, 1])
+        pl.addProcess(l3d16)
+
+        # Range node to bring the general range into back to int 0-1023
+        rpn11 = Range(bitDepths["FLOAT16"], bitDepths["UINT10"], "someId", "Transform3", style='noClamp')
+        pl.addProcess(rpn11)
 
         # Write
         pl.writeFile(clfPath)
