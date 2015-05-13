@@ -61,6 +61,8 @@ import xml.etree.ElementTree as etree
 from Comment import Description
 from Common import *
 
+from ProcessList import ProcessListChildMeta
+
 # References for Bit-depth strings
 bitDepths = {
     "UINT8"   : "8i", 
@@ -122,8 +124,14 @@ def bitDepthIsInteger(bitDepth):
 def bitDepthIsFloatingPoint(bitDepth):
     return not bitDepth in [bitDepths["UINT8"], bitDepths["UINT10"], bitDepths["UINT12"], bitDepths["UINT16"]]
 
-class ProcessNode:
+#
+# ProcessNode
+#
+class ProcessNode():
     "A Common LUT Format ProcessNode element"
+
+    # Ensures that this class and children can be written to disk and read back later 
+    __metaclass__ = ProcessListChildMeta
 
     def __init__(self, nodeType, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", bypass=False):
         "%s - Initialize the standard class variables" % nodeType

@@ -130,11 +130,6 @@ from Comment import Description, InputDescriptor, OutputDescriptor
 from Info import Info
 from ProcessNode import ProcessNode, bitDepths, bitDepthToNormalized, normalizedToBitDepth
 
-#
-# These ProcessNode imports should also be used in the ProcessList
-# and Group Nodes
-#
-
 # ProcessNodes
 from Range import Range
 from Matrix import Matrix

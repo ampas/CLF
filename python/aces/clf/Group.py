@@ -53,40 +53,10 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
 from ProcessNode import *
-
-#
-# These ProcessNode imports should also be used in the ProcessList
-# and Group Nodes
-#
-
-# ProcessNodes
-from Range import Range
-from Matrix import Matrix
-from ASCCDL import ASCCDL, ColorCorrection
-from LUT1D import LUT1D
-from LUT3D import LUT3D
-
-# Autodesk-specific ProcessNodes
-from Reference import Reference
-from ExposureContrast import ExposureContrast
-from Gamma import Gamma
-from Log import Log
-
-#
-# Duiker Research extensions
-#
+from ProcessList import ProcessList
 
 class Group(ProcessNode):
     "A Common LUT Format Group ProcessNode element"
-
-    # Resolve class based on name
-    @staticmethod
-    def getClass( cls ):
-        glb = globals()
-        if cls in glb:
-            return glb[cls]
-        else:
-            return None
 
     def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name=""):
         "%s - Initialize the standard class variables" % 'Group'
@@ -117,7 +87,7 @@ class Group(ProcessNode):
         # Add ProcessNode elements
         for process in self._processes:
             # Choose whether to write Reference node or nodes referred to
-            if isinstance(process, Reference):
+            if isinstance(process, ProcessList.getClass("Reference")):
                 process.setWriteReferencedNodes(writeSelfContained)
             process.write(node)
         
@@ -127,14 +97,14 @@ class Group(ProcessNode):
     def readChild(self, child):
         elementType = child.tag.replace('-', '')
         elementType = child.tag.replace('_', '')
-        elementClass = self.getClass(elementType)
+        elementClass = ProcessList.getClass(elementType)
         #print( elementType, elementClass )
 
         if elementClass != None:
             element = elementClass()
             element.read(child)
 
-            processNodeClass = self.getClass("ProcessNode")
+            processNodeClass = ProcessList.getClass("ProcessNode")
             if issubclass(elementClass, processNodeClass):
                 self.addProcess( element )
             else:

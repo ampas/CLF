@@ -55,10 +55,15 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 import sys
 import os
 
+from ProcessList import ProcessListChildMeta
+
 import xml.etree.ElementTree as etree
 
 class Comment:
     "A Common LUT Format Comment element"
+
+    # Ensures that this class and children can be written to disk and read back later 
+    __metaclass__ = ProcessListChildMeta
 
     def __init__(self, comment='', elementType='Comment'):
         "%s - Initialize the standard class variables" % 'Comment'

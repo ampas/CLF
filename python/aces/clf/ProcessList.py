@@ -57,32 +57,6 @@ import os
 
 import xml.etree.ElementTree as etree
 
-# General Types
-from Comment import Description, InputDescriptor, OutputDescriptor
-from Info import Info
-from ProcessNode import ProcessNode
-
-#
-# These ProcessNode imports should also be used in the ProcessList
-# and Group Nodes
-#
-
-# ProcessNodes
-from Range import Range
-from Matrix import Matrix
-from ASCCDL import ASCCDL, ColorCorrection
-from LUT1D import LUT1D
-from LUT3D import LUT3D
-
-# Autodesk-specific ProcessNodes
-from Reference import Reference
-from ExposureContrast import ExposureContrast
-from Gamma import Gamma
-from Log import Log
-
-# Duiker Research-specific ProcessNodes
-from Group import Group
-
 class ProcessList:
     "A Common LUT Format ProcessList element"
 
@@ -99,10 +73,18 @@ class ProcessList:
         fp.close()
     #xmlPrettyWrite
 
+    # ProcessNode registry
+    serializableClasses = {}
+
+    @staticmethod
+    def registerClass(name, cls):
+        #print( "ProcessList register : %s, %s" % (name, cls))
+        ProcessList.serializableClasses[name] = cls
+
     # Resolve class based on name
     @staticmethod
-    def getClass( cls ):
-        glb = globals()
+    def getClass(cls):
+        glb = ProcessList.serializableClasses
         if cls in glb:
             return glb[cls]
         else:
@@ -154,7 +136,7 @@ class ProcessList:
         # Add ProcessNode elements
         for process in self._processes:
             # Choose whether to write Reference node or nodes referred to
-            if isinstance(process, Reference):
+            if isinstance(process, self.getClass("Reference")):
                 process.setWriteReferencedNodes(writeSelfContained)
             process.write(tree)
         
@@ -329,4 +311,14 @@ class ProcessList:
 
     # printInfo
 # ProcessList
+
+#
+# Metaclass for nodes that will register with ProcessList
+#
+class ProcessListChildMeta(type):
+    def __new__(meta, name, bases, class_dict):
+        cls = type.__new__(meta, name, bases, class_dict)
+        ProcessList.registerClass(name, cls)
+        return cls
+# ProcessNodeMeta
 
