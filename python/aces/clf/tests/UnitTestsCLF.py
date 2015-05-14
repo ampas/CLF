@@ -97,6 +97,7 @@ class TestCLF(unittest.TestCase):
     """
     _tmpdir = ""
     _tmpclf = ""
+    _tmpclfz = ""
 
     @classmethod
     def setUpClass(cls):
@@ -105,7 +106,8 @@ class TestCLF(unittest.TestCase):
         """
         cls._tmpdir = tempfile.gettempdir()
         cls._tmpclf = os.path.join(cls._tmpdir, "test.clf")
-        print( "Unit tests will use : %s" % cls._tmpclf )
+        cls._tmpclfz = os.path.join(cls._tmpdir, "test.clfz")
+        print( "Unit tests will use : \n\t%s\n\t%s" % (cls._tmpclf, cls._tmpclfz) )
 
     @classmethod
     def tearDownClass(cls):
@@ -114,6 +116,8 @@ class TestCLF(unittest.TestCase):
         """
         print( "Cleaning up : %s" % cls._tmpclf )
         os.unlink(cls._tmpclf)
+        print( "Cleaning up : %s" % cls._tmpclfz )
+        os.unlink(cls._tmpclfz)
 
     def createCLF(self, clfPath):
         pl = ProcessList()
@@ -660,6 +664,27 @@ class TestCLF(unittest.TestCase):
         # Test
         self.assertTrue(processedValue != [0.0, 0.0, 0.0])
     #testProcess
+
+    def test4WriteGzip(self):
+        """
+        Performs tests on writing *CLF* gzip.
+        """
+        # Load CLF
+        pl = ProcessList(self._tmpclf)
+        self.assertTrue(pl != None)
+
+        # Write
+        pl.writeFile(self._tmpclfz, writeGzip=True)
+    #test4WriteGzip
+
+    def test5ReadGzip(self):
+        """
+        Performs tests on reading *CLF* gzip.
+        """
+        # Load CLF
+        pl = ProcessList(self._tmpclfz)
+        self.assertTrue(pl != None)
+    #test5ReadGzip
 
 def unittests():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestCLF)

@@ -79,7 +79,8 @@ Extensions
 - Duiker Research extensions
 	- Group ProcessNode
 		- Useful for organizing list of nodes that represent a single filter/transform
-	- 'floatEncoding' Array attribute and associated behavior
+	- 'floatEncoding' Array Attribute and associated behavior
+	- gzipped reading and writing
 
 Would be nice to have
 ---------------------

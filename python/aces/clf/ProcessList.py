@@ -56,22 +56,21 @@ import sys
 import os
 
 import xml.etree.ElementTree as etree
+import gzip
 
 class ProcessList:
     "A Common LUT Format ProcessList element"
 
     @staticmethod
-    def xmlPrettyWrite(document, path):
+    def xmlPrettify(document, path):
         # Pretty saving to to disk
         documentString = etree.tostring(document.getroot(), encoding='UTF-8')
             
         from xml.dom import minidom
         prettyString = minidom.parseString(documentString).toprettyxml()
        
-        fp = open(path, 'wb')
-        fp.write(prettyString)
-        fp.close()
-    #xmlPrettyWrite
+        return prettyString
+    #xmlPrettify
 
     # ProcessNode registry
     serializableClasses = {}
@@ -145,13 +144,26 @@ class ProcessList:
         return document
     # write
 
-    def writeFile(self, clfPath, writeSelfContained=False):
+    def writeFile(self, clfPath, writeSelfContained=False, writeGzip=False):
         document = self.write(writeSelfContained=writeSelfContained)
-        # Non pretty-saving to disk
-        #document.write(scriptPath)
-        
-        # Pretty saving to to disk
-        self.xmlPrettyWrite(document, clfPath)
+
+        # Writing Gzipped XML data
+        if writeGzip:
+            prettyString = self.xmlPrettify(document, clfPath)
+            f = gzip.open(clfPath, 'wb')
+            f.write(prettyString)
+            f.close()
+
+        # Writing XML text
+        else:
+            # Non pretty-saving to disk
+            #document.write(scriptPath)
+            
+            # Pretty saving to to disk
+            prettyString = self.xmlPrettify(document, clfPath)
+            fp = open(clfPath, 'wb')
+            fp.write(prettyString)
+            fp.close()
 
         return document
     # writeFile
@@ -184,9 +196,19 @@ class ProcessList:
     # read
 
     def readFile(self, clfPath):
-        tree = etree.parse(clfPath)
-        root = tree.getroot()
-        self.read(root)
+        # Try to read as gzipped XML file
+        try:
+            f = gzip.open(clfPath, 'rb')
+            tree = etree.parse(f)
+            root = tree.getroot()
+            self.read(root)
+            f.close()
+
+        # Read as normal XML otherwise
+        except:
+            tree = etree.parse(clfPath)
+            root = tree.getroot()
+            self.read(root)
     # readFile
 
     # Attributes
