@@ -138,11 +138,11 @@ from LUT1D import LUT1D, simpleSampledLUT, simpleSampledLUTHalfDomain
 from LUT3D import LUT3D, simple3DLUT
 
 # Autodesk-specific ProcessNodes
-from Reference import Reference
-from ExposureContrast import ExposureContrast
-from Gamma import Gamma
-from Log import Log
+from ExtensionReference import Reference
+from ExtensionExposureContrast import ExposureContrast
+from ExtensionGamma import Gamma
+from ExtensionLog import Log
 
 # Duiker Research-specific ProcessNodes
-from Group import Group
+from ExtensionGroup import Group
 
