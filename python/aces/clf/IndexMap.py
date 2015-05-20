@@ -121,8 +121,25 @@ class IndexMap:
     # process
 
     def printInfo(self):
-        print( "\tIndexMap" )
-        print( "\t\tmap : %s" % " ".join(map(lambda a, b: "%s,%s" % (a,b), self._values[0], self._values[1])) )
+        print( "%20s" % "IndexMap" )
+        length = len(self._values[0])
+
+        print( "%20s : %s" % ("Length", length ) )
+        #print( "\t\tvalues     : %s" % self._values )
+        print( "%20s" % "Values" )
+
+        if length < 15:
+            print( "\t\tmap : %s" % " ".join(map(lambda a, b: "%s,%s" % (a,b), self._values[0], self._values[1])) )
+        else:
+            pairs = map(lambda a, b: "%6.9f, %6.9f" % (a,b), self._values[0], self._values[1])
+            for n in (range(3)):
+                print( " "*30 + pairs[n] )
+
+            print( " "*30 + "    ...    " )
+
+            for n in (range(length-3,length)):
+                print( " "*30 + pairs[n] )
+
     # printInfo
 # IndexMap
 
