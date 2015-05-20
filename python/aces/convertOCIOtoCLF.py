@@ -63,7 +63,7 @@ import sys
 import PyOpenColorIO as OCIO
 
 import clf
-import convertLUTtoCLF
+import lutFormats
 
 def convertMatrixToProcessNode(matrix, offset, direction):
     # Get resolution
@@ -150,8 +150,9 @@ def convertTransformsToProcessNodes( ocioTransform,
         if lutSearchPath != None:
             lutPath = os.path.join( lutSearchPath, lutPath )
 
-        lutpns = convertLUTtoCLF.convertLUTToProcessNode(lutPath, direction, interpolation, 
-            useIndexMaps=inversesUseIndexMaps, inversesUseHalfDomain=inversesUseHalfDomain)
+        lutpns = lutFormats.Registry.read(lutPath, direction, interpolation, 
+            useIndexMaps=inversesUseIndexMaps, inversesUseHalfDomain=inversesUseHalfDomain,
+            returnProcessNodes=True)
         #print( "Created %d CLF process nodes" % len(lutpns) )
         pns.extend( lutpns )
 

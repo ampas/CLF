@@ -53,71 +53,23 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
 """
-Functions to convert from different LUT formats to CLF
+CLF LUT Reading and Writing
+===========================
+
 """
 
-import array
-import math
-import os
-import sys
+__author__ = 'Haarm-Pieter Duiker'
+__copyright__ = 'Copyright (C) 2015 Academy of Motion Picture Arts and Sciences'
+__maintainer__ = 'Academy of Motion Picture Arts and Sciences'
+__email__ = 'acessupport@oscars.org'
+__status__ = 'Production'
 
-import clf
-import lutFormats
+__major_version__ = '1'
+__minor_version__ = '0'
+__change_version__ = '0'
+__version__ = '.'.join((__major_version__,
+                        __minor_version__,
+                        __change_version__))
 
-def main():
-    import optparse
 
-    usage  = '%prog [options]\n'
-    usage += "The following formats can be converted to CLF:\n"
-    for format in lutFormats.Registry.getFormats():
-        for description, extension in zip(format.descriptions(), format.extensions()):
-            if format.canRead(extension):
-                usage += "\t%s\n" % description
 
-    p = optparse.OptionParser(description='Convert a LUT to the Common LUT Format',
-                                prog='convertLUTtoCLF',
-                                version='0.01',
-                                usage=usage)
-
-    p.add_option('--lut', '-l', default=None)
-    p.add_option('--clf', '-c', default=None)
-    p.add_option('--inverse', '', action='store_true', default=False)
-    p.add_option('--inversesUseIndexMaps', '', action='store_true', default=False)
-    p.add_option('--inversesUseHalfDomain', '', action='store_true', default=False)
-
-    options, arguments = p.parse_args()
-
-    #
-    # Get options
-    # 
-    lutPath = options.lut
-    clfPath = options.clf
-    inverse = options.inverse
-    inversesUseIndexMaps = options.inversesUseIndexMaps
-    inversesUseHalfDomain = options.inversesUseHalfDomain
-
-    try:
-        argsStart = sys.argv.index('--') + 1
-        args = sys.argv[argsStart:]
-    except:
-        argsStart = len(sys.argv)+1
-        args = []
-
-    #print( "command line : \n%s\n" % " ".join(sys.argv) )
- 
-    #
-    # Run 
-    #
-    if lutPath != None and clfPath != None:
-        clf = lutFormats.Registry.read(lutPath, 
-            inverse=inverse,
-            inversesUseIndexMaps=inversesUseIndexMaps,
-            inversesUseHalfDomain=inversesUseHalfDomain)
-
-        if clf:
-            clf.writeFile(clfPath)
-
-# main
-
-if __name__ == '__main__':
-    main()
