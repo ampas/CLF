@@ -101,9 +101,8 @@ class Matrix(ProcessNode):
         '''
 
         # Actually process a value or two
-        #outValue = value
         outValue = [0.0]*len(value)
-        for i in range(len(value)):
+        for i in range(min(3, len(value))):
             #outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
 
             offset = i*dimensions[1]
@@ -114,6 +113,11 @@ class Matrix(ProcessNode):
                 outValue[i] += matrix[offset+3]
 
             #outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+
+        # Copy the extra channels
+        for i in range(min(3, len(value)),len(value)):
+            outValue[i] = value[i]
+
         return outValue
     # process
 # Matrix

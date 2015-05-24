@@ -175,6 +175,11 @@ class LUT3D(ProcessNode):
         # as LUT values are assumed to target a specific bit depth
         #for i in range(min(3, len(value))):
         #   outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+
+        # Copy the extra channels
+        for i in range(min(3, len(value)),len(value)):
+            outValue[i] = value[i]
+
         return outValue
     # process
 # LUT3D

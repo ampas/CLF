@@ -206,6 +206,10 @@ class ASCCDL(ProcessNode):
                     outValue[i] = ( pow( clamp(outSat), 1.0/power[i] ) - offset[i] ) / slope[i]
                 outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
+        # Copy the extra channels
+        for i in range(min(3, len(value)),len(value)):
+            outValue[i] = value[i]
+
         return outValue
     # process
 

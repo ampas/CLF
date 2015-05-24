@@ -151,6 +151,10 @@ class ExposureContrast(ProcessNode):
 
                 outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
+        # Copy the extra channels
+        for i in range(min(3, len(value)),len(value)):
+            outValue[i] = value[i]
+
         return outValue
     # process
 

@@ -187,6 +187,11 @@ class LUT1D(ProcessNode):
             # Bit Depth conversion for output is ignored for LUTs
             # as LUT values are assumed to target a specific bit depth
             #outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+
+        # Copy the extra channels
+        for i in range(min(3, len(value)),len(value)):
+            outValue[i] = value[i]
+
         return outValue
     # process
 # LUT1D

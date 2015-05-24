@@ -137,14 +137,12 @@ class Range(ProcessNode):
 
             # Only minimum values
             elif( minInValue != None and 
-                minOutValue != None and
-                (inBitDepth not in [bitDepths['FLOAT16'], bitDepths['FLOAT32']]) ):
+                minOutValue != None ):x
                 outValue[i] = max(minOutValue, outValue[i] + minOutValue - minInValue)
 
             # Only maximum values
             elif( maxInValue != None and 
-                maxOutValue != None and
-                (inBitDepth not in [bitDepths['FLOAT16'], bitDepths['FLOAT32']]) ):
+                maxOutValue != None ):
                 outValue[i] = min( maxOutValue, outValue[i] + maxOutValue - maxInValue)
 
             # Convert to bit-depth specific range
