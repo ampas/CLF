@@ -138,12 +138,16 @@ class Range(ProcessNode):
             # Only minimum values
             elif( minInValue != None and 
                 minOutValue != None ):
-                outValue[i] = max(minOutValue, outValue[i] + minOutValue - minInValue)
+                outValue[i] = outValue[i] + minOutValue - minInValue
+                if clamp:
+                    outValue[i] = max(minOutValue, outValue[i])
 
             # Only maximum values
             elif( maxInValue != None and 
                 maxOutValue != None ):
-                outValue[i] = min( maxOutValue, outValue[i] + maxOutValue - maxInValue)
+                outValue[i] = outValue[i] + maxOutValue - maxInValue
+                if clamp:
+                    outValue[i] = min( maxOutValue, outValue[i])
 
             # Convert to bit-depth specific range
             outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
