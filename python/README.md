@@ -85,7 +85,11 @@ Extensions
 Would be nice to have
 ---------------------
 
+- An implementation of tetrahedral interpolation for 3D LUTs
+- Interpolation support for 1D LUTs that use the 'halfDomain' flag
+- An efficient implementation of the IndexMap lookup using a 'halfDomain' 1D LUT under the hood
 - An 'inverse' style for ProcessNodes such as LUT1D, Matrix, Range, ASC CDL.
+
 
 Thanks
 ------

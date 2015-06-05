@@ -53,6 +53,7 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
 import math
+import numpy as np
 
 import xml.etree.ElementTree as etree
 
@@ -180,21 +181,35 @@ class Array:
             elif key == 'floatEncoding':
                 self._floatEncoding = value
 
+        dtype = np.float32
         if self._rawHalfs or self._floatEncoding == 'integer16bit':
             cast = lambda x: float(uint16ToHalf(x))
+            dtype = np.float16
         elif self._floatEncoding == 'integer32bit':
             cast = uint32ToFloat32
+            dtype = np.float32
         elif self._floatEncoding == 'integer64bit':
             cast = uint64ToDouble
+            dtype = np.float64
         elif self._floatEncoding == 'hex16bit':
             cast = hexToHalf
+            dtype = np.float16
         elif self._floatEncoding == 'hex32bit':
             cast = hexToFloat32
+            dtype = np.float32
         elif self._floatEncoding == 'hex64bit':
             cast = hexToDouble
+            dtype = np.float64
         else:
             cast = float
-        self._values = map(cast, element.text.split())
+            dtype = np.float32
+
+        textValues = element.text.split()
+        numValues = np.zeros(len(textValues), dtype=dtype)
+        for i in range(len(textValues)):
+            numValues[i] = cast(textValues[i])
+
+        self._values = numValues
     # read
 
     def printInfo(self):
@@ -306,7 +321,8 @@ class Array:
 
         index1 = (index3[0]*dimensions[0]*dimensions[1] + index3[1]*dimensions[1] + index3[2])*3 
 
-        result = [values[index1], values[index1+1], values[index1+2]]
+        #result = [values[index1], values[index1+1], values[index1+2]]
+        result = values[index1:index1+3]
 
         #print( "%d, %d, %d -> %d, %s" % (index3[0], index3[1], index3[2], index1, result))
         return result

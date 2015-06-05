@@ -75,6 +75,7 @@ import sys
 import os
 import unittest
 import math
+import numpy as np
 import tempfile
 
 # Make sure we can import aces.clf
@@ -662,7 +663,7 @@ class TestCLF(unittest.TestCase):
         processedValue = self.processExample(pl, processValue)
 
         # Test
-        self.assertTrue(processedValue != [0.0, 0.0, 0.0])
+        self.assertTrue(processedValue.nonzero() != None)
     #testProcess
 
     def test4WriteGzip(self):

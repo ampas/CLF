@@ -338,17 +338,17 @@ def filterImageWithCLF(inputPath,
 
     # Float buffer for the processed pixels
     # Values will be converted to other bit depths when writing to disk
-    processedPixels = array.array("f", "\0" * width * height * channels * 4)
+    #processedPixels = array.array("f", "\0" * width * height * channels * 4)
+    processedPixels = np.zeros(width * height * channels, dtype=np.float32)
 
     # Process
     print( "Filtering image" )
     for i in range(width):
         for j in range(height):
             index = (j*width + i)*channels
-            #ovalue = list(pixels[index:index+3])
             ovalue = pixels[index:index+channels]
 
-            pvalue = list(ovalue)
+            pvalue = np.array(ovalue, dtype=np.float32)
             # Reset values if input image and CLF input bit depths don't match
             if InRange:
                 pvalue = InRange.process(pvalue)
@@ -362,7 +362,7 @@ def filterImageWithCLF(inputPath,
                 pvalue = OutRange.process(pvalue)
 
             if verbose:
-                print( "Processed %04d, %04d : %s -> %s" % (i, j, list(ovalue), pvalue))
+                print( "Processed %04d, %04d : %s -> %s" % (i, j, ovalue, pvalue))
 
             for c in range(channels):
                 processedPixels[index + c] = pvalue[c]

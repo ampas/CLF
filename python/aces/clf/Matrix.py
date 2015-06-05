@@ -52,6 +52,8 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
+import numpy as np
+
 from ProcessNode import *
 from Array import Array
 
@@ -101,7 +103,8 @@ class Matrix(ProcessNode):
         '''
 
         # Actually process a value or two
-        outValue = [0.0]*len(value)
+        #outValue = [0.0]*len(value)
+        outValue = np.zeros(len(value), dtype=np.float32)
         for i in range(min(3, len(value))):
             #outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
 

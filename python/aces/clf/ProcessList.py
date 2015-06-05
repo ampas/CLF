@@ -52,11 +52,11 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
-import sys
 import os
-
-import xml.etree.ElementTree as etree
 import gzip
+import numpy as np
+import sys
+import xml.etree.ElementTree as etree
 
 class ProcessList:
     "A Common LUT Format ProcessList element"
@@ -291,15 +291,20 @@ class ProcessList:
 
     # Color processing
     def process(self, value, verbose=False):
-        result = list(map(float,value))
+        #result = list(map(float,value))
+        # Cast all values to float32 for processing
+        result = np.array(value, np.float32)
+
+        # Pass the value through each ProcessNode in the ProcessList
         for processNode in self._processes:
             #print( "processing : %s" % result )
             if processNode.getAttribute('bypass') == None:
                 result = processNode.process(result, verbose=verbose)
                 if verbose:
-                    print( "%s (%s) - result value : %s" % 
+                    print( "%s (%s) - result value : %s, result type : %s" % 
                         (processNode.getAttribute('name'), processNode.getNodeType(), 
-                            " ".join(map(lambda x: "%3.6f" % x, result)) ) )
+                            " ".join(map(lambda x: "%3.6f" % x, result)),
+                            type(result) ) )
             else:
                 if verbose:
                     print( "%s (%s) - bypassing" % 

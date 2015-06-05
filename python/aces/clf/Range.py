@@ -137,7 +137,7 @@ class Range(ProcessNode):
 
             # Only minimum values
             elif( minInValue != None and 
-                minOutValue != None ):x
+                minOutValue != None ):
                 outValue[i] = max(minOutValue, outValue[i] + minOutValue - minInValue)
 
             # Only maximum values
