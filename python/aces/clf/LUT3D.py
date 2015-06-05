@@ -165,11 +165,11 @@ class LUT3D(ProcessNode):
         # Run color through LUT
         # trilinear interpolation
         if interpolation == 'trilinear':
-            outValue = self._array.lookup3DTrilinear(outValue)
+            outValue[0:3] = self._array.lookup3DTrilinear(outValue)
 
         # tetrahedral interpolation
         elif interpolation == 'tetrahedral':
-            outValue = self._array.lookup3DTetrahedral(outValue)
+            outValue[0:3] = self._array.lookup3DTetrahedral(outValue)
 
         # Bit Depth conversion for output is ignored for LUTs
         # as LUT values are assumed to target a specific bit depth
