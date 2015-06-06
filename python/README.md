@@ -76,6 +76,7 @@ Extensions
 	- ExposureContrast ProcessNode
 	- 'bypass' Attribute
 	- DynamicParameter Element
+	- ASC-CDL 'style' keywords
 - Duiker Research extensions
 	- Group ProcessNode
 		- Useful for organizing list of nodes that represent a single filter/transform
