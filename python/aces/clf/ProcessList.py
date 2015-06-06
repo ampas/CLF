@@ -296,7 +296,9 @@ class ProcessList:
         result = np.array(value, np.float32)
 
         # Pass the value through each ProcessNode in the ProcessList
-        for processNode in self._processes:
+        #for processNode in self._processes:
+        for i in range(len(self._processes)):
+            processNode = self._processes[i]
             #print( "processing : %s" % result )
             if processNode.getAttribute('bypass') == None:
                 result = processNode.process(result, verbose=verbose)
@@ -309,6 +311,26 @@ class ProcessList:
                 if verbose:
                     print( "%s (%s) - bypassing" % 
                         (processNode.getAttribute('name'), processNode.getNodeType()))
+
+                # Handle bit-depth mismatches
+                if i > 0 and i < (len(self._processes)-1):
+                    RangeClass = ProcessList.serializableClasses['Range']
+                    inBitDepth = self._processes[i-1].getOutBitDepth()
+                    outBitDepth = self._processes[i+1].getInBitDepth()
+                    
+                    if inBitDepth != outBitDepth:
+                        if verbose:
+                            print( "%s (%s) - Adding a Range node to adapt bit depth %s to bit depth %s" % (
+                                processNode.getAttribute('name'), processNode.getNodeType(), inBitDepth, outBitDepth))
+
+                        RangeAdapter = RangeClass(inBitDepth, outBitDepth, "adapter", "adapter", style='noClamp')
+                        result = RangeAdapter.process(result, verbose=verbose)
+                        if verbose:
+                            print( "%s (%s) - result value : %s, result type : %s" % 
+                                (RangeAdapter.getAttribute('name'), RangeAdapter.getNodeType(), 
+                                    " ".join(map(lambda x: "%3.6f" % x, result)),
+                                    type(result) ) )
+
         return result
     # process
 
