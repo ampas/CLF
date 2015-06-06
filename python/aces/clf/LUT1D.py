@@ -175,13 +175,18 @@ class LUT1D(ProcessNode):
                 outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
             # Run through LUT
+            # Use Cubic interpolation
             if interpolation == 'cubic':
-                outValue[i] = self._array.lookup1DCubic(outValue[i], i, halfDomain)
+                outValue[i] = self._array.lookup1DCubic(outValue[i], i)
+
+            # Use halfDomain lookup and interpolation
+            elif halfDomain:
+                outValue[i] = self._array.lookup1DHalfDomain(outValue[i], i, interpolate=True)
 
             # Linear interpolation is the default
             #elif interpolation == 'linear':
             else:
-                outValue[i] = self._array.lookup1DLinear(outValue[i], i, halfDomain)
+                outValue[i] = self._array.lookup1DLinear(outValue[i], i)
 
 
             # Bit Depth conversion for output is ignored for LUTs
