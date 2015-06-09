@@ -99,7 +99,7 @@ class ExposureContrast(ProcessNode):
         return None
     # readChild
 
-    def process(self, value, verbose=False):
+    def process(self, values, stride=0, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -124,38 +124,50 @@ class ExposureContrast(ProcessNode):
         print( "pivot         : %s" % pivot )
         '''
 
-        # Actually process a value or two
-        outValue = value
-        if style == 'linear':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+        # Handle processing of single values
+        if stride == 0:
+            stride = len(values)
 
-                outValue[i] = pivot*pow(max(0.0,(pow(2.0,exposure)*outValue[i]/pivot)), contrast)
+        # Initialize the output value
+        outValues = np.zeros(len(values), dtype=np.float32)
 
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+        for p in range(len(values)/stride):
+            value = values[p*stride:(p+1)*stride]
+            outValue = values[p*stride:(p+1)*stride]
 
-        elif style == 'video':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+            if style == 'linear':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-                outValue[i] = pow(pivot,1.0/1.83)*pow(max(0.0,(outValue[i]*pow(pow(2.0,exposure)/pivot),1.0/1.83)), contrast)
+                    outValue[i] = pivot*pow(max(0.0,(pow(2.0,exposure)*outValue[i]/pivot)), contrast)
 
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-        elif style == 'log':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+            elif style == 'video':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-                p = (0.6/2.046*math.log10(pivot/0.9) + 685.0/1023.0)
-                outValue[i] = (outValue[i] + exposure*0.6/2.046*math.log10(2.0) - p)*contrast + p
+                    outValue[i] = pow(pivot,1.0/1.83)*pow(max(0.0,(outValue[i]*pow(pow(2.0,exposure)/pivot),1.0/1.83)), contrast)
 
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-        # Copy the extra channels
-        for i in range(min(3, len(value)),len(value)):
-            outValue[i] = value[i]
+            elif style == 'log':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-        return outValue
+                    p = (0.6/2.046*math.log10(pivot/0.9) + 685.0/1023.0)
+                    outValue[i] = (outValue[i] + exposure*0.6/2.046*math.log10(2.0) - p)*contrast + p
+
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+
+            # Copy the extra channels
+            for i in range(min(3, stride),stride):
+                outValue[i] = values[i]
+
+            # Copy to the output array
+            outValues[p*stride:(p+1)*stride] = outValue
+
+        return outValues
     # process
 
     def printInfoChild(self):

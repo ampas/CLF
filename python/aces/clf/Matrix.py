@@ -88,7 +88,7 @@ class Matrix(ProcessNode):
         return child
     # readChild
 
-    def process(self, value, verbose=False):
+    def process(self, values, stride=0, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -102,26 +102,35 @@ class Matrix(ProcessNode):
         print( "matrix      : %s" % matrix )
         '''
 
-        # Actually process a value or two
-        #outValue = [0.0]*len(value)
-        outValue = np.zeros(len(value), dtype=np.float32)
-        for i in range(min(3, len(value))):
-            #outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
+        # Handle processing of single values
+        if stride == 0:
+            stride = len(values)
 
-            offset = i*dimensions[1]
-            outValue[i] = matrix[0 + offset]*value[0] + matrix[1 + offset]*value[1] + matrix[2 + offset]*value[2]
-            #print( "value : %d : %f = %f * %f + %f * %f + %f * %f" % (
-            #    i, outValue[i], matrix[0 + offset], value[0], matrix[1 + offset], value[1], matrix[2 + offset], value[2]))
-            if dimensions[1] == 4:
-                outValue[i] += matrix[offset+3]
+        # Initialize the output value
+        outValues = np.zeros(len(values), dtype=np.float32)
 
-            #outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+        for p in range(len(values)/stride):
+            value = values[p*stride:(p+1)*stride]
+            outValue = np.zeros(stride, dtype=np.float32)
 
-        # Copy the extra channels
-        for i in range(min(3, len(value)),len(value)):
-            outValue[i] = value[i]
+            for i in range(min(3, stride)):
+                offset = i*dimensions[1]
+                outValue[i] = matrix[0 + offset]*value[0] + matrix[1 + offset]*value[1] + matrix[2 + offset]*value[2]
+                #print( "value : %d : %f = %f * %f + %f * %f + %f * %f" % (
+                #    i, outValue[i], matrix[0 + offset], value[0], matrix[1 + offset], value[1], matrix[2 + offset], value[2]))
+                if dimensions[1] == 4:
+                    outValue[i] += matrix[offset+3]
 
-        return outValue
+                #outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+
+            # Copy the extra channels
+            for i in range(min(3, stride),stride):
+                outValue[i] = value[i]
+
+            # Copy to the output array
+            outValues[p*stride:(p+1)*stride] = outValue
+
+        return outValues
     # process
 # Matrix
 

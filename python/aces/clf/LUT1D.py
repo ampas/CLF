@@ -135,7 +135,7 @@ class LUT1D(ProcessNode):
         return child
     # readChild
 
-    def process(self, value, verbose=False):
+    def process(self, values, stride=0, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -156,48 +156,60 @@ class LUT1D(ProcessNode):
         # Get LUT dimensions
         dimensions = self.getLUTDimensions()
 
-        # Actually process a value or two
-        outValue = value
-        for i in range(min(3, len(value))):
-            # Run through single Index Map then normalize
-            if len(self._indexMaps) > 1:
-                outValue[i] = self._indexMaps[i].process(outValue[i])
-                outValue[i] /= float(dimensions[0]-1)
+        # Handle processing of single values
+        if stride == 0:
+            stride = len(values)
 
-            # Run through per-channel Index Map then normalize
-            elif len(self._indexMaps) > 0:
-                outValue[i] = self._indexMaps[0].process(outValue[i])
-                outValue[i] /= float(dimensions[0]-1)
+        # Initialize the output value
+        outValues = np.zeros(len(values), dtype=np.float32)
 
-            # Normalize from bit-depth
-            else:
-                # Convert input bit depth
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+        for p in range(len(values)/stride):
+            value = values[p*stride:(p+1)*stride]
+            outValue = values[p*stride:(p+1)*stride]
 
-            # Run through LUT
-            # Use Cubic interpolation
-            if interpolation == 'cubic':
-                outValue[i] = self._array.lookup1DCubic(outValue[i], i)
+            for i in range(min(3, stride)):
+                # Run through single Index Map then normalize
+                if len(self._indexMaps) > 1:
+                    outValue[i] = self._indexMaps[i].process(outValue[i])
+                    outValue[i] /= float(dimensions[0]-1)
 
-            # Use halfDomain lookup and interpolation
-            elif halfDomain:
-                outValue[i] = self._array.lookup1DHalfDomain(outValue[i], i, interpolate=True)
+                # Run through per-channel Index Map then normalize
+                elif len(self._indexMaps) > 0:
+                    outValue[i] = self._indexMaps[0].process(outValue[i])
+                    outValue[i] /= float(dimensions[0]-1)
 
-            # Linear interpolation is the default
-            #elif interpolation == 'linear':
-            else:
-                outValue[i] = self._array.lookup1DLinear(outValue[i], i)
+                # Normalize from bit-depth
+                else:
+                    # Convert input bit depth
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+
+                # Run through LUT
+                # Use Cubic interpolation
+                if interpolation == 'cubic':
+                    outValue[i] = self._array.lookup1DCubic(outValue[i], i)
+
+                # Use halfDomain lookup and interpolation
+                elif halfDomain:
+                    outValue[i] = self._array.lookup1DHalfDomain(outValue[i], i, interpolate=True)
+
+                # Linear interpolation is the default
+                #elif interpolation == 'linear':
+                else:
+                    outValue[i] = self._array.lookup1DLinear(outValue[i], i)
 
 
-            # Bit Depth conversion for output is ignored for LUTs
-            # as LUT values are assumed to target a specific bit depth
-            #outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+                # Bit Depth conversion for output is ignored for LUTs
+                # as LUT values are assumed to target a specific bit depth
+                #outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-        # Copy the extra channels
-        for i in range(min(3, len(value)),len(value)):
-            outValue[i] = value[i]
+            # Copy the extra channels
+            for i in range(min(3, stride),stride):
+                outValue[i] = value[i]
 
-        return outValue
+            # Copy to the output array
+            outValues[p*stride:(p+1)*stride] = outValue
+
+        return outValues
     # process
 # LUT1D
 

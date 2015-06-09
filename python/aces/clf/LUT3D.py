@@ -126,7 +126,7 @@ class LUT3D(ProcessNode):
         return child
     # readChild
 
-    def process(self, value, verbose=False):
+    def process(self, values, stride=0, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -142,45 +142,56 @@ class LUT3D(ProcessNode):
         # Get LUT dimensions
         dimensions = self.getLUTDimensions()
 
-        # Actually process a value or two
-        outValue = value
+        # Handle processing of single values
+        if stride == 0:
+            stride = len(values)
 
-        # Run each channel through the index map, or base normalization
-        for i in range(min(3, len(value))):
-            # Run through single Index Map then normalize
-            if len(self._indexMaps) > 1:
-                outValue[i] = self._indexMaps[i].process(outValue[i])
-                outValue[i] /= float(dimensions[i]-1)
+        # Initialize the output value
+        outValues = np.zeros(len(values), dtype=np.float32)
 
-            # Run through per-channel Index Map then normalize
-            elif len(self._indexMaps) > 0:
-                outValue[i] = self._indexMaps[0].process(outValue[i])
-                outValue[i] /= float(dimensions[i]-1)
+        for p in range(len(values)/stride):
+            value = values[p*stride:(p+1)*stride]
+            outValue = values[p*stride:(p+1)*stride]
 
-            # Normalize from bit-depth
-            else:
-                # Convert input bit depth
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+            # Run each channel through the index map, or base normalization
+            for i in range(min(3, len(value))):
+                # Run through single Index Map then normalize
+                if len(self._indexMaps) > 1:
+                    outValue[i] = self._indexMaps[i].process(outValue[i])
+                    outValue[i] /= float(dimensions[i]-1)
 
-        # Run color through LUT
-        # trilinear interpolation
-        if interpolation == 'trilinear':
-            outValue[0:3] = self._array.lookup3DTrilinear(outValue)
+                # Run through per-channel Index Map then normalize
+                elif len(self._indexMaps) > 0:
+                    outValue[i] = self._indexMaps[0].process(outValue[i])
+                    outValue[i] /= float(dimensions[i]-1)
 
-        # tetrahedral interpolation
-        elif interpolation == 'tetrahedral':
-            outValue[0:3] = self._array.lookup3DTetrahedral(outValue)
+                # Normalize from bit-depth
+                else:
+                    # Convert input bit depth
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-        # Bit Depth conversion for output is ignored for LUTs
-        # as LUT values are assumed to target a specific bit depth
-        #for i in range(min(3, len(value))):
-        #   outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+            # Run color through LUT
+            # trilinear interpolation
+            if interpolation == 'trilinear':
+                outValue[0:3] = self._array.lookup3DTrilinear(outValue)
 
-        # Copy the extra channels
-        for i in range(min(3, len(value)),len(value)):
-            outValue[i] = value[i]
+            # tetrahedral interpolation
+            elif interpolation == 'tetrahedral':
+                outValue[0:3] = self._array.lookup3DTetrahedral(outValue)
 
-        return outValue
+            # Bit Depth conversion for output is ignored for LUTs
+            # as LUT values are assumed to target a specific bit depth
+            #for i in range(min(3, len(value))):
+            #   outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+
+            # Copy the extra channels
+            for i in range(min(3, stride),stride):
+                outValue[i] = value[i]
+
+            # Copy to the output array
+            outValues[p*stride:(p+1)*stride] = outValue
+
+        return outValues
     # process
 # LUT3D
 

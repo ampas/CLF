@@ -117,10 +117,14 @@ class ASCCDL(ProcessNode):
         return None
     # readChild
 
-    def process(self, value, verbose=False):
+    def process(self, values, stride=0, verbose=False):
+        # Handle processing of single values
+        if stride == 0:
+            stride = len(value)
+
         # Pass through if there aren't at least three channels
-        if len(value) < 3:
-            return value
+        if stride < 3:
+            return values
 
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
@@ -152,65 +156,74 @@ class ASCCDL(ProcessNode):
         print( "saturation : %s" % saturation )
         '''
 
+        # Initialize the output value
+        outValues = np.zeros(len(values), dtype=np.float32)
+
         # Support CLF spec and Autodesk CTF style keywords
-        outValue = value
-        if style == 'Fwd' or style == 'v1.2_Fwd':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
-                outValue[i] = pow( clamp( outValue[i] * slope[i] + offset[i] ), power[i])
+        for p in range(len(values)/stride):
+            value = value[p*stride:(p+1)*stride]
+            outValue = values[p*stride:(p+1)*stride]
 
-            luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
-            for i in range(3):
-                outValue[i] = clamp( luma + saturation * (outValue[i] - luma) )
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+            if style == 'Fwd' or style == 'v1.2_Fwd':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
+                    outValue[i] = pow( clamp( outValue[i] * slope[i] + offset[i] ), power[i])
 
-        elif style == 'FwdNoClamp' or style == 'noClampFwd':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
-                tmp = outValue[i] * slope[i] + offset[i]
-                if tmp < 0:
-                    outValue[i] = tmp
-                else:
-                    outValue[i] = pow(tmp, power[i])
+                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
+                for i in range(3):
+                    outValue[i] = clamp( luma + saturation * (outValue[i] - luma) )
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-            luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
-            for i in range(3):
-                outValue[i] = luma + saturation * (outValue[i] - luma)
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+            elif style == 'FwdNoClamp' or style == 'noClampFwd':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
+                    tmp = outValue[i] * slope[i] + offset[i]
+                    if tmp < 0:
+                        outValue[i] = tmp
+                    else:
+                        outValue[i] = pow(tmp, power[i])
 
-        elif style == 'Rev' or style == 'v1.2_Rev':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
-                outValue[i] = clamp( outValue[i] )
+                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
+                for i in range(3):
+                    outValue[i] = luma + saturation * (outValue[i] - luma)
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-            luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
-            print( luma )
+            elif style == 'Rev' or style == 'v1.2_Rev':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
+                    outValue[i] = clamp( outValue[i] )
 
-            for i in range(3):
-                outSat = luma + (1.0/saturation) * (outValue[i] - luma)
-                outValue[i] = ( pow( clamp(outSat), 1.0/power[i] ) - offset[i] ) / slope[i]
-                outValue[i] = clamp( outValue[i] )
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
+                print( luma )
 
-        elif style == 'RevNoClamp' or style == 'noClampRev':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
-
-            luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
-
-            for i in range(3):
-                outSat = luma + (1.0/saturation) * (outValue[i] - luma)
-                if outSat < 0:
-                    outValue[i] = ( clamp(outSat) - offset[i] ) / slope[i]
-                else:
+                for i in range(3):
+                    outSat = luma + (1.0/saturation) * (outValue[i] - luma)
                     outValue[i] = ( pow( clamp(outSat), 1.0/power[i] ) - offset[i] ) / slope[i]
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+                    outValue[i] = clamp( outValue[i] )
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-        # Copy the extra channels
-        for i in range(min(3, len(value)),len(value)):
-            outValue[i] = value[i]
+            elif style == 'RevNoClamp' or style == 'noClampRev':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
 
-        return outValue
+                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
+
+                for i in range(3):
+                    outSat = luma + (1.0/saturation) * (outValue[i] - luma)
+                    if outSat < 0:
+                        outValue[i] = ( clamp(outSat) - offset[i] ) / slope[i]
+                    else:
+                        outValue[i] = ( pow( clamp(outSat), 1.0/power[i] ) - offset[i] ) / slope[i]
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+
+            # Copy the extra channels
+            for i in range(min(3, stride),stride):
+                outValue[i] = value[i]
+
+            # Copy to the output array
+            outValues[p*stride:(p+1)*stride] = outValue
+
+        return outValues
     # process
 
     def printInfoChild(self):

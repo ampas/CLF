@@ -52,10 +52,11 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
-import sys
 import array
-
+import math
 import numpy as np
+import sys
+import timeit
 
 import clf
 import OpenImageIO as oiio
@@ -298,6 +299,136 @@ def writePixelArray(outputPath,
     outputImage.close()
 # writePixelArray
 
+from multiprocessing import Pool, Lock, cpu_count
+
+#
+# Filter a single row - one pixel at a time
+#
+def filterRow_pixel(row, 
+    width,
+    height, 
+    channels, 
+    pixels, 
+    InRange,
+    processList,
+    OutRange,
+    processedPixels,
+    verbose):
+
+    if row%math.ceil((height-1)/100.0) == 0:
+        print( "%3.1f - row %d / %d" % (row/(height-1.0)*100.0, row, height-1) )
+
+    for i in range(width):
+        index = (row*width + i)*channels
+        ovalue = pixels[index:index+channels]
+
+        pvalue = np.array(ovalue, dtype=np.float32)
+        # Reset values if input image and CLF input bit depths don't match
+        if InRange:
+            pvalue = InRange.process(pvalue)
+
+        # Process values
+        #print( "Processing %04d, %04d : %s" % (i, j, ovalue))
+        pvalue = processList.process(pvalue)
+
+        # Reset values if output image and CLF output bit depths don't match
+        if OutRange:
+            pvalue = OutRange.process(pvalue)
+
+        if verbose:
+            print( "Processed %04d, %04d : %s -> %s" % (i, j, ovalue, pvalue))
+
+        for c in range(channels):
+            processedPixels[index + c] = pvalue[c]
+
+    return True
+
+#
+# Filter a single row - as a group of pixels
+#
+def filterRow_stride(row, 
+    width, 
+    height,
+    channels, 
+    pixels, 
+    InRange,
+    processList,
+    OutRange,
+    processedPixels,
+    verbose):
+
+    if row%math.ceil((height-1)/100.0) == 0:
+        print( "%3.1f - row %d / %d" % (row/(height-1.0)*100.0, row, height-1) )
+
+    index = (row*width)*channels
+
+    # Copy a single row
+    ovalue = pixels[index:index+width*channels]
+    pvalue = np.array(ovalue, dtype=np.float32)
+
+    # Reset values if input image and CLF input bit depths don't match
+    if InRange:
+        pvalue = InRange.process(pvalue, stride=channels)
+
+    # Process values
+    #print( "Processing %04d, %04d : %s" % (i, j, ovalue))
+    pvalue = processList.process(pvalue, stride=channels)
+
+    # Reset values if output image and CLF output bit depths don't match
+    if OutRange:
+        pvalue = OutRange.process(pvalue, stride=channels)
+
+    if verbose:
+        print( "Processed %04d, %04d : %s -> %s" % (i, j, ovalue, pvalue))
+
+    for c in range(width*channels):
+        processedPixels[index + c] = pvalue[c]
+
+    return True
+
+#
+# Filter a single row - parallel
+#
+def filterRow_parallel(row, 
+    width, 
+    height,
+    channels, 
+    pixels, 
+    InRange,
+    processList,
+    OutRange,
+    processedPixels,
+    verbose):
+
+    if row%math.ceil((height-1)/100.0) == 0:
+        print( "%3.1f - row %d / %d" % (row/(height-1.0)*100.0, row, height-1) )
+
+    # Copy a single row
+    ovalue = pixels
+
+    pvalue = np.array(ovalue, dtype=np.float32)
+    # Reset values if input image and CLF input bit depths don't match
+    if InRange:
+        pvalue = InRange.process(pvalue, stride=channels)
+
+    # Process values
+    #print( "Processing %04d, %04d : %s" % (i, j, ovalue))
+    pvalue = processList.process(pvalue, stride=channels)
+
+    # Reset values if output image and CLF output bit depths don't match
+    if OutRange:
+        pvalue = OutRange.process(pvalue, stride=channels)
+
+    if verbose:
+        print( "Processed %04d, %04d : %s -> %s" % (i, j, ovalue, pvalue))
+
+    return pvalue
+
+# this helper function is needed because map() can only be used for functions
+# that take a single argument (see http://stackoverflow.com/q/5442910/1461210)
+def filterRow_parallel_splitargs(args):
+    return filterRow_parallel(*args)
+
 #
 # Filter an image
 #
@@ -305,21 +436,29 @@ def filterImageWithCLF(inputPath,
     outputPath, 
     processList, 
     verbose=False,
-    outBitDepth=None):
+    outBitDepth=None,
+    multithreaded=cpu_count()):
 
     #
     # Get the input image pixel array
     #
+    t0 = timeit.default_timer()
+
     pixels, inBitDepth, width, height, channels, metadata = readPixelArray(inputPath)
     #print( len(pixels), bitDepth, width, height, channels )
+
+    t1 = timeit.default_timer()
+    elapsed = t1 - t0
+    print( "Reading took %s seconds" % elapsed )
 
     # Determine outBitDepth
     if not outBitDepth or not (outBitDepth in clf.bitDepths.values()):
         outBitDepth = inBitDepth
 
     #
-    # Create Range ProcessNodes to convert data to the correct bit depth
-    # for input to the CLF and then for output to file
+    # Create two Range ProcessNodes to convert data
+    # 1: from the bitdepth of the input image to the bit depth of the CLF start
+    # 2: from the bitdepth of the CLF output to the bit depth of the output image
     #
     processListInBitDepth = processList.getInBitDepth()
     processListOutBitDepth = processList.getOutBitDepth()
@@ -338,39 +477,69 @@ def filterImageWithCLF(inputPath,
 
     # Float buffer for the processed pixels
     # Values will be converted to other bit depths when writing to disk
-    #processedPixels = array.array("f", "\0" * width * height * channels * 4)
     processedPixels = np.zeros(width * height * channels, dtype=np.float32)
 
     # Process
-    print( "Filtering image" )
-    for i in range(width):
+    t0 = timeit.default_timer()
+
+    # Multi-threaded execution
+    if multithreaded > 1:
+        print( "Filtering image - multithreaded (%d threads)" % multithreaded )
+        pool = Pool(processes=multithreaded)
+        try:
+            # Each process filters a single row and returns the results
+            # Feels a little clunky, but it gets us the speed of multithreading
+            # and we're probably not worried about the memory hit since we're
+            # only processing one image at a time.
+            parallelProcessedPixels = pool.map(filterRow_parallel_splitargs,
+                [(x, 
+                    width, 
+                    height,
+                    channels, 
+                    pixels[x*width*channels:x*width*channels+width*channels], 
+                    InRange,
+                    processList,
+                    OutRange,
+                    processedPixels,
+                    verbose) for x in range(height)],
+                chunksize=1)
+
+            # The filtered rows have to be copied back to the 'processedPixels' block
+            # when everything finishes up
+            for i in range(height):
+                for j in range(width*channels):
+                    processedPixels[i*width*channels + j] = parallelProcessedPixels[i][j]
+        except:
+            print( "Error in pool creation" )
+
+    # Single-threaded execution
+    else:
+        print( "Filtering image - single threaded" )
+
         for j in range(height):
-            index = (j*width + i)*channels
-            ovalue = pixels[index:index+channels]
+            # Using filterRow_stride instead of filterRow_pixel
+            # Processing a full row is ~10% faster than processing individual pixels
+            filterRow_stride(j,
+                width, height, channels, pixels, 
+                InRange, processList, OutRange,
+                processedPixels,
+                verbose)
 
-            pvalue = np.array(ovalue, dtype=np.float32)
-            # Reset values if input image and CLF input bit depths don't match
-            if InRange:
-                pvalue = InRange.process(pvalue)
-
-            # Process values
-            #print( "Processing %04d, %04d : %s" % (i, j, ovalue))
-            pvalue = processList.process(pvalue)
-
-            # Reset values if output image and CLF output bit depths don't match
-            if OutRange:
-                pvalue = OutRange.process(pvalue)
-
-            if verbose:
-                print( "Processed %04d, %04d : %s -> %s" % (i, j, ovalue, pvalue))
-
-            for c in range(channels):
-                processedPixels[index + c] = pvalue[c]
+    t1 = timeit.default_timer()
+    elapsed = t1 - t0
+    print( "Filtering took %s seconds" % elapsed )
 
     #
     # Write the processed pixel array to the output
     #
+    t0 = timeit.default_timer()
+
     writePixelArray(outputPath, processedPixels, outBitDepth, width, height, channels, metadata)
+
+    t1 = timeit.default_timer()
+    elapsed = t1 - t0
+    print( "Writing took %s seconds" % elapsed )
+
 # filterImageWithCLF
 
 #
@@ -389,6 +558,7 @@ def main():
     p.add_option('--clf', '-c', default=None)
     p.add_option('--verbose', '-v', action="store_true")
     p.add_option('--outputBitDepth', '', default=None)
+    p.add_option('--multithreaded', '-m', type='int', default=cpu_count())
 
     options, arguments = p.parse_args()
 
@@ -400,6 +570,7 @@ def main():
     outputPath = options.output
     verbose = options.verbose == True
     outputBitDepth = options.outputBitDepth
+    multithreaded = options.multithreaded
 
     try:
         argsStart = sys.argv.index('--') + 1
@@ -433,7 +604,8 @@ def main():
             outputPath, 
             processList, 
             verbose,
-            outBitDepth=outputBitDepth)
+            outBitDepth=outputBitDepth,
+            multithreaded=multithreaded)
 # main
 
 if __name__ == '__main__':

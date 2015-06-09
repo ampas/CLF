@@ -290,18 +290,20 @@ class ProcessList:
         return None
 
     # Color processing
-    def process(self, value, verbose=False):
-        #result = list(map(float,value))
+    def process(self, values, stride=0, verbose=False):
         # Cast all values to float32 for processing
-        result = np.array(value, np.float32)
+        result = np.array(values, np.float32)
+
+        if verbose:
+            print( "Processing %d values. Stride size: %d" % (len(values), stride) )
 
         # Pass the value through each ProcessNode in the ProcessList
-        #for processNode in self._processes:
         for i in range(len(self._processes)):
             processNode = self._processes[i]
             #print( "processing : %s" % result )
+
             if processNode.getAttribute('bypass') == None:
-                result = processNode.process(result, verbose=verbose)
+                result = processNode.process(result, stride, verbose=verbose)
                 if verbose:
                     print( "%s (%s) - result value : %s, result type : %s" % 
                         (processNode.getAttribute('name'), processNode.getNodeType(), 
@@ -317,7 +319,7 @@ class ProcessList:
                     RangeClass = ProcessList.serializableClasses['Range']
                     inBitDepth = self._processes[i-1].getOutBitDepth()
                     outBitDepth = self._processes[i+1].getInBitDepth()
-                    
+
                     if inBitDepth != outBitDepth:
                         if verbose:
                             print( "%s (%s) - Adding a Range node to adapt bit depth %s to bit depth %s" % (

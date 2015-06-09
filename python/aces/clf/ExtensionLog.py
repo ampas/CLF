@@ -111,7 +111,7 @@ class Log(ProcessNode):
         return None
     # readChild
 
-    def process(self, value, verbose=False):
+    def process(self, values, stride, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -154,69 +154,81 @@ class Log(ProcessNode):
 
         FLOAT_MIN = 1.1754943508222875 * pow(10,-38)
 
-        # Actually process a value or two
-        outValue = value
-        if style == 'log10':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+        # Handle processing of single values
+        if stride == 0:
+            stride = len(values)
 
-                outValue[i] = math.log10(max(outValue[i], FLOAT_MIN))
-                
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+        # Initialize the output value
+        outValues = np.zeros(len(values), dtype=np.float32)
 
-        elif style == 'log2':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+        for p in range(len(values)/stride):
+            value = values[p*stride:(p+1)*stride]
+            outValue = values[p*stride:(p+1)*stride]
 
-                outValue[i] = math.log10(max(outValue[i], FLOAT_MIN))/math.log10(2.0)
-                
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+            if style == 'log10':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-        elif style == 'antiLog10':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+                    outValue[i] = math.log10(max(outValue[i], FLOAT_MIN))
+                    
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-                outValue[i] = pow(10.0, outValue[i])
-                
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+            elif style == 'log2':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-        elif style == 'antiLog2':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+                    outValue[i] = math.log10(max(outValue[i], FLOAT_MIN))/math.log10(2.0)
+                    
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-                outValue[i] = pow(2.0, outValue[i])
-                
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+            elif style == 'antiLog10':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-        elif style == 'logToLin':
-            for i in range(3):
-                linearRefBlack = pow(10.0, min(-0.00001, (refBlack[i]-refWhite[i])*0.002/gamma[i]))
-                gain = (highlight[i] - shadow[i])/(1.0 - linearRefBlack)
+                    outValue[i] = pow(10.0, outValue[i])
+                    
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+            elif style == 'antiLog2':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-                relativeExposure = pow(10.0, (1023.0*outValue[i] - refWhite[i])*0.002/gamma[i])
-                outValue[i] = (relativeExposure - linearRefBlack)*gain + shadow[i]
+                    outValue[i] = pow(2.0, outValue[i])
+                    
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+            elif style == 'logToLin':
+                for i in range(3):
+                    linearRefBlack = pow(10.0, min(-0.00001, (refBlack[i]-refWhite[i])*0.002/gamma[i]))
+                    gain = (highlight[i] - shadow[i])/(1.0 - linearRefBlack)
 
-        elif style == 'linToLog':
-            for i in range(3):
-                linearRefBlack = pow(10.0, min(-0.00001, (refBlack[i]-refWhite[i])*0.002/gamma[i]))
-                gain = (highlight[i] - shadow[i])/(1.0 - linearRefBlack)
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+                    relativeExposure = pow(10.0, (1023.0*outValue[i] - refWhite[i])*0.002/gamma[i])
+                    outValue[i] = (relativeExposure - linearRefBlack)*gain + shadow[i]
 
-                relativeExposure = linearRefBlack + (outValue[i] - shadow[i])/gain
-                outValue[i] = (refWhite[i] + math.log10(max(FLOAT_MIN, relativeExposure))*gamma[i]/0.002)/1023.0
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+            elif style == 'linToLog':
+                for i in range(3):
+                    linearRefBlack = pow(10.0, min(-0.00001, (refBlack[i]-refWhite[i])*0.002/gamma[i]))
+                    gain = (highlight[i] - shadow[i])/(1.0 - linearRefBlack)
 
-        # Copy the extra channels
-        for i in range(min(3, len(value)),len(value)):
-            outValue[i] = value[i]
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-        return outValue
+                    relativeExposure = linearRefBlack + (outValue[i] - shadow[i])/gain
+                    outValue[i] = (refWhite[i] + math.log10(max(FLOAT_MIN, relativeExposure))*gamma[i]/0.002)/1023.0
+
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+
+            # Copy the extra channels
+            for i in range(min(3, stride),stride):
+                outValue[i] = value[i]
+
+            # Copy to the output array
+            outValues[p*stride:(p+1)*stride] = outValue
+
+        return outValues
     # process
 
     def printInfoChild(self):

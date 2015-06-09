@@ -87,7 +87,7 @@ class Range(ProcessNode):
         return None
     # readChild
 
-    def process(self, value, verbose=False):
+    def process(self, value, stride=0, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']

@@ -101,7 +101,7 @@ class Gamma(ProcessNode):
         return None
     # readChild
 
-    def process(self, value, verbose=False):
+    def process(self, values, stride=0, verbose=False):
         # Base attributes
         inBitDepth = self._attributes['inBitDepth']
         outBitDepth = self._attributes['outBitDepth']
@@ -130,49 +130,61 @@ class Gamma(ProcessNode):
         print( "offset     : %s" % offset )
         '''
 
-        # Actually process a value or two
-        outValue = value
-        if style == 'basicFwd':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
-                outValue[i] = pow(max(0.0, outValue[i]), gamma[i])
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+        # Handle processing of single values
+        if stride == 0:
+            stride = len(values)
 
-        elif style == 'basicRev':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
-                outValue[i] = pow(max(0.0, outValue[i]), 1/gamma[i])
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+        # Initialize the output value
+        outValues = np.zeros(len(values), dtype=np.float32)
 
-        elif style == 'moncurveFwd':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+        for p in range(len(values)/stride):
+            value = values[p*stride:(p+1)*stride]
+            outValue = values[p*stride:(p+1)*stride]
 
-                pivot = (offset[i]/(gamma[i]-1))
-                if( outValue[i] <= pivot ):
-                    outValue[i] = (gamma[i]-1.0)/offset[i]*pow(gamma[i]*offset[i]/((gamma[i]-1.0)*(offset[i]+1.0)), gamma[i])*outValue[i]
-                else:
-                    outValue[i] = pow(max(0.0, (outValue[i] + offset[i])/(offset[i] + 1.0)), gamma[i])
+            if style == 'basicFwd':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+                    outValue[i] = pow(max(0.0, outValue[i]), gamma[i])
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+            elif style == 'basicRev':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+                    outValue[i] = pow(max(0.0, outValue[i]), 1/gamma[i])
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-        elif style == 'moncurveRev':
-            for i in range(3):
-                outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
+            elif style == 'moncurveFwd':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-                pivot = pow( gamma[i]*offset[i]/((gamma[i]-1.0)*(offset[i]+1.0)) , gamma[i])
-                if( outValue[i] <= (offset[i]/(gamma[i]-1)) ):
-                    outValue[i] = pow((gamma[i]-1.0)/offset[i], gamma[i]-1.0)*pow((1.0 + offset[i])/gamma[i], gamma[i])*outValue[i]
-                else:
-                    outValue[i] = pow(max(0.0, outValue[i]), 1.0/gamma[i])*(1.0 + offset[i]) - offset[i]
+                    pivot = (offset[i]/(gamma[i]-1))
+                    if( outValue[i] <= pivot ):
+                        outValue[i] = (gamma[i]-1.0)/offset[i]*pow(gamma[i]*offset[i]/((gamma[i]-1.0)*(offset[i]+1.0)), gamma[i])*outValue[i]
+                    else:
+                        outValue[i] = pow(max(0.0, (outValue[i] + offset[i])/(offset[i] + 1.0)), gamma[i])
 
-                outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
-        # Copy the extra channels
-        for i in range(min(3, len(value)),len(value)):
-            outValue[i] = value[i]
+            elif style == 'moncurveRev':
+                for i in range(3):
+                    outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
-        return outValue
+                    pivot = pow( gamma[i]*offset[i]/((gamma[i]-1.0)*(offset[i]+1.0)) , gamma[i])
+                    if( outValue[i] <= (offset[i]/(gamma[i]-1)) ):
+                        outValue[i] = pow((gamma[i]-1.0)/offset[i], gamma[i]-1.0)*pow((1.0 + offset[i])/gamma[i], gamma[i])*outValue[i]
+                    else:
+                        outValue[i] = pow(max(0.0, outValue[i]), 1.0/gamma[i])*(1.0 + offset[i]) - offset[i]
+
+                    outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
+
+            # Copy the extra channels
+            for i in range(min(3, stride),stride):
+                outValue[i] = value[i]
+
+            # Copy to the output array
+            outValues[p*stride:(p+1)*stride] = outValue
+
+        return outValues
     # process
 
     def printInfoChild(self):

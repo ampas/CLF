@@ -603,21 +603,21 @@ class TestCLF(unittest.TestCase):
         return pl        
     #createCLF
 
-    def processExample(self, processList, value):
+    def processExample(self, processList, value, stride, bitDepth):
         rangePL = ProcessList()
 
         # Add a range node
-        rpn0 = Range(value[3], bitDepths["FLOAT16"], "someId", "Transform0")
+        rpn0 = Range(value, bitDepths["FLOAT16"], "someId", "Transform0")
         rangePL.addProcess(rpn0)
 
-        processedValue = map(float,value[:3])
+        processedValue = map(float,value)
         print( "Input Value  : %s" % processedValue)
 
         # Normalize values
-        processedValue = rangePL.process(processedValue, verbose=True)    
+        processedValue = rangePL.process(processedValue, stride, verbose=True)    
 
         # Run through processList
-        processedValue = processList.process(processedValue, verbose=True)
+        processedValue = processList.process(processedValue, stride, verbose=True)
 
         return processedValue
     # processExample
@@ -658,9 +658,11 @@ class TestCLF(unittest.TestCase):
         pl = ProcessList(self._tmpclf)
         self.assertTrue(pl != None)
 
-        # Process value
-        processValue = "0.5 0 1.0 32f".split()
-        processedValue = self.processExample(pl, processValue)
+        # Process value (with extra channels that will be ignored)
+        processValue = "0.5 0.0 1.0 1.0 215.0".split()
+        stride = 5
+        bitDepth = "32f"
+        processedValue = self.processExample(pl, processValue, stride, bitDepth)
 
         # Test
         self.assertTrue(processedValue.nonzero() != None)

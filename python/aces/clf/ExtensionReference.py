@@ -131,15 +131,14 @@ class Reference(ProcessNode):
         return None
     # readInitialize
 
-    def process(self, value, verbose=False):
-        outValue = value
+    def process(self, values, stride=0, verbose=False):
         if verbose:
             print( "Reference processing - begin" )
         if self._processList != None:
-            outValue = self._processList.process(outValue, verbose=verbose)
+            outValues = self._processList.process(values, stride, verbose=verbose)
         if verbose:
             print( "Reference processing - end\n" )
-        return outValue
+        return outValues
     # process
 
     def printInfoChild(self):

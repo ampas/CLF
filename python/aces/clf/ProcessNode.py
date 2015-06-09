@@ -91,13 +91,13 @@ def bitDepthToNormalized(value, bitDepth):
 def normalizedToBitDepth(value, bitDepth):
     # Convert to normalized representation
     if( bitDepth == bitDepths["UINT8"] ):
-        outValue = clamp(value)*(pow(2, 8)-1.0)
+        outValue = value*(pow(2, 8)-1.0)
     elif( bitDepth == bitDepths["UINT10"] ):
-        outValue = clamp(value)*(pow(2, 10)-1.0)        
+        outValue = value*(pow(2, 10)-1.0)        
     elif( bitDepth == bitDepths["UINT12"] ):
-        outValue = clamp(value)*(pow(2, 12)-1.0)
+        outValue = value*(pow(2, 12)-1.0)
     elif( bitDepth == bitDepths["UINT16"] ):
-        outValue = clamp(value)*(pow(2, 16)-1.0)
+        outValue = value*(pow(2, 16)-1.0)
     else:
         outValue = value
     return outValue
@@ -286,7 +286,7 @@ class ProcessNode():
         return self._nodeType
 
     # Color processing
-    def process(self, value, verbose=False):
+    def process(self, values, stride=0, verbose=False):
         if verbose:
             print( "ProcessNode::process - processing bypassed")
         return value
