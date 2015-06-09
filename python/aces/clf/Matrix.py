@@ -109,22 +109,26 @@ class Matrix(ProcessNode):
         # Initialize the output value
         outValues = np.zeros(len(values), dtype=np.float32)
 
+        # For each pixel
         for p in range(len(values)/stride):
             value = values[p*stride:(p+1)*stride]
             outValue = np.zeros(stride, dtype=np.float32)
 
-            for i in range(min(3, stride)):
+            for i in range(min(dimensions[0], stride)):
                 offset = i*dimensions[1]
-                outValue[i] = matrix[0 + offset]*value[0] + matrix[1 + offset]*value[1] + matrix[2 + offset]*value[2]
+                outValue[i] = 0
+                for j in range(dimensions[0]):
+                    outValue[i] += matrix[j + offset]*value[j]
+
                 #print( "value : %d : %f = %f * %f + %f * %f + %f * %f" % (
                 #    i, outValue[i], matrix[0 + offset], value[0], matrix[1 + offset], value[1], matrix[2 + offset], value[2]))
-                if dimensions[1] == 4:
-                    outValue[i] += matrix[offset+3]
+                if dimensions[1] == dimensions[0]+1:
+                    outValue[i] += matrix[offset+dimensions[1]-1]
 
                 #outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
             # Copy the extra channels
-            for i in range(min(3, stride),stride):
+            for i in range(min(dimensions[0], stride),stride):
                 outValue[i] = value[i]
 
             # Copy to the output array

@@ -154,15 +154,25 @@ class TestCLF(unittest.TestCase):
         #pn1 = ProcessNode("TestProcessNode", "10i", "16f", "someId", "Transform1")
         #pl.addProcess(pn1)
 
-        # Add a matrix node
+        # Add a 3x3 matrix node
         mpn1 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform1")
         mpn1.setMatrix([3, 3, 3], [2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5])
         pl.addProcess(mpn1)
 
-        # Add another matrix node
+        # Add 3x4 matrix node
         mpn2 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
         mpn2.setMatrix([3, 4, 3], [0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0, 0.0, 2.0, 0.0])
         pl.addProcess(mpn2)
+
+        # Add 4x4 matrix node
+        mpn3 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
+        mpn3.setMatrix([4, 4, 4], [2.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.1])
+        pl.addProcess(mpn3)
+
+        # Add 4x5 matrix node
+        mpn4 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
+        mpn4.setMatrix([4, 5, 4], [0.5, 0.0, 0.0, 0.0, 0.1,  0.0, 1.0, 0.0, 0.0, 0.1,  0.0, 0.0, 2.0, 0.0, 0.1,  0.0, 0.0, 1.0, 0.0, 0.01])
+        pl.addProcess(mpn4)
 
         # Add a range node
         rpn1 = Range(bitDepths["FLOAT16"], bitDepths["UINT12"], "someId", "Transform3", style='noClamp')
