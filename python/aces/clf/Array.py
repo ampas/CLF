@@ -54,6 +54,7 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 
 import math
 import numpy as np
+from scipy.interpolate import interp1d, LinearNDInterpolator
 
 import xml.etree.ElementTree as etree
 
@@ -76,6 +77,16 @@ class Array:
         self._rawHalfs = rawHalfs
         self._floatEncoding = floatEncoding
         self._elementType = elementType
+
+        self._interp1ds = None
+        self._interp3d = None
+
+        # Create the interpolators that we'll use later
+        if self._values != [] and self._dimensions != []:
+            if len(self._dimensions) == 2:
+                self.create1dInterpolators()
+            elif len(self._dimensions) == 4:
+                self.create3dInterpolator()
     # __init__
 
     def setDimensions(self, dimensions):
@@ -85,6 +96,13 @@ class Array:
 
     def setValues(self, values):
         self._values = values
+
+        if self._values != [] and self._dimensions != []:
+            if len(self._dimensions) == 2:
+                self.create1dInterpolators()
+            elif len(self._dimensions) == 4:
+                self.create3dInterpolator()
+
     def getValues(self):
         return self._values
 
@@ -209,7 +227,7 @@ class Array:
         for i in range(len(textValues)):
             numValues[i] = cast(textValues[i])
 
-        self._values = numValues
+        self.setValues(numValues)
     # read
 
     def printInfo(self):
@@ -254,6 +272,52 @@ class Array:
                     sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
                 print( " "*30 + sampleText )
     # printInfo
+
+    #
+    # Interpolators
+    #
+    def create1dInterpolators(self):
+        dimensions = self._dimensions
+
+        if dimensions[0] >= 4 and dimensions[0] < 65536:
+            self._interp1ds = []
+            for channel in range(dimensions[1]):
+                indices = np.arange(0, dimensions[0])
+                output = np.arange(0, dimensions[0])
+                for i in range(len(output)):
+                    output[i] = self.lookup1D(i, channel)
+
+                # Create a cubic interpolator using the indices and array values
+                cubicInterpolator = interp1d(indices, output, 
+                    kind='cubic', bounds_error=False, fill_value=0.0)
+
+                self._interp1ds.append(cubicInterpolator)
+
+    def create3dInterpolator(self):
+        values = self._values
+        dimensions = self._dimensions
+
+        self._interp3d = None
+
+        # Create index array
+        indices = [[0,0,0]]*dimensions[0]*dimensions[1]*dimensions[2]
+
+        # Create output value array
+        output = [[0,0,0]]*dimensions[0]*dimensions[1]*dimensions[2]
+
+        i = 0
+        for z in range(dimensions[2]):
+            for y in range(dimensions[1]):
+                for x in range(dimensions[0]):
+                    index1 = (x*dimensions[0]*dimensions[1] + y*dimensions[1] + z)*3 
+                    indices[i] = [x, y, z]
+                    output[i] = values[index1:index1+3]
+                    i += 1
+
+        # Create tetrahedral interpolator
+        tetrahedralInterpolator = LinearNDInterpolator(indices, output)
+
+        self._interp3d = tetrahedralInterpolator
 
     #
     # Lookup values
@@ -374,7 +438,7 @@ class Array:
         return result
     # lookup1DHalfDomain
 
-    # 1D linearly interpolated lookup
+    # 1D linearly interpolation lookup
     def lookup1DLinear(self, position, channel):
         values = self._values
         dimensions = self._dimensions
@@ -392,10 +456,30 @@ class Array:
         return result
     # lookup1DLinear
 
-    # XXX
-    # To be implemented
+    # 1D cubic interpolation lookup
     def lookup1DCubic(self, position, channel):
-        return self.lookup1DLinear(position, channel)
+        dimensions = self._dimensions
+
+        if dimensions[0] < 4:
+            return lookup1DLinear(position, channel)
+
+        index = position*(dimensions[0]-1)
+
+        # Handle out of bounds positions
+        if index < 0:
+            result = self.lookup1D(0, channel)
+        elif index >= dimensions[0]:
+            result = elf.lookup1D(dimensions[0]-1, channel)
+
+        # Use cubic interpolation
+        else:
+            if not self._interp1ds:
+                self.create1dInterpolators()
+
+            lutChannel = min(dimensions[1], channel)
+            result = self._interp1ds[lutChannel](index)
+
+        return result
 
     def lookup3D(self, index3):
         values = self._values
@@ -466,10 +550,26 @@ class Array:
         return enclosingCubeColors[0];
     # lookup3DTrilinear
 
-    # XXX
-    # To be implemented
     def lookup3DTetrahedral(self, position):
-        return self.lookup3DTrilinear(position)
+        if not self._interp3d:
+            self.create3dInterpolator()
+
+        dimensions = self._dimensions
+
+        # clamp because we only use values between 0 and 1
+        position = map(clamp, position)
+
+        # index values interpolation factor for RGB
+        indexRf = (position[0] * (dimensions[0]-1))
+        indexGf = (position[1] * (dimensions[1]-1))
+        indexBf = (position[2] * (dimensions[2]-1))
+
+        interpolated = self._interp3d(indexRf, indexGf, indexBf)
+
+        return interpolated
+
+        # Fallback
+        #return self.lookup3DTrilinear(position)
 # Array
 
 

@@ -210,7 +210,7 @@ class TestCLF(unittest.TestCase):
         l1d2.setIndexMaps([[0, 256, 1023], [0, 1, 2]])
         pl.addProcess(l1d2)
 
-        # Add another 1D lut node
+        # Add a 3D lut node
         l3d1 = LUT3D("10i", "10i", "someId", "Transform7")
         #indexMapR = [[0, 128, 1023], [0, 1, 2]]
         indexMapG = [[0, 768], [0, 1]]
@@ -227,6 +227,19 @@ class TestCLF(unittest.TestCase):
             1023, 1023, 0,  
             1023, 1023, 1023])
         pl.addProcess(l3d1)
+
+        # Add a 3D lut node, using tetrahedral interpolation
+        l3d2 = LUT3D("10i", "10i", "someId", "Transform7", interpolation='tetrahedral')
+        l3d2.setArray([2, 2, 2], 
+            [0, 0, 0,  
+            0, 0, 1023,  
+            0, 1023, 0,  
+            0, 1023, 1023,
+            1023, 0, 0,  
+            1023, 0, 1023,  
+            1023, 1023, 0,  
+            1023, 1023, 1023])
+        pl.addProcess(l3d2)
 
         # Add a range node
         rpn2 = Range(bitDepths["UINT10"], bitDepths["FLOAT16"], "someId", "Transform7", style='clamp')
