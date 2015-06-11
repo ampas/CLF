@@ -279,13 +279,18 @@ class Array:
     def create1dInterpolators(self):
         dimensions = self._dimensions
 
+        #print( "Creating 1D interpolator" )
+
         if dimensions[0] >= 4 and dimensions[0] < 65536:
             self._interp1ds = []
             for channel in range(dimensions[1]):
                 indices = np.arange(0, dimensions[0])
-                output = np.arange(0, dimensions[0])
+                output = np.zeros(dimensions[0], dtype=np.float32)
                 for i in range(len(output)):
                     output[i] = self.lookup1D(i, channel)
+
+                #print( indices )
+                #print( output )
 
                 # Create a cubic interpolator using the indices and array values
                 cubicInterpolator = interp1d(indices, output, 
@@ -300,17 +305,17 @@ class Array:
         self._interp3d = None
 
         # Create index array
-        indices = [[0,0,0]]*dimensions[0]*dimensions[1]*dimensions[2]
+        indices = [[0.0,0.0,0.0]]*dimensions[0]*dimensions[1]*dimensions[2]
 
         # Create output value array
-        output = [[0,0,0]]*dimensions[0]*dimensions[1]*dimensions[2]
+        output = [[0.0,0.0,0.0]]*dimensions[0]*dimensions[1]*dimensions[2]
 
         i = 0
         for z in range(dimensions[2]):
             for y in range(dimensions[1]):
                 for x in range(dimensions[0]):
                     index1 = (x*dimensions[0]*dimensions[1] + y*dimensions[1] + z)*3 
-                    indices[i] = [x, y, z]
+                    indices[i] = [float(x), float(y), float(z)]
                     output[i] = values[index1:index1+3]
                     i += 1
 
@@ -329,6 +334,7 @@ class Array:
         dimensions = self._dimensions
 
         if dimensions[1] == 3:
+            channel = max(0, min(2, channel))
             if index < 0:
                 result = values[0 + channel]
             elif index >= dimensions[0]:
@@ -457,10 +463,10 @@ class Array:
     # lookup1DLinear
 
     # 1D cubic interpolation lookup
-    def lookup1DCubic(self, position, channel):
+    def lookup1DCubic(self, position, channel, useSciPy=False):
         dimensions = self._dimensions
 
-        if dimensions[0] < 4:
+        if dimensions[0] < 4 or not useSciPy:
             return lookup1DLinear(position, channel)
 
         index = position*(dimensions[0]-1)
@@ -469,7 +475,7 @@ class Array:
         if index < 0:
             result = self.lookup1D(0, channel)
         elif index >= dimensions[0]:
-            result = elf.lookup1D(dimensions[0]-1, channel)
+            result = self.lookup1D(dimensions[0]-1, channel)
 
         # Use cubic interpolation
         else:
@@ -550,26 +556,27 @@ class Array:
         return enclosingCubeColors[0];
     # lookup3DTrilinear
 
-    def lookup3DTetrahedral(self, position):
-        if not self._interp3d:
-            self.create3dInterpolator()
+    def lookup3DTetrahedral(self, position, useSciPy=False):
+        # Fallback, and the default for now
+        if not useSciPy:
+            return self.lookup3DTrilinear(position)
+        else:
+            if not self._interp3d:
+                self.create3dInterpolator()
 
-        dimensions = self._dimensions
+            dimensions = self._dimensions
 
-        # clamp because we only use values between 0 and 1
-        position = map(clamp, position)
+            # clamp because we only use values between 0 and 1
+            position = map(clamp, position)
 
-        # index values interpolation factor for RGB
-        indexRf = (position[0] * (dimensions[0]-1))
-        indexGf = (position[1] * (dimensions[1]-1))
-        indexBf = (position[2] * (dimensions[2]-1))
+            # index values interpolation factor for RGB
+            indexRf = (position[0] * (dimensions[0]-1))
+            indexGf = (position[1] * (dimensions[1]-1))
+            indexBf = (position[2] * (dimensions[2]-1))
 
-        interpolated = self._interp3d(indexRf, indexGf, indexBf)
+            interpolated = self._interp3d(indexRf, indexGf, indexBf)
 
-        return interpolated
-
-        # Fallback
-        #return self.lookup3DTrilinear(position)
+            return interpolated
 # Array
 
 

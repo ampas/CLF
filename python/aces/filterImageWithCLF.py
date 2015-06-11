@@ -379,7 +379,7 @@ def filterRow_stride(row,
         pvalue = OutRange.process(pvalue, stride=channels)
 
     if verbose:
-        print( "Processed %04d, %04d : %s -> %s" % (i, j, ovalue, pvalue))
+        print( "Processed %04d : %s -> %s" % (row, ovalue, pvalue))
 
     for c in range(width*channels):
         processedPixels[index + c] = pvalue[c]
@@ -582,7 +582,7 @@ def main():
     if verbose:
         print( "command line : \n%s\n" % " ".join(sys.argv) )
  
-    if not outputBitDepth in clf.bitDepths.values():
+    if outputBitDepth and not (outputBitDepth in clf.bitDepths.values()):
         print( "Output bit depth %s is not a valid CLF bit depth. It will be ignored." % outputBitDepth)
         print( "Valid values are %s." % ", ".join(clf.bitDepths.values()) )
         outputBitDepth = None
