@@ -558,7 +558,7 @@ def main():
     p.add_option('--clf', '-c', default=None)
     p.add_option('--verbose', '-v', action="store_true")
     p.add_option('--outputBitDepth', '', default=None)
-    p.add_option('--multithreaded', '-m', type='int', default=cpu_count())
+    p.add_option('--multithreaded', '-m', type='int', default=1)
 
     options, arguments = p.parse_args()
 
@@ -571,6 +571,7 @@ def main():
     verbose = options.verbose == True
     outputBitDepth = options.outputBitDepth
     multithreaded = options.multithreaded
+    multithreaded = min(cpu_count(), max(1, multithreaded))
 
     try:
         argsStart = sys.argv.index('--') + 1

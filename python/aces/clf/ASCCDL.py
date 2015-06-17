@@ -120,7 +120,7 @@ class ASCCDL(ProcessNode):
     def process(self, values, stride=0, verbose=False):
         # Handle processing of single values
         if stride == 0:
-            stride = len(value)
+            stride = len(values)
 
         # Pass through if there aren't at least three channels
         if stride < 3:
@@ -161,7 +161,7 @@ class ASCCDL(ProcessNode):
 
         # Support CLF spec and Autodesk CTF style keywords
         for p in range(len(values)/stride):
-            value = value[p*stride:(p+1)*stride]
+            value = values[p*stride:(p+1)*stride]
             outValue = values[p*stride:(p+1)*stride]
 
             if style == 'Fwd' or style == 'v1.2_Fwd':

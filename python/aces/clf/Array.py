@@ -351,8 +351,8 @@ class Array:
         return result
     # lookup1D
 
-    # 1D Half-Domain lookup
-    def lookup1DHalfDomain(self, position, channel, interpolate=True):
+    # 1D Half-Domain lookup - nearest match
+    def lookup1DHalfDomainNearest(self, position, channel):
         values = self._values
         dimensions = self._dimensions
 
@@ -363,86 +363,131 @@ class Array:
             value = self.lookup1D(index, channel)
             result = value
 
+        return result
+
+    # 1D Half-Domain lookup - interpolated lookup
+    def lookup1DHalfDomainInterpolated(self, position, channel):
+        values = self._values
+        dimensions = self._dimensions
+
+        # In this case, the input values are treated as float32
+        # The nearest float16 value are found and then 
+        # used to as two entries in the LUT
+
+        # 16 bit half floats uses code values as follows
+        # We have to account for each case
+        # 0 to 31743 = positive values 0.0 to 65504.0
+        # 31744 = Inf
+        # 31745 to 32767 = NaN
+        # 32768 to 64511 = negative values 0.0 to -65504.0
+        # 64512 = -Inf
+        # 64513 to 65535 = NaN
+
+        # NaNs
+        if np.isnan(position):
+            #print( "lookup1DHalfDomain - NaN" )
+            index = 31745
+            value = self.lookup1D(index, channel)
+            result = value
+
+        # Infs
+        elif np.isinf(position):
+            # -Inf
+            if position < 0:
+                #print( "lookup1DHalfDomain - -Inf" )
+                index = 64512
+                value = self.lookup1D(index, channel)
+                result = value
+            # Inf
+            else:
+                #print( "lookup1DHalfDomain - +Inf" )
+                index = 31744
+                value = self.lookup1D(index, channel)
+                result = value
+
+        # Positive and negative numbers:
+        else:
+
+            # Cast float32 to float16
+            floatValue = max(-65504.0, min(65504.0, position))
+            halfValue1 = np.float16(floatValue)
+            floatDifference = floatValue - halfValue1
+
+            offset = 1
+            indexMin = 0
+            indexMax = 31743
+            if floatValue < 0.0:
+                offset = -1
+                indexMin = 32768
+                indexMax = 64511
+
+            # Cast could put half value above or below the original float value
+            if floatDifference >= 0.0:
+                halfValue2 = uint16ToHalf(max(indexMin, min(indexMax, halfToUInt16(halfValue1)+offset)))
+                halfRange = (halfValue2 - halfValue1)
+                if halfRange != 0.0:
+                    ratio = floatDifference/halfRange
+                else:
+                    ratio = 0.0
+            else:
+                halfValue2 = uint16ToHalf(max(indexMin, min(indexMax, halfToUInt16(halfValue1)-offset)))
+                halfRange = (halfValue2 - halfValue1)
+                if halfRange != 0.0:
+                    import warnings
+                    #np.seterr(all='warn')
+                    #try:
+                    ratio = floatDifference/halfRange
+                    #except RuntimeWarning:
+                    #    print( "warning : floatDifference %f, halfRange %f" % (floatDifference, halfRange) )
+                else:
+                    ratio = 0.0
+
+            # Convert half values to integers
+            index1 = halfToUInt16(halfValue1)
+            index2 = halfToUInt16(halfValue2)
+
+            # Lookup values in LUT using integer indices
+            value1 = self.lookup1D(index1, channel)
+            value2 = self.lookup1D(index2, channel)
+
+            # Interpolate
+            result = (1-ratio)*value1 + ratio*value2
+
+            '''
+            print( "lookup1DHalfDomain - normal numbers" )
+            print( "lookup1DHalfDomain - position        : %6.9f" % position )
+            print( "lookup1DHalfDomain - float value     : %6.9f" % floatValue )
+            print( "lookup1DHalfDomain - index 1         : %d" % index1 )
+            print( "lookup1DHalfDomain - index 2         : %d" % index2 )
+            print( "lookup1DHalfDomain - half value 1    : %6.9f" % halfValue1 )
+            print( "lookup1DHalfDomain - half value 2    : %6.9f" % halfValue2 )
+            print( "lookup1DHalfDomain - floatDifference : %6.9f" % floatDifference )
+            print( "lookup1DHalfDomain - ratio           : %6.9f" % ratio )
+            print( "lookup1DHalfDomain - value 1         : %6.9f" % value1 )
+            print( "lookup1DHalfDomain - value 2         : %6.9f" % value2 )
+            print( "lookup1DHalfDomain - result          : %6.9f" % result )
+            '''                           
+
+        return result
+    # lookup1DHalfDomainInterpolated
+
+    # 1D Half-Domain lookup
+    def lookup1DHalfDomain(self, position, channel, interpolate=True):
+        values = self._values
+        dimensions = self._dimensions
+
+        # Input half-float values are treated as 16 bit unsigned integers
+        # Those integers are the index into the LUT
+        if not interpolate:
+            result = self.lookup1DHalfDomainNearest(position, channel)
+
         # In this case, the input values are treated as float32
         # The nearest float16 value are found and then 
         # used to as two entries in the LUT
         else:
-            # 16 bit half floats uses code values as follows
-            # We have to account for each case
-            # 0 to 31743 = positive values 0.0 to 65504.0
-            # 31744 = Inf
-            # 31745 to 32767 = NaN
-            # 32768 to 64511 = negative values 0.0 to -65504.0
-            # 64512 = -Inf
-            # 64513 to 65535 = NaN
-
-            # NaNs
-            if np.isnan(position):
-                #print( "lookup1DHalfDomain - NaN" )
-                index = 31745
-                value = self.lookup1D(index, channel)
-                result = value
-            # Infs
-            elif np.isinf(position):
-                # -Inf
-                if position < 0:
-                    #print( "lookup1DHalfDomain - -Inf" )
-                    index = 64512
-                    value = self.lookup1D(index, channel)
-                    result = value
-                # Inf
-                else:
-                    #print( "lookup1DHalfDomain - +Inf" )
-                    index = 31744
-                    value = self.lookup1D(index, channel)
-                    result = value
-
-            # Positive and negative numbers:
-            else:
-
-                # Cast float32 to float16
-                halfPosition1 = np.float16(position)
-                floatDifference = position - halfPosition1
-
-                offset = 1
-                if position < 0.0:
-                    offset = -1
-
-                # Cast could put half value above or below the original float value
-                if floatDifference >= 0.0:
-                    halfPosition2 = uint16ToHalf(halfToUInt16(halfPosition1)+offset)
-                    ratio = floatDifference/(halfPosition2 - halfPosition1)
-                else:
-                    halfPosition2 = uint16ToHalf(halfToUInt16(halfPosition1)-offset)
-                    ratio = 1.0 - floatDifference/(halfPosition2 - halfPosition1)
-
-                # Convert half values to integers
-                index1 = halfToUInt16(halfPosition1)
-                index2 = halfToUInt16(halfPosition2)
-
-                # Lookup values in LUT using integer indices
-                value1 = self.lookup1D(index1, channel)
-                value2 = self.lookup1D(index2, channel)
-
-                # Interpolate
-                result = (1-ratio)*value1 + ratio*value2
-
-                '''
-                print( "lookup1DHalfDomain - normal numbers" )
-                print( "lookup1DHalfDomain - position        : %f" % position )
-                print( "lookup1DHalfDomain - halfPosition1   : %f" % halfPosition1 )
-                print( "lookup1DHalfDomain - floatDifference : %f" % floatDifference )
-                print( "lookup1DHalfDomain - halfPosition2   : %f" % halfPosition2 )
-                print( "lookup1DHalfDomain - ratio           : %f" % ratio )
-                print( "lookup1DHalfDomain - index1          : %d" % index1 )
-                print( "lookup1DHalfDomain - index2          : %d" % index2 )
-                print( "lookup1DHalfDomain - value1          : %f" % value1 )
-                print( "lookup1DHalfDomain - value2          : %f" % value2 )
-                print( "lookup1DHalfDomain - result          : %f" % result )
-                '''
+            result = self.lookup1DHalfDomainInterpolated(position, channel)
 
         return result
-    # lookup1DHalfDomain
 
     # 1D linearly interpolation lookup
     def lookup1DLinear(self, position, channel):
