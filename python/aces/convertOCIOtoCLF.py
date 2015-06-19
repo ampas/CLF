@@ -150,8 +150,10 @@ def convertTransformsToProcessNodes( ocioTransform,
         if lutSearchPath != None:
             lutPath = os.path.join( lutSearchPath, lutPath )
 
-        lutpns = lutFormats.Registry.read(lutPath, direction, interpolation, 
-            useIndexMaps=inversesUseIndexMaps, inversesUseHalfDomain=inversesUseHalfDomain,
+        inverse = direction != 'forward'
+        lutpns = lutFormats.Registry.read(lutPath, inverse, interpolation, 
+            inversesUseIndexMaps=inversesUseIndexMaps, 
+            inversesUseHalfDomain=inversesUseHalfDomain,
             returnProcessNodes=True)
         #print( "Created %d CLF process nodes" % len(lutpns) )
         pns.extend( lutpns )
