@@ -383,15 +383,19 @@ class Array:
         # 64512 = -Inf
         # 64513 to 65535 = NaN
 
+        # Cast float32 to float16
+        floatValue = position
+        halfValue1 = np.float16(floatValue)
+
         # NaNs
-        if np.isnan(position):
+        if np.isnan(halfValue1):
             #print( "lookup1DHalfDomain - NaN" )
             index = 31745
             value = self.lookup1D(index, channel)
             result = value
 
         # Infs
-        elif np.isinf(position):
+        elif np.isinf(halfValue1):
             # -Inf
             if position < 0:
                 #print( "lookup1DHalfDomain - -Inf" )
@@ -407,10 +411,6 @@ class Array:
 
         # Positive and negative numbers:
         else:
-
-            # Cast float32 to float16
-            floatValue = max(-65504.0, min(65504.0, position))
-            halfValue1 = np.float16(floatValue)
             floatDifference = floatValue - halfValue1
 
             offset = 1
