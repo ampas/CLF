@@ -54,7 +54,13 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 
 import math
 import numpy as np
-from scipy.interpolate import interp1d, LinearNDInterpolator
+try:
+    from scipy.interpolate import interp1d, LinearNDInterpolator
+    sciPyEnabled = True
+    raise ImportError('A very specific bad thing happened')
+except ImportError, e:
+    print( "Scipy import failed" )
+    sciPyEnabled = False
 
 import xml.etree.ElementTree as etree
 
@@ -281,22 +287,24 @@ class Array:
 
         #print( "Creating 1D interpolator" )
 
-        if dimensions[0] >= 4 and dimensions[0] < 65536:
-            self._interp1ds = []
-            for channel in range(dimensions[1]):
-                indices = np.arange(0, dimensions[0])
-                output = np.zeros(dimensions[0], dtype=np.float32)
-                for i in range(len(output)):
-                    output[i] = self.lookup1D(i, channel)
+        self._interp1ds = []
 
-                #print( indices )
-                #print( output )
+        if sciPyEnabled:
+            if dimensions[0] >= 4 and dimensions[0] < 65536:
+                for channel in range(dimensions[1]):
+                    indices = np.arange(0, dimensions[0])
+                    output = np.zeros(dimensions[0], dtype=np.float32)
+                    for i in range(len(output)):
+                        output[i] = self.lookup1D(i, channel)
 
-                # Create a cubic interpolator using the indices and array values
-                cubicInterpolator = interp1d(indices, output, 
-                    kind='cubic', bounds_error=False, fill_value=0.0)
+                    #print( indices )
+                    #print( output )
 
-                self._interp1ds.append(cubicInterpolator)
+                    # Create a cubic interpolator using the indices and array values
+                    cubicInterpolator = interp1d(indices, output, 
+                        kind='cubic', bounds_error=False, fill_value=0.0)
+
+                    self._interp1ds.append(cubicInterpolator)
 
     def create3dInterpolator(self):
         values = self._values
@@ -304,25 +312,26 @@ class Array:
 
         self._interp3d = None
 
-        # Create index array
-        indices = [[0.0,0.0,0.0]]*dimensions[0]*dimensions[1]*dimensions[2]
+        if sciPyEnabled:
+            # Create index array
+            indices = [[0.0,0.0,0.0]]*dimensions[0]*dimensions[1]*dimensions[2]
 
-        # Create output value array
-        output = [[0.0,0.0,0.0]]*dimensions[0]*dimensions[1]*dimensions[2]
+            # Create output value array
+            output = [[0.0,0.0,0.0]]*dimensions[0]*dimensions[1]*dimensions[2]
 
-        i = 0
-        for z in range(dimensions[2]):
-            for y in range(dimensions[1]):
-                for x in range(dimensions[0]):
-                    index1 = (x*dimensions[0]*dimensions[1] + y*dimensions[1] + z)*3 
-                    indices[i] = [float(x), float(y), float(z)]
-                    output[i] = values[index1:index1+3]
-                    i += 1
+            i = 0
+            for z in range(dimensions[2]):
+                for y in range(dimensions[1]):
+                    for x in range(dimensions[0]):
+                        index1 = (x*dimensions[0]*dimensions[1] + y*dimensions[1] + z)*3 
+                        indices[i] = [float(x), float(y), float(z)]
+                        output[i] = values[index1:index1+3]
+                        i += 1
 
-        # Create tetrahedral interpolator
-        tetrahedralInterpolator = LinearNDInterpolator(indices, output)
+            # Create tetrahedral interpolator
+            tetrahedralInterpolator = LinearNDInterpolator(indices, output)
 
-        self._interp3d = tetrahedralInterpolator
+            self._interp3d = tetrahedralInterpolator
 
     #
     # Lookup values
@@ -511,7 +520,7 @@ class Array:
     def lookup1DCubic(self, position, channel, useSciPy=False):
         dimensions = self._dimensions
 
-        if dimensions[0] < 4 or not useSciPy:
+        if dimensions[0] < 4 or not useSciPy or not sciPyEnabled:
             return lookup1DLinear(position, channel)
 
         index = position*(dimensions[0]-1)
@@ -603,7 +612,7 @@ class Array:
 
     def lookup3DTetrahedral(self, position, useSciPy=False):
         # Fallback, and the default for now
-        if not useSciPy:
+        if not useSciPy or not sciPyEnabled:
             return self.lookup3DTrilinear(position)
         else:
             if not self._interp3d:
