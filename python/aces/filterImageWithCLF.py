@@ -82,15 +82,8 @@ def halfsToFloat(half1, half2):
 # 'floats' read from OpenImageIO.
 # Each 4 byte 'float' is the binary equivalent of two packed 2-byte half-floats.
 def oiioFloatPixelsToNPHalfArray(width, height, channels, oiioFloats):
-    # Read half float pixels into a numpy pixel array
-    npPixels = np.zeros(width*height*channels, dtype=np.float16)
-
-    # OIIO packs two half-float into a single float value
-    # They have to be split out and then stored in a new array
-    for entry in range(len(oiioFloats)):
-        (half1, half2) = floatToHalfs(oiioFloats[entry])
-        npPixels[entry*2    ] = half1
-        npPixels[entry*2 + 1] = half2
+    # Read float pixels into a numpy half-float pixel array
+    npPixels = np.frombuffer(np.getbuffer(np.float32(oiioFloats)), dtype=np.float16)
 
     return npPixels
 # oiioFloatPixelsToNPHalfArray
@@ -100,20 +93,9 @@ def oiioFloatPixelsToNPHalfArray(width, height, channels, oiioFloats):
 # is a numpy array of half-float pixels. 
 # Each 4 byte 'float' is the binary equivalent of two packed 2-byte half-floats.
 def npHalfArrayToOIIOFloatPixels(width, height, channels, npPixels):
-    # Allocate array of floats. Divide by two as two half values will be
-    # packes into each float value
-    oiioFloats = [0.0]*(width*height*channels/2)
+    # Read half-float pixels into a numpy float pixel array
+    oiioFloatsArray = np.frombuffer(np.getbuffer(np.float16(npPixels)), dtype=np.float32)
 
-    # Step through the float array, grabbing the appropriate two half values
-    # and bringing them together
-    for entry in range(len(oiioFloats)):
-        #print( "%d / %d" % (entry, len(npPixels)) )
-        half1 = npPixels[entry*2    ]
-        half2 = npPixels[entry*2 + 1]
-        floatValue = halfsToFloat(half1, half2)
-        oiioFloats[entry] = floatValue
-
-    oiioFloatsArray = array.array('f', oiioFloats)
     return oiioFloatsArray
 # npHalfArrayToOIIOFloatPixels
 
@@ -145,57 +127,60 @@ def readPixelArray(inputPath,
 
     inputImage = oiio.ImageInput.open( inputPath )
 
-    # get image specs
-    inputImageSpec = inputImage.spec()
-    type = inputImageSpec.format.basetype
-    width = inputImageSpec.width
-    height = inputImageSpec.height
-    channels = inputImageSpec.nchannels
-    metadata = inputImageSpec.extra_attribs
-    metanames = [attr.name for attr in metadata]
+    if inputImage:
+        # get image specs
+        inputImageSpec = inputImage.spec()
+        type = inputImageSpec.format.basetype
+        width = inputImageSpec.width
+        height = inputImageSpec.height
+        channels = inputImageSpec.nchannels
+        metadata = inputImageSpec.extra_attribs
+        metanames = [attr.name for attr in metadata]
 
-    bitShift = 0
+        bitShift = 0
 
-    # Handle automatic bit-depth conversions
-    if bitDepthOverride:
-        if bitDepthOverride == "auto":
+        # Handle automatic bit-depth conversions
+        if bitDepthOverride:
+            if bitDepthOverride == "auto":
+                bitDepth = oiioBitDepthToCLFBitDepth[type]
+
+                # 10, 12 or 16 bit values should map to maximum values of
+                # 1023, 4095 or 65535 respectively. The OIIO default is treat
+                # them all as 16-bit / 65535. This corrects for that behavior.
+                if 'oiio:BitsPerSample' in metanames:
+                    oiioBitDepth = metadata[ metanames.index( "oiio:BitsPerSample" ) ].value
+
+                    if type == oiio.UINT16:
+                        bitShift = (16 - oiioBitDepth)
+                        print( "Reading as 16-bit int, then shifting by %d bits" % bitShift )
+
+                        if oiioBitDepth == 10:
+                            bitDepth = clf.bitDepths["UINT10"]
+                        elif oiioBitDepth == 12:
+                            bitDepth = clf.bitDepths["UINT12"]
+            else:
+                type = clfBitDepthToOIIOBitDepth[bitDepthOverride]
+                bitDepth = bitDepthOverride
+        else:
             bitDepth = oiioBitDepthToCLFBitDepth[type]
 
-            # 10, 12 or 16 bit values should map to maximum values of
-            # 1023, 4095 or 65535 respectively. The OIIO default is treat
-            # them all as 16-bit / 65535. This corrects for that behavior.
-            if 'oiio:BitsPerSample' in metanames:
-                oiioBitDepth = metadata[ metanames.index( "oiio:BitsPerSample" ) ].value
+        sourceData = inputImage.read_image(type)
 
-                if type == oiio.UINT16:
-                    bitShift = (16 - oiioBitDepth)
-                    print( "Reading as 16-bit int, then shifting by %d bits" % bitShift )
+        inputImage.close()
 
-                    if oiioBitDepth == 10:
-                        bitDepth = clf.bitDepths["UINT10"]
-                    elif oiioBitDepth == 12:
-                        bitDepth = clf.bitDepths["UINT12"]
-        else:
-            type = clfBitDepthToOIIOBitDepth[bitDepthOverride]
-            bitDepth = bitDepthOverride
+        # Reset integer bit-depth 
+        if bitShift != 0:
+            #print( "Shifting integer values" )
+            for i in range(len(sourceData)):
+                sourceData[i] = sourceData[i] >> bitShift
+
+        # OIIO doesn't return half-float values directly, so this will
+        # convert from the packed representation to half-floats
+        if type == oiio.HALF:
+            print( "Unpacking half-float values" )
+            sourceData = oiioFloatPixelsToNPHalfArray(width, height, channels, sourceData)
     else:
-        bitDepth = oiioBitDepthToCLFBitDepth[type]
-
-    sourceData = inputImage.read_image(type)
-
-    inputImage.close()
-
-    # Reset integer bit-depth 
-    if bitShift != 0:
-        #print( "Shifting integer values" )
-        for i in range(len(sourceData)):
-            sourceData[i] = sourceData[i] >> bitShift
-
-    # OIIO doesn't return half-float values directly, so this will
-    # convert from the packed representation to half-floats
-    if type == oiio.HALF:
-        print( "Unpacking half-float values" )
-        sourceData = oiioFloatPixelsToNPHalfArray(width, height, channels, sourceData)
+        (sourceData, bitDepth, width, height, channels, metadata) = (None, clf.bitDepths["UINT10"], 0, 0, 0, None)
 
     return (sourceData, bitDepth, width, height, channels, metadata)
 # readPixelArray
@@ -294,8 +279,17 @@ def writePixelArray(outputPath,
     # Create, write and close the image
     #
     outputImage = oiio.ImageOutput.create(outputPath)
-    outputImage.open (outputPath, outputSpec, oiio.Create)
-    outputImage.write_image(outputSpec.format, pixels)
+    if not outputImage:
+        print( "\nImage %s could not be created. Writing aborted.\n" % outputPath )
+        return
+    ok = outputImage.open (outputPath, outputSpec, oiio.Create)
+    if not ok:
+        print( "\nImage %s could not be opened. Writing aborted.\n" % outputPath )
+        return
+    ok = outputImage.write_image(outputSpec.format, pixels)
+    if not ok:
+        print( "\nImage %s could not write. Writing failed.\n" % outputPath )
+        return
     outputImage.close()
 # writePixelArray
 
@@ -427,7 +421,10 @@ def filterRow_parallel(row,
 # this helper function is needed because map() can only be used for functions
 # that take a single argument (see http://stackoverflow.com/q/5442910/1461210)
 def filterRow_parallel_splitargs(args):
-    return filterRow_parallel(*args)
+    try:
+        return filterRow_parallel(*args)
+    except:
+        print( "Error in process" )
 
 #
 # Filter an image
@@ -445,6 +442,9 @@ def filterImageWithCLF(inputPath,
     t0 = timeit.default_timer()
 
     pixels, inBitDepth, width, height, channels, metadata = readPixelArray(inputPath)
+    if pixels == None:
+        print( "\nImage %s could not be opened. Filtering aborted.\n" % inputPath )
+        return
     #print( len(pixels), bitDepth, width, height, channels )
 
     t1 = timeit.default_timer()
@@ -485,8 +485,9 @@ def filterImageWithCLF(inputPath,
     # Multi-threaded execution
     if multithreaded > 1:
         print( "Filtering image - multithreaded (%d threads)" % multithreaded )
-        pool = Pool(processes=multithreaded)
         try:
+            pool = Pool(processes=multithreaded)
+
             # Each process filters a single row and returns the results
             # Feels a little clunky, but it gets us the speed of multithreading
             # and we're probably not worried about the memory hit since we're
