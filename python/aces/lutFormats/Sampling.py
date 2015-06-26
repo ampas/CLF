@@ -232,8 +232,8 @@ def generateLUT1DInverseHalfDomain(resolution, samples, minInputValue, maxInputV
                 # Find the output value
                 outputInterpolated = (lutInterp + lutIndexLow)/(inputResolution-1)
 
-            if rawHalfs:
-                outputInterpolated = halfToUInt16(outputInterpolated)
+            #if rawHalfs:
+            #    outputInterpolated = halfToUInt16(outputInterpolated)
 
             inverseSample[channel] = outputInterpolated
 
