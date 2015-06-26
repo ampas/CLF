@@ -55,7 +55,9 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 import array
 import math
 import numpy as np
+import os
 import sys
+import traceback
 import timeit
 
 import clf
@@ -394,6 +396,10 @@ def filterRow_parallel(row,
     processedPixels,
     verbose):
 
+    #t0 = timeit.default_timer()
+    if verbose:
+        print( "process %d - row %d" % (os.getpid(), row) )
+
     if row%math.ceil((height-1)/100.0) == 0:
         print( "%3.1f - row %d / %d" % (row/(height-1.0)*100.0, row, height-1) )
 
@@ -413,8 +419,11 @@ def filterRow_parallel(row,
     if OutRange:
         pvalue = OutRange.process(pvalue, stride=channels)
 
-    if verbose:
-        print( "Processed %04d, %04d : %s -> %s" % (i, j, ovalue, pvalue))
+    #t1 = timeit.default_timer()
+    #elapsed = t1 - t0
+    
+    #if verbose:
+    #    print( "Filtering row %d took %s seconds" % (row, elapsed) )
 
     return pvalue
 
@@ -424,7 +433,8 @@ def filterRow_parallel_splitargs(args):
     try:
         return filterRow_parallel(*args)
     except:
-        print( "Error in process" )
+        #print( "\nprocess %d - exception caught\n" % os.getpid() )
+        pass
 
 #
 # Filter an image
@@ -492,7 +502,9 @@ def filterImageWithCLF(inputPath,
             # Feels a little clunky, but it gets us the speed of multithreading
             # and we're probably not worried about the memory hit since we're
             # only processing one image at a time.
-            parallelProcessedPixels = pool.map(filterRow_parallel_splitargs,
+
+            #print ( "Creating map_async pool ")
+            result = pool.map_async(filterRow_parallel_splitargs,
                 [(x, 
                     width, 
                     height,
@@ -505,13 +517,29 @@ def filterImageWithCLF(inputPath,
                     verbose) for x in range(height)],
                 chunksize=1)
 
+            try:
+                parallelProcessedPixels = result.get(0xFFFF)
+            except KeyboardInterrupt:
+                print( "\nProcess received Ctrl-C. Exiting.\n" )
+                return
+            except:
+                print( "\nCaught exception. Exiting." )
+                print( '-'*60 )
+                traceback.print_exc()
+                print( '-'*60 )
+                return
+
             # The filtered rows have to be copied back to the 'processedPixels' block
             # when everything finishes up
             for i in range(height):
                 for j in range(width*channels):
                     processedPixels[i*width*channels + j] = parallelProcessedPixels[i][j]
         except:
-            print( "Error in pool creation" )
+            print( "Error in multithreaded processing. Exiting." )
+            print( '-'*60 )
+            traceback.print_exc()
+            print( '-'*60 )
+            return
 
     # Single-threaded execution
     else:
