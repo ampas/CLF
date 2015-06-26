@@ -58,11 +58,13 @@ class Range(ProcessNode):
     "A Common LUT Format Range ProcessNode element"
 
     def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
-        style=''):
+        style='', defaultRange=None):
         "%s - Initialize the standard class variables" % 'Range'
         ProcessNode.__init__(self, 'Range', inBitDepth, outBitDepth, id, name)
         if style != '':
             self._attributes['style'] = style
+        if defaultRange:
+            self._attributes['defaultRange'] = defaultRange
         self.valueElements = {}
     # __init__
 
@@ -74,6 +76,14 @@ class Range(ProcessNode):
         self._valueElements['minOutValue'] = minOutValue
     def setMaxOutValue(self, maxOutValue):
         self._valueElements['maxOutValue'] = maxOutValue
+
+    def setStyle(self, style):
+        self._attributes['style'] = style
+    def setDefaultRange(self, defaultRange):
+        if defaultRange:
+            self._attributes['defaultRange'] = defaultRange
+        elif 'defaultRange' in self._attributes:
+            del self._attributes['defaultRange']
 
     def readChild(self, element):
         if element.tag == 'minInValue':
@@ -94,8 +104,11 @@ class Range(ProcessNode):
 
         # Node attributes
         clamp = True
+        defaultRange = False
         if 'style' in self._attributes: 
             clamp = (self._attributes['style'] == 'clamp')
+        if 'defaultRange' in self._attributes: 
+            defaultRange = True
 
         # Node parameters
         minInValue = None
@@ -112,7 +125,18 @@ class Range(ProcessNode):
         if 'maxOutValue' in self._valueElements: 
             maxOutValue = self._valueElements['maxOutValue'] / bitDepthSize(outBitDepth)
 
+        if defaultRange:
+            if minInValue == None: 
+                minInValue = 0.0
+            if maxInValue == None: 
+                maxInValue = 1.0
+            if minOutValue == None: 
+                minOutValue = 0.0
+            if maxOutValue == None: 
+                maxOutValue = 1.0
+
         '''
+        print( "default range : %s" % defaultRange )
         print( "min in value  : %s" % minInValue )
         print( "max in value  : %s" % maxInValue )
         print( "min out value : %s" % minOutValue )

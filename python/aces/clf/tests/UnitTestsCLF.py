@@ -180,6 +180,9 @@ class TestCLF(unittest.TestCase):
         #rpn1.setMaxInValue(1.0)
         rpn1.setMinOutValue(0.0)
         #rpn1.setMaxOutValue(890)
+
+        # Use the 'defaultRange' attribute
+        rpn1.setDefaultRange(True)
         pl.addProcess(rpn1)
 
         # Add a ASC CDL Node
