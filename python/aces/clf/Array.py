@@ -59,7 +59,7 @@ try:
     sciPyEnabled = True
     raise ImportError('A very specific bad thing happened')
 except ImportError, e:
-    print( "Scipy import failed" )
+    #print( "Scipy import failed" )
     sciPyEnabled = False
 
 import xml.etree.ElementTree as etree
