@@ -55,6 +55,8 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 import xml.etree.ElementTree as etree
 
 from ProcessNode import *
+from Common import getFeatureCompatibility, featureSets
+import Errors
 
 class ASCCDL(ProcessNode):
     "A Common LUT Format ASC_CDL ProcessNode element"
@@ -133,6 +135,11 @@ class ASCCDL(ProcessNode):
         # Node attributes
         style = ''
         if 'style' in self._attributes: style = self._attributes['style']
+
+        if (not(getFeatureCompatibility() & featureSets["Autodesk"]) and
+            style in ['v1.2_Fwd', 'noClampFwd', 'v1.2_Rev', 'noClampRev']):
+                msg = "Unsupported feature : Autodesk CDL style keyword %s" % style
+                raise Errors.UnsupportedExtensionError(msg)
 
         # Node parameters
         slope = [1.0, 1.0, 1.0]

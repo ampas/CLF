@@ -65,6 +65,7 @@ except ImportError, e:
 import xml.etree.ElementTree as etree
 
 from Common import *
+import Errors
 
 class Array:
     "A Common LUT Format Array element"
@@ -123,7 +124,13 @@ class Array:
         return self._rawHalfs
 
     def setFloatEncoding(self, floatEncoding):
-        self._floatEncoding = floatEncoding
+        if getFeatureCompatibility() & featureSets["Duiker Research"]:
+            self._floatEncoding = floatEncoding
+        else:
+            msg = "Unsupported feature : Array floatEncoding"
+            self._floatEncoding='string'
+            raise Errors.UnsupportedExtensionError(msg)
+
     def getFloatEncoding(self):
         return self._floatEncoding
 
@@ -154,36 +161,45 @@ class Array:
 
             # Float Values
             # Floats encoded using bitwise equivalent hex or integer values
-            if self._rawHalfs or self._floatEncoding != 'string':
+            if self._floatEncoding != 'string':
                 # Encoding options: 
                 # integer16bit, integer32bit, integer64bit, hex16bit, hex32bit, hex64bit
-                if self._floatEncoding in ['integer16bit', 'integer32bit', 'integer64bit', 
-                    'hex16bit', 'hex32bit', 'hex64bit']:
-                    element.set('floatEncoding', self._floatEncoding)
+                if getFeatureCompatibility() & featureSets["Duiker Research"]:
+                    if self._floatEncoding in ['integer16bit', 'integer32bit', 'integer64bit', 
+                        'hex16bit', 'hex32bit', 'hex64bit']:
+                        element.set('floatEncoding', self._floatEncoding)
 
-                if self._rawHalfs or self._floatEncoding == 'integer16bit':
-                    sample = map(halfToUInt16, sample)
-                    sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
-                elif self._floatEncoding == 'integer32bit':
-                    sample = map(float32ToUInt32, sample)
-                    sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
-                elif self._floatEncoding == 'integer64bit':
-                    sample = map(doubleToUInt64, sample)
-                    sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+                    if self._rawHalfs or self._floatEncoding == 'integer16bit':
+                        sample = map(halfToUInt16, sample)
+                        sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+                    elif self._floatEncoding == 'integer32bit':
+                        sample = map(float32ToUInt32, sample)
+                        sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
+                    elif self._floatEncoding == 'integer64bit':
+                        sample = map(doubleToUInt64, sample)
+                        sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
 
-                elif self._floatEncoding == 'hex16bit':
-                    sample = map(halfToHex, sample)
-                    sampleText = " ".join(map(lambda x: "%15s" % str(x), sample))
-                elif self._floatEncoding == 'hex32bit':
-                    sample = map(float32ToHex, sample)
-                    sampleText = " ".join(map(lambda x: "%15s" % str(x), sample))
-                elif self._floatEncoding == 'hex64bit':
-                    sample = map(doubleToHex, sample)
-                    sampleText = " ".join(map(lambda x: "%16s" % str(x), sample))
+                    elif self._floatEncoding == 'hex16bit':
+                        sample = map(halfToHex, sample)
+                        sampleText = " ".join(map(lambda x: "%15s" % str(x), sample))
+                    elif self._floatEncoding == 'hex32bit':
+                        sample = map(float32ToHex, sample)
+                        sampleText = " ".join(map(lambda x: "%15s" % str(x), sample))
+                    elif self._floatEncoding == 'hex64bit':
+                        sample = map(doubleToHex, sample)
+                        sampleText = " ".join(map(lambda x: "%16s" % str(x), sample))
 
-                # An unknown encoding. Will be ignored.
+                    # An unknown encoding. Will be ignored.
+                    else:
+                        sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
                 else:
-                    sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
+                    msg = "Unsupported feature : Array floatEncoding"
+                    raise Errors.UnsupportedExtensionError(msg)
+
+            # 'rawHalfs' functionality. equivalent to 'floatEncoding' = 'integer16bit'
+            elif self._rawHalfs:
+                sample = map(halfToUInt16, sample)
+                sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
 
             # Floats printed as strings
             else:

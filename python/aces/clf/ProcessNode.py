@@ -60,6 +60,7 @@ import xml.etree.ElementTree as etree
 # General Types
 from Comment import Description
 from Common import *
+import Errors
 
 from ProcessList import ProcessListChildMeta
 
@@ -183,7 +184,7 @@ class ProcessNode():
     def readInitialize(self):
         return None
 
-    def read(self, element):
+    def read(self, element, strict=False):
         #print( "%s - ProcessNode::read" % element.tag)
         # Store attributes
         for key, value in element.attrib.iteritems():
@@ -205,9 +206,16 @@ class ProcessNode():
 
             # Read DynamicParameter elements
             elif childType == 'DynamicParameter':
-                for key, value in child.attrib.iteritems():
-                    if key == 'param':
-                        self._dynamicParams.append(value)
+                if getFeatureCompatibility() & featureSets["Autodesk"]:
+                    for key, value in child.attrib.iteritems():
+                        if key == 'param':
+                            self._dynamicParams.append(value)
+                else:
+                    msg = "Unsupported feature : DynamicParameter element"
+                    if strict:
+                        raise Errors.UnsupportedExtensionError(msg)
+                    else:
+                        print( "ProcessNode::read - %s" % msg )
 
             # Otherwise, allow the subclasses to read elements
             else:
@@ -288,7 +296,7 @@ class ProcessNode():
     # Color processing
     def process(self, values, stride=0, verbose=False):
         if verbose:
-            print( "ProcessNode::process - processing bypassed")
+            print( "ProcessNode::process - no op")
         return value
 
     # Setters and getters

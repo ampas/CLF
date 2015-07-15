@@ -136,6 +136,8 @@ class Reference(ProcessNode):
             print( "Reference processing - begin" )
         if self._processList != None:
             outValues = self._processList.process(values, stride, verbose=verbose)
+        else:
+            outValues = values
         if verbose:
             print( "Reference processing - end\n" )
         return outValues

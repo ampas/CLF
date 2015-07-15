@@ -124,6 +124,9 @@ __version__ = '.'.join((__major_version__,
 Having the explicit imports here feels off, but also necessary...
 '''
 
+# Feature set compatibility
+from Common import setFeatureCompatibility, getFeatureCompatibility, featureSets
+
 # General Types
 from ProcessList import ProcessList
 from Comment import Description, InputDescriptor, OutputDescriptor

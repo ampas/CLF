@@ -121,6 +121,19 @@ class TestCLF(unittest.TestCase):
         os.unlink(cls._tmpclfz)
 
     def createCLF(self, clfPath):
+        # If you want to restrict feature compatibility for some reason,
+        # use one of these lines
+        # setFeatureCompatibility(featureSets["Autodesk"])
+        # setFeatureCompatibility(featureSets["Duiker Research"])
+        # 
+        # The following setting will cause the library to act like a
+        # true reference implementation of the CLF spec. Only features included
+        # in the specification will be supported
+        #setFeatureCompatibility(featureSets["CLF"])
+        #
+        # The default setting supports all extensions. This is equivalent to
+        setFeatureCompatibility(featureSets["All"])
+
         pl = ProcessList()
 
         # Populate

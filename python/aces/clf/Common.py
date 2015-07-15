@@ -52,9 +52,28 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
+import numpy as np
 import struct
 
-import numpy as np
+#
+# Functions to manage which feature sets are supported at run-time
+#
+featureSets = {
+    "CLF"              : 0x0, 
+    "Autodesk"         : 0x1,
+    "Duiker Research"  : 0x2,
+    "All"              : 0xf
+}
+
+compatibility = featureSets["All"]
+
+def setFeatureCompatibility(featureSet):
+    global compatibility
+    compatibility = featureSet
+
+def getFeatureCompatibility():
+    global compatibility
+    return compatibility
 
 # Simple utility functions
 def clamp(value, minValue=0.0, maxValue=1.0):

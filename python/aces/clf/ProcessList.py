@@ -58,6 +58,9 @@ import numpy as np
 import sys
 import xml.etree.ElementTree as etree
 
+from Common import getFeatureCompatibility, featureSets
+import Errors
+
 class ProcessList:
     "A Common LUT Format ProcessList element"
 
@@ -89,7 +92,7 @@ class ProcessList:
         else:
             return None
 
-    def __init__(self, clfPath=None):
+    def __init__(self, clfPath=None, strict=False):
         "%s - Initialize the standard class variables" % 'ProcessList'
         self._attributes = {}
         self._valueElements = {}
@@ -97,7 +100,7 @@ class ProcessList:
         self._processes = []
         
         if clfPath != None:
-            self.readFile(clfPath)
+            self.readFile(clfPath, strict)
     # __init__
 
     def __iter__(self):
@@ -149,10 +152,15 @@ class ProcessList:
 
         # Writing Gzipped XML data
         if writeGzip:
-            prettyString = self.xmlPrettify(document, clfPath)
-            f = gzip.open(clfPath, 'wb')
-            f.write(prettyString)
-            f.close()
+            if getFeatureCompatibility() & featureSets["Duiker Research"]:
+                prettyString = self.xmlPrettify(document, clfPath)
+                f = gzip.open(clfPath, 'wb')
+                f.write(prettyString)
+                f.close()
+            else:
+                msg = "Unsupported feature : write gzipped file"
+                #print( "ProcessList::writeFile - %s" % msg )
+                raise Errors.UnsupportedExtensionError(msg)
 
         # Writing XML text
         else:
@@ -165,10 +173,10 @@ class ProcessList:
             fp.write(prettyString)
             fp.close()
 
-        return document
+        return True
     # writeFile
 
-    def read(self, element):
+    def read(self, element, strict=False):
         root = element
 
         # Store attributes
@@ -177,38 +185,70 @@ class ProcessList:
 
         # Read child elements
         for child in root:
+
+            # Find the Python class associated with this XML element tag
             elementType = child.tag.replace('-', '')
             elementType = child.tag.replace('_', '')
             elementClass = self.getClass(elementType)
             #print( elementType, elementClass )
 
             if elementClass != None:
+                # Instantiate the class and read XML data
                 element = elementClass()
-                element.read(child)
 
+                # Add ProcessNodes to the ProcessList data structures
                 processNodeClass = self.getClass("ProcessNode")
                 if issubclass(elementClass, processNodeClass):
+                    element.read(child, strict=strict)
+
+                    # Check that a given ProcessNode class is compatible with 
+                    # the current feature set
+                    if ( (elementType in ["ExposureContrast", "Gamma", "Log", "Reference"] and
+                        not (getFeatureCompatibility() & featureSets["Autodesk"])) or
+                        (elementType in ["Group"] and
+                            not (getFeatureCompatibility() & featureSets["Duiker Research"])) ):
+                        msg = "Unsupported feature : ProcessNode type %s" % elementType
+                        if strict:
+                            raise Errors.UnsupportedExtensionError(msg)
+                        else:
+                            print( "ProcessList::read - %s" % msg )
+
                     self.addProcess( element )
+
+                # Add elements to the ProcessList data structures
                 else:
+                    element.read(child)
                     self.addElement( element )
             else:
-                print( "ProcessList::read - Ignoring element : %s" % child.tag)
+                msg = "Ignoring element : %s" % child.tag
+                if strict:
+                    raise Errors.UnknownProcessNodeError(msg)
+                else:
+                    print( "ProcessList::read - %s" % msg )
     # read
 
-    def readFile(self, clfPath):
-        # Try to read as gzipped XML file
-        try:
-            f = gzip.open(clfPath, 'rb')
-            tree = etree.parse(f)
-            root = tree.getroot()
-            self.read(root)
-            f.close()
+    def readFile(self, clfPath, strict=False):
+        # Support for reading gzipped xml data
+        if getFeatureCompatibility() & featureSets["Duiker Research"]:
+            # Try to read as gzipped XML file
+            try:
+                f = gzip.open(clfPath, 'rb')
+                tree = etree.parse(f)
+                root = tree.getroot()
+                self.read(root, strict)
+                f.close()
 
-        # Read as normal XML otherwise
-        except:
+            # Read as normal XML otherwise
+            except:
+                tree = etree.parse(clfPath)
+                root = tree.getroot()
+                self.read(root, strict)
+
+        # Read as XML otherwise
+        else:
             tree = etree.parse(clfPath)
             root = tree.getroot()
-            self.read(root)
+            self.read(root, strict)
     # readFile
 
     # Attributes
@@ -302,13 +342,22 @@ class ProcessList:
             processNode = self._processes[i]
             #print( "processing : %s" % result )
 
-            if processNode.getAttribute('bypass') == None:
+            # Process the current value using the ProcessNode
+            if (processNode.getAttribute('bypass') == None or
+                not(getFeatureCompatibility() & featureSets["Autodesk"]) ):
                 result = processNode.process(result, stride, verbose=verbose)
                 if verbose:
                     print( "%s (%s) - result value : %s, result type : %s" % 
                         (processNode.getAttribute('name'), processNode.getNodeType(), 
                             " ".join(map(lambda x: "%3.6f" % x, result)),
                             type(result) ) )
+
+                    if (processNode.getAttribute('bypass') != None and
+                        not(getFeatureCompatibility() & featureSets["Autodesk"])):
+                        print( "%s (%s) - bypass ignored based on feature compatibility setting." % 
+                            (processNode.getAttribute('name'), processNode.getNodeType()) )
+
+            # Bypass this ProcessNode
             else:
                 if verbose:
                     print( "%s (%s) - bypassing" % 
