@@ -196,7 +196,9 @@ def writePixelArray(outputPath,
     width, 
     height, 
     channels, 
-    metadata):
+    metadata,
+    compression=None,
+    compressionQuality=0):
     print( "Writing image - path : %s" % outputPath)
 
     bitShift = 0
@@ -278,6 +280,15 @@ def writePixelArray(outputPath,
         outputSpec.attribute("oiio:BitsPerSample", bitDepthValue[bitDepth])
 
     #
+    # Set compression
+    #
+    if compression:
+        outputSpec.attribute("compression", compression)
+            
+    if compressionQuality > 0:
+        outputSpec.attribute("CompressionQuality", compressionQuality)        
+
+    #
     # Create, write and close the image
     #
     outputImage = oiio.ImageOutput.create(outputPath)
@@ -288,7 +299,14 @@ def writePixelArray(outputPath,
     if not ok:
         print( "\nImage %s could not be opened. Writing aborted.\n" % outputPath )
         return
-    ok = outputImage.write_image(outputSpec.format, pixels)
+    try:
+        ok = outputImage.write_image(outputSpec.format, pixels)
+    except:
+        print( "\nCaught exception." )
+        print( '-'*60 )
+        traceback.print_exc()
+        print( '-'*60 )
+        ok = False
     if not ok:
         print( "\nImage %s could not write. Writing failed.\n" % outputPath )
         return
@@ -300,6 +318,7 @@ from multiprocessing import Pool, Lock, cpu_count
 #
 # Filter a single row - one pixel at a time
 #
+# This version processes a single pixel at a time.
 def filterRow_pixel(row, 
     width,
     height, 
@@ -342,6 +361,8 @@ def filterRow_pixel(row,
 #
 # Filter a single row - as a group of pixels
 #
+# This version processes a row of pixels as a group, using the 'stride' parameter
+# It it marginally faster than processing one pixel at a time.
 def filterRow_stride(row, 
     width, 
     height,
@@ -385,6 +406,8 @@ def filterRow_stride(row,
 #
 # Filter a single row - parallel
 #
+# This version takes a row of pixels and returns a filtered row of pixels.
+# It is designed to be used with the Pool map_async call.
 def filterRow_parallel(row, 
     width, 
     height,
@@ -427,7 +450,8 @@ def filterRow_parallel(row,
 
     return pvalue
 
-# this helper function is needed because map() can only be used for functions
+# filterRow_parallel_splitargs splits the single argument 'args' into mulitple arguments
+# this is needed because map() can only be used for functions
 # that take a single argument (see http://stackoverflow.com/q/5442910/1461210)
 def filterRow_parallel_splitargs(args):
     try:
@@ -444,7 +468,9 @@ def filterImageWithCLF(inputPath,
     processList, 
     verbose=False,
     outBitDepth=None,
-    multithreaded=cpu_count()):
+    multithreaded=cpu_count(),
+    compression=None,
+    compressionQuality=0):
 
     #
     # Get the input image pixel array
@@ -563,7 +589,8 @@ def filterImageWithCLF(inputPath,
     #
     t0 = timeit.default_timer()
 
-    writePixelArray(outputPath, processedPixels, outBitDepth, width, height, channels, metadata)
+    writePixelArray(outputPath, processedPixels, outBitDepth, width, height, channels, metadata,
+        compression, compressionQuality)
 
     t1 = timeit.default_timer()
     elapsed = t1 - t0
@@ -577,17 +604,32 @@ def filterImageWithCLF(inputPath,
 def main():
     import optparse
 
+    usage  = "%prog [options]\n"
+    usage += "\n"
+    usage += "compression options:\n"
+    usage += " exr format compression options  : none, rle, zip, zips(default), piz, pxr24, b44, b44a, dwaa, or dwab\n"
+    usage += "   dwaa and dwab compression support depends on the version of OpenImageIO that you're using."
+    usage += " tiff format compression options : none, lzw, zip(default), packbits\n"
+    usage += " tga format compression options  : none, rle\n"
+    usage += " sgi format compression options  : none, rle\n"
+    usage += "\n"
+    usage += "compression quality options:\n"
+    usage += " jpg format compression quality options  : 0 to 100\n"
+
+
     p = optparse.OptionParser(description='Filter an image using the Common LUT Format',
                                 prog='clfFilter',
                                 version='clfFilter',
-                                usage='%prog [options]')
+                                usage=usage)
 
     p.add_option('--input', '-i', default=None)
     p.add_option('--output', '-o', default=None)
     p.add_option('--clf', '-c', default=None)
     p.add_option('--verbose', '-v', action="store_true")
     p.add_option('--outputBitDepth', '', default=None)
-    p.add_option('--multithreaded', '-m', type='int', default=1)
+    p.add_option('--multithreaded', '-m', type='int', default=cpu_count())
+    p.add_option("--compression")
+    p.add_option("--quality", type="int", dest="quality", default = -1)
 
     options, arguments = p.parse_args()
 
@@ -601,6 +643,8 @@ def main():
     outputBitDepth = options.outputBitDepth
     multithreaded = options.multithreaded
     multithreaded = min(cpu_count(), max(1, multithreaded))
+    compression = options.compression
+    compressionQuality = options.quality
 
     try:
         argsStart = sys.argv.index('--') + 1
@@ -635,7 +679,9 @@ def main():
             processList, 
             verbose,
             outBitDepth=outputBitDepth,
-            multithreaded=multithreaded)
+            multithreaded=multithreaded,
+            compression=compression,
+            compressionQuality=compressionQuality)
 # main
 
 if __name__ == '__main__':
