@@ -86,14 +86,11 @@ class Array:
         self._elementType = elementType
 
         self._interp1ds = None
-        self._interp3d = None
 
         # Create the interpolators that we'll use later
         if self._values != [] and self._dimensions != []:
             if len(self._dimensions) == 2:
                 self.create1dInterpolators()
-            elif len(self._dimensions) == 4:
-                self.create3dInterpolator()
     # __init__
 
     def setDimensions(self, dimensions):
@@ -107,8 +104,6 @@ class Array:
         if self._values != [] and self._dimensions != []:
             if len(self._dimensions) == 2:
                 self.create1dInterpolators()
-            elif len(self._dimensions) == 4:
-                self.create3dInterpolator()
 
     def getValues(self):
         return self._values
@@ -321,33 +316,6 @@ class Array:
                         kind='cubic', bounds_error=False, fill_value=0.0)
 
                     self._interp1ds.append(cubicInterpolator)
-
-    def create3dInterpolator(self):
-        values = self._values
-        dimensions = self._dimensions
-
-        self._interp3d = None
-
-        if sciPyEnabled:
-            # Create index array
-            indices = [[0.0,0.0,0.0]]*dimensions[0]*dimensions[1]*dimensions[2]
-
-            # Create output value array
-            output = [[0.0,0.0,0.0]]*dimensions[0]*dimensions[1]*dimensions[2]
-
-            i = 0
-            for z in range(dimensions[2]):
-                for y in range(dimensions[1]):
-                    for x in range(dimensions[0]):
-                        index1 = (x*dimensions[0]*dimensions[1] + y*dimensions[1] + z)*3 
-                        indices[i] = [float(x), float(y), float(z)]
-                        output[i] = values[index1:index1+3]
-                        i += 1
-
-            # Create tetrahedral interpolator
-            tetrahedralInterpolator = LinearNDInterpolator(indices, output)
-
-            self._interp3d = tetrahedralInterpolator
 
     #
     # Lookup values
@@ -626,27 +594,180 @@ class Array:
         return enclosingCubeColors[0];
     # lookup3DTrilinear
 
+    # Tetrahedral interoplation, as described by:
+    # http://www.filmlight.ltd.uk/pdf/whitepapers/FL-TL-TN-0057-SoftwareLib.pdf
+    # http://blogs.mathworks.com/steve/2006/11/24/tetrahedral-interpolation-for-colorspace-conversion/
+    # http://www.hpl.hp.com/techreports/98/HPL-98-95.html
+    # Reference implementation from OCIO
+    # https://github.com/imageworks/OpenColorIO/blob/master/src/core/Lut3DOp.cpp#L294
     def lookup3DTetrahedral(self, position, useSciPy=False):
-        # Fallback, and the default for now
-        if not useSciPy or not sciPyEnabled:
-            return self.lookup3DTrilinear(position)
+        dimensions = self._dimensions
+
+        #print( position )
+        #print( dimensions )
+        #print( len(self._values) )
+
+        enclosingCubeColors = [0.0, 0.0, 0.0] * 8
+
+        # clamp because we only use values between 0 and 1
+        position = map(clamp, position)
+
+        # index values interpolation factor for RGB
+        indexRf = (position[0] * (dimensions[0]-1))
+        interpR, indexR = math.modf(indexRf)
+        indexR = int(indexR)
+
+        indexGf = (position[1] * (dimensions[1]-1))
+        interpG, indexG = math.modf(indexGf)
+        indexG = int(indexG)
+
+        indexBf = (position[2] * (dimensions[2]-1))
+        interpB, indexB = math.modf(indexBf)
+        indexB = int(indexB)
+
+        #print( "index : %d, %d, %d" % (indexR, indexG, indexB))
+
+        # Sample the 8 points around the current sample position
+        enclosingCubeColors[0] = self.lookup3D([indexR    , indexG    , indexB    ])
+        enclosingCubeColors[1] = self.lookup3D([indexR    , indexG    , indexB + 1])
+        enclosingCubeColors[2] = self.lookup3D([indexR    , indexG + 1, indexB    ])
+        enclosingCubeColors[3] = self.lookup3D([indexR    , indexG + 1, indexB + 1])
+        enclosingCubeColors[4] = self.lookup3D([indexR + 1, indexG    , indexB    ])
+        enclosingCubeColors[5] = self.lookup3D([indexR + 1, indexG    , indexB + 1])
+        enclosingCubeColors[6] = self.lookup3D([indexR + 1, indexG + 1, indexB    ])
+        enclosingCubeColors[7] = self.lookup3D([indexR + 1, indexG + 1, indexB + 1])
+
+        rgbaBuffer = [0.0, 0.0, 0.0]
+
+        # Rebind for consistency with Truelight paper
+        fx = interpR
+        fy = interpG
+        fz = interpB
+
+        startPos = enclosingCubeColors
+
+        # Compute index into LUT for surrounding corners
+        n000 = 0
+        n100 = 4
+        n010 = 2
+        n001 = 1
+        n110 = 6
+        n101 = 5
+        n011 = 3
+        n111 = 7
+
+        if (fx > fy):
+            if (fy > fz):
+                rgbaBuffer[0] = (
+                    (1-fx)  * startPos[n000][0] +
+                    (fx-fy) * startPos[n100][0] +
+                    (fy-fz) * startPos[n110][0] +
+                    (fz)    * startPos[n111][0] )
+
+                rgbaBuffer[1] = (
+                    (1-fx)  * startPos[n000][1] +
+                    (fx-fy) * startPos[n100][1] +
+                    (fy-fz) * startPos[n110][1] +
+                    (fz)    * startPos[n111][1] )
+
+                rgbaBuffer[2] = (
+                    (1-fx)  * startPos[n000][2] +
+                    (fx-fy) * startPos[n100][2] +
+                    (fy-fz) * startPos[n110][2] +
+                    (fz)    * startPos[n111][2] )
+            elif (fx > fz):
+                rgbaBuffer[0] = (
+                    (1-fx)  * startPos[n000][0] +
+                    (fx-fz) * startPos[n100][0] +
+                    (fz-fy) * startPos[n101][0] +
+                    (fy)    * startPos[n111][0] )
+
+                rgbaBuffer[1] = (
+                    (1-fx)  * startPos[n000][1] +
+                    (fx-fz) * startPos[n100][1] +
+                    (fz-fy) * startPos[n101][1] +
+                    (fy)    * startPos[n111][1] )
+
+                rgbaBuffer[2] = (
+                    (1-fx)  * startPos[n000][2] +
+                    (fx-fz) * startPos[n100][2] +
+                    (fz-fy) * startPos[n101][2] +
+                    (fy)    * startPos[n111][2] )
+            else:
+                rgbaBuffer[0] = (
+                    (1-fz)  * startPos[n000][0] +
+                    (fz-fx) * startPos[n001][0] +
+                    (fx-fy) * startPos[n101][0] +
+                    (fy)    * startPos[n111][0] )
+
+                rgbaBuffer[1] = (
+                    (1-fz)  * startPos[n000][1] +
+                    (fz-fx) * startPos[n001][1] +
+                    (fx-fy) * startPos[n101][1] +
+                    (fy)    * startPos[n111][1] )
+
+                rgbaBuffer[2] = (
+                    (1-fz)  * startPos[n000][2] +
+                    (fz-fx) * startPos[n001][2] +
+                    (fx-fy) * startPos[n101][2] +
+                    (fy)    * startPos[n111][2] )
         else:
-            if not self._interp3d:
-                self.create3dInterpolator()
+            if (fz > fy):
+                rgbaBuffer[0] = (
+                    (1-fz)  * startPos[n000][0] +
+                    (fz-fy) * startPos[n001][0] +
+                    (fy-fx) * startPos[n011][0] +
+                    (fx)    * startPos[n111][0] )
 
-            dimensions = self._dimensions
+                rgbaBuffer[1] = (
+                    (1-fz)  * startPos[n000][1] +
+                    (fz-fy) * startPos[n001][1] +
+                    (fy-fx) * startPos[n011][1] +
+                    (fx)    * startPos[n111][1] )
 
-            # clamp because we only use values between 0 and 1
-            position = map(clamp, position)
+                rgbaBuffer[2] = (
+                    (1-fz)  * startPos[n000][2] +
+                    (fz-fy) * startPos[n001][2] +
+                    (fy-fx) * startPos[n011][2] +
+                    (fx)    * startPos[n111][2] )
+            elif (fz > fx):
+                rgbaBuffer[0] = (
+                    (1-fy)  * startPos[n000][0] +
+                    (fy-fz) * startPos[n010][0] +
+                    (fz-fx) * startPos[n011][0] +
+                    (fx)    * startPos[n111][0] )
 
-            # index values interpolation factor for RGB
-            indexRf = (position[0] * (dimensions[0]-1))
-            indexGf = (position[1] * (dimensions[1]-1))
-            indexBf = (position[2] * (dimensions[2]-1))
+                rgbaBuffer[1] = (
+                    (1-fy)  * startPos[n000][1] +
+                    (fy-fz) * startPos[n010][1] +
+                    (fz-fx) * startPos[n011][1] +
+                    (fx)    * startPos[n111][1] )
 
-            interpolated = self._interp3d(indexRf, indexGf, indexBf)
+                rgbaBuffer[2] = (
+                    (1-fy)  * startPos[n000][2] +
+                    (fy-fz) * startPos[n010][2] +
+                    (fz-fx) * startPos[n011][2] +
+                    (fx)    * startPos[n111][2] )
+            else:
+                rgbaBuffer[0] = (
+                    (1-fy)  * startPos[n000][0] +
+                    (fy-fx) * startPos[n010][0] +
+                    (fx-fz) * startPos[n110][0] +
+                    (fz)    * startPos[n111][0] )
 
-            return interpolated
+                rgbaBuffer[1] = (
+                    (1-fy)  * startPos[n000][1] +
+                    (fy-fx) * startPos[n010][1] +
+                    (fx-fz) * startPos[n110][1] +
+                    (fz)    * startPos[n111][1] )
+
+                rgbaBuffer[2] = (
+                    (1-fy)  * startPos[n000][2] +
+                    (fy-fx) * startPos[n010][2] +
+                    (fx-fz) * startPos[n110][2] +
+                    (fz)    * startPos[n111][2] )
+
+        return rgbaBuffer
 # Array
 
 
