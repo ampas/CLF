@@ -86,7 +86,6 @@ Extensions
 Would be nice to have
 ---------------------
 
-- An efficient implementation of the IndexMap lookup using a 'halfDomain' 1D LUT under the hood
 - An 'inverse' style for ProcessNodes such as LUT1D, Matrix, Range, ASC CDL.
 
 
