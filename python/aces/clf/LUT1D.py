@@ -52,10 +52,10 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
-from ProcessNode import *
-from Array import Array
-from IndexMap import IndexMap
-from Common import uint16ToHalf, halfToUInt16
+from aces.clf.ProcessNode import *
+from aces.clf.Array import Array
+from aces.clf.IndexMap import IndexMap
+from aces.clf.Common import uint16ToHalf, halfToUInt16
 
 class LUT1D(ProcessNode):
     "A Common LUT Format LUT 1D ProcessNode element"
@@ -163,7 +163,7 @@ class LUT1D(ProcessNode):
         # Initialize the output value
         outValues = np.zeros(len(values), dtype=np.float32)
 
-        for p in range(len(values)/stride):
+        for p in range(int(len(values)/stride)):
             value = values[p*stride:(p+1)*stride]
             outValue = values[p*stride:(p+1)*stride]
 

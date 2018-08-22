@@ -53,19 +53,20 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
 import math
+import six
 import numpy as np
 try:
     from scipy.interpolate import interp1d, LinearNDInterpolator
     sciPyEnabled = True
     raise ImportError('A very specific bad thing happened')
-except ImportError, e:
+except ImportError as e:
     #print( "Scipy import failed" )
     sciPyEnabled = False
 
 import xml.etree.ElementTree as etree
 
-from Common import *
-import Errors
+from aces.clf.Common import *
+from aces.clf.Errors import UnsupportedExtensionError
 
 class Array:
     "A Common LUT Format Array element"
@@ -124,7 +125,7 @@ class Array:
         else:
             msg = "Unsupported feature : Array floatEncoding"
             self._floatEncoding='string'
-            raise Errors.UnsupportedExtensionError(msg)
+            raise UnsupportedExtensionError(msg)
 
     def getFloatEncoding(self):
         return self._floatEncoding
@@ -147,7 +148,7 @@ class Array:
 
         integers = self._valuesAreIntegers
 
-        for n in range(len(self._values)/columns):
+        for n in range(int(len(self._values)/columns)):
             sample = self._values[n*columns:(n+1)*columns]
 
             # Integer values
@@ -165,23 +166,23 @@ class Array:
                         element.set('floatEncoding', self._floatEncoding)
 
                     if self._rawHalfs or self._floatEncoding == 'integer16bit':
-                        sample = map(halfToUInt16, sample)
+                        sample = list(map(halfToUInt16, sample))
                         sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
                     elif self._floatEncoding == 'integer32bit':
-                        sample = map(float32ToUInt32, sample)
+                        sample = list(map(float32ToUInt32, sample))
                         sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
                     elif self._floatEncoding == 'integer64bit':
-                        sample = map(doubleToUInt64, sample)
+                        sample = list(map(doubleToUInt64, sample))
                         sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
 
                     elif self._floatEncoding == 'hex16bit':
-                        sample = map(halfToHex, sample)
+                        sample = list(map(halfToHex, sample))
                         sampleText = " ".join(map(lambda x: "%15s" % str(x), sample))
                     elif self._floatEncoding == 'hex32bit':
-                        sample = map(float32ToHex, sample)
+                        sample = list(map(float32ToHex, sample))
                         sampleText = " ".join(map(lambda x: "%15s" % str(x), sample))
                     elif self._floatEncoding == 'hex64bit':
-                        sample = map(doubleToHex, sample)
+                        sample = list(map(doubleToHex, sample))
                         sampleText = " ".join(map(lambda x: "%16s" % str(x), sample))
 
                     # An unknown encoding. Will be ignored.
@@ -189,11 +190,11 @@ class Array:
                         sampleText = " ".join(map(lambda x: "%15s" % ("%6.9f" % float(x)), sample))
                 else:
                     msg = "Unsupported feature : Array floatEncoding"
-                    raise Errors.UnsupportedExtensionError(msg)
+                    raise UnsupportedExtensionError(msg)
 
             # 'rawHalfs' functionality. equivalent to 'floatEncoding' = 'integer16bit'
             elif self._rawHalfs:
-                sample = map(halfToUInt16, sample)
+                sample = list(map(halfToUInt16, sample))
                 sampleText = " ".join(map(lambda x: "%15s" % str(int(x)), sample))
 
             # Floats printed as strings
@@ -210,9 +211,9 @@ class Array:
 
     def read(self, element):
         # Store attributes
-        for key, value in element.attrib.iteritems():
+        for key, value in six.iteritems(element.attrib):
             if key == 'dim':
-                self._dimensions = map(int, value.split())
+                self._dimensions = list(map(int, map(float, value.split())))
             elif key == 'floatEncoding':
                 self._floatEncoding = value
 
@@ -530,7 +531,7 @@ class Array:
         dimensions = self._dimensions
 
         # Corner cases
-        index3 = map(lambda a, b: max(0, min(a, b-1)), index3, dimensions)
+        index3 = list(map(lambda a, b: max(0, min(a, b-1)), index3, dimensions))
 
         index1 = (index3[0]*dimensions[0]*dimensions[1] + index3[1]*dimensions[1] + index3[2])*3 
 
@@ -551,7 +552,7 @@ class Array:
         enclosingCubeColors = [0.0, 0.0, 0.0] * 8
 
         # clamp because we only use values between 0 and 1
-        position = map(clamp, position)
+        position = list(map(clamp, position))
 
         # index values interpolation factor for RGB
         indexRf = (position[0] * (dimensions[0]-1))
@@ -610,7 +611,7 @@ class Array:
         enclosingCubeColors = [0.0, 0.0, 0.0] * 8
 
         # clamp because we only use values between 0 and 1
-        position = map(clamp, position)
+        position = list(map(clamp, position))
 
         # index values interpolation factor for RGB
         indexRf = (position[0] * (dimensions[0]-1))

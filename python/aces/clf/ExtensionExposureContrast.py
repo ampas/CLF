@@ -52,7 +52,9 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
-from ProcessNode import *
+import six
+
+from aces.clf.ProcessNode import *
 
 #
 # Autodesk extensions
@@ -88,7 +90,7 @@ class ExposureContrast(ProcessNode):
     def readChild(self, element):
         if element.tag == 'ECParams':
             param = [0.0, 1.0, 1.0]
-            for key, value in element.attrib.iteritems():
+            for key, value in six.iteritems(element.attrib):
                 if key == 'exposure':
                     param[0] = float(value)
                 elif key == 'contrast':
@@ -131,7 +133,7 @@ class ExposureContrast(ProcessNode):
         # Initialize the output value
         outValues = np.zeros(len(values), dtype=np.float32)
 
-        for p in range(len(values)/stride):
+        for p in range(int(len(values)/stride)):
             value = values[p*stride:(p+1)*stride]
             outValue = values[p*stride:(p+1)*stride]
 
@@ -182,7 +184,7 @@ class ExposureContrast(ProcessNode):
 
         values = {"exposure":param[0], "contrast":param[0], "pivot":param[2]}
 
-        for key, value in values.iteritems():
+        for key, value in six.iteritems(values):
             print( "%20s : %15s : %15s" % ("Value", key, value) )
     # printInfoChild
 # ExposureContrast

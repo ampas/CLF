@@ -56,10 +56,11 @@ import os
 import gzip
 import numpy as np
 import sys
+import six
 import xml.etree.ElementTree as etree
 
-from Common import getFeatureCompatibility, featureSets
-import Errors
+from aces.clf.Common import getFeatureCompatibility, featureSets
+from aces.clf.Errors import UnsupportedExtensionError, UnknownProcessNodeError
 
 class ProcessList:
     "A Common LUT Format ProcessList element"
@@ -122,12 +123,12 @@ class ProcessList:
         else:
             tree = etree.Element('ProcessList')
 
-        # Add attributes        
-        for key, value in self._attributes.iteritems():
+        # Add attributes
+        for key, value in six.iteritems(self._attributes):
             tree.set(key, "%s" % value)
 
         # Add raw value elements
-        for key, value in self._valueElements.iteritems():
+        for key, value in six.iteritems(self._valueElements):
             valueElement = etree.SubElement(tree, key)
             valueElement.text = str(value)
 
@@ -155,12 +156,12 @@ class ProcessList:
             if getFeatureCompatibility() & featureSets["Duiker Research"]:
                 prettyString = self.xmlPrettify(document, clfPath)
                 f = gzip.open(clfPath, 'wb')
-                f.write(prettyString)
+                f.write(prettyString.encode("utf-8"))
                 f.close()
             else:
                 msg = "Unsupported feature : write gzipped file"
                 #print( "ProcessList::writeFile - %s" % msg )
-                raise Errors.UnsupportedExtensionError(msg)
+                raise UnsupportedExtensionError(msg)
 
         # Writing XML text
         else:
@@ -170,7 +171,7 @@ class ProcessList:
             # Pretty saving to to disk
             prettyString = self.xmlPrettify(document, clfPath)
             fp = open(clfPath, 'wb')
-            fp.write(prettyString)
+            fp.write(prettyString.encode("utf-8"))
             fp.close()
 
         return True
@@ -180,7 +181,7 @@ class ProcessList:
         root = element
 
         # Store attributes
-        for key, value in root.attrib.iteritems():
+        for key, value in six.iteritems(root.attrib):
             self.setAttribute(key, value)
 
         # Read child elements
@@ -209,7 +210,7 @@ class ProcessList:
                             not (getFeatureCompatibility() & featureSets["Duiker Research"])) ):
                         msg = "Unsupported feature : ProcessNode type %s" % elementType
                         if strict:
-                            raise Errors.UnsupportedExtensionError(msg)
+                            raise UnsupportedExtensionError(msg)
                         else:
                             print( "ProcessList::read - %s" % msg )
 
@@ -222,7 +223,7 @@ class ProcessList:
             else:
                 msg = "Ignoring element : %s" % child.tag
                 if strict:
-                    raise Errors.UnknownProcessNodeError(msg)
+                    raise UnknownProcessNodeError(msg)
                 else:
                     print( "ProcessList::read - %s" % msg )
     # read
@@ -389,12 +390,12 @@ class ProcessList:
     def printInfo(self):
         print( "ProcessList" )
 
-        # Attributes        
-        for key, value in self._attributes.iteritems():
+        # Attributes
+        for key, value in six.iteritems(self._attributes):
             print( "%20s : %15s : %15s" % ("Attribute", key, value))
 
         # Raw value elements
-        for key, value in self._valueElements.iteritems():
+        for key, value in six.iteritems(self._valueElements):
             print( "%20s : %15s : %15s" % ("Element", key, value))
 
         # Elements

@@ -52,8 +52,8 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
-from ProcessNode import *
-from ProcessList import ProcessList
+from aces.clf.ProcessNode import *
+from aces.clf.ProcessList import ProcessList
 
 class Group(ProcessNode):
     "A Common LUT Format Group ProcessNode element"

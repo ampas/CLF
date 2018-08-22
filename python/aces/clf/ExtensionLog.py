@@ -53,8 +53,9 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
 import math
+import six
 
-from ProcessNode import *
+from aces.clf.ProcessNode import *
 
 #
 # Autodesk extensions
@@ -94,7 +95,7 @@ class Log(ProcessNode):
     def readChild(self, element):
         if element.tag == 'LogParams':
             param = [0.6, 685.0, 95.0, 1.0, 0.0, None]
-            for key, value in element.attrib.iteritems():
+            for key, value in six.iteritems(element.attrib):
                 if key == 'gamma':
                     param[0] = float(value)
                 elif key == 'refWhite':
@@ -161,7 +162,7 @@ class Log(ProcessNode):
         # Initialize the output value
         outValues = np.zeros(len(values), dtype=np.float32)
 
-        for p in range(len(values)/stride):
+        for p in range(int(len(values)/stride)):
             value = values[p*stride:(p+1)*stride]
             outValue = values[p*stride:(p+1)*stride]
 
@@ -266,7 +267,7 @@ class Log(ProcessNode):
 
         values = {"gamma":gamma, "ref white":refWhite, "ref black":refBlack, "highlight":highlight, "shadow":shadow}
 
-        for key, value in values.iteritems():
+        for key, value in six.iteritems(values):
             print( "%20s : %15s : %15s" % ("Value", key, value) )
     # printInfoChild
 # Log

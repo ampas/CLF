@@ -73,13 +73,14 @@ Should be turned into a proper set of unit tests.
 import os
 import sys
 # Make sure we can import lutFormats
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'python'))
 
-import lutFormats
+import aces.lutFormats as lutFormats
 
 tmpDir = "/tmp"
 #aces1OCIOConfirDir = "/work/client/academy/ocio/hpd/OpenColorIO-Configs/aces_1.0.0"
-aces1OCIOConfirDir = "/path/to/OpenColorIO-Configs/aces_1.0.0"
+# aces1OCIOConfirDir = "/path/to/OpenColorIO-Configs/aces_1.0.0"
+aces1OCIOConfirDir = "/Users/remi/Desktop/color/OpenColorIO-Configs/aces_1.0.1"
 
 spiPath = "%s/luts/ACEScc_to_linear.spi1d" % aces1OCIOConfirDir
 cspPath = "%s/baked/maya/sRGB (D60 sim.) for ACEScg Maya.csp" % aces1OCIOConfirDir

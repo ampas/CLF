@@ -68,7 +68,7 @@ Python
 ******
 More extensive examples are included in tests/UnitTestsCLF.py
 
-import clf
+import clf as clf
 
 # Create a ProcessList
 pl = clf.ProcessList()
@@ -125,27 +125,28 @@ Having the explicit imports here feels off, but also necessary...
 '''
 
 # Feature set compatibility
-from Common import setFeatureCompatibility, getFeatureCompatibility, featureSets
+from aces.clf.Common import setFeatureCompatibility, getFeatureCompatibility, featureSets
 
 # General Types
-from ProcessList import ProcessList
-from Comment import Description, InputDescriptor, OutputDescriptor
-from Info import Info
-from ProcessNode import ProcessNode, bitDepths, bitDepthToNormalized, normalizedToBitDepth
+from aces.clf.ProcessList import ProcessList
+from aces.clf.Comment import Description, InputDescriptor, OutputDescriptor
+from aces.clf.Info import Info
+from aces.clf.ProcessNode import ProcessNode, bitDepths, bitDepthToNormalized, normalizedToBitDepth
 
 # ProcessNodes
-from Range import Range
-from Matrix import Matrix
-from ASCCDL import ASCCDL, ColorCorrection
-from LUT1D import LUT1D, simpleSampledLUT, simpleSampledLUTHalfDomain
-from LUT3D import LUT3D, simple3DLUT
+from aces.clf.Range import Range
+from aces.clf.Matrix import Matrix
+from aces.clf.ASCCDL import ASCCDL, ColorCorrection
+from aces.clf.LUT1D import LUT1D, simpleSampledLUT, simpleSampledLUTHalfDomain
+from aces.clf.LUT3D import LUT3D, simple3DLUT
 
 # Autodesk-specific ProcessNodes
-from ExtensionReference import Reference
-from ExtensionExposureContrast import ExposureContrast
-from ExtensionGamma import Gamma
-from ExtensionLog import Log
+from aces.clf.ExtensionReference import Reference
+from aces.clf.ExtensionExposureContrast import ExposureContrast
+from aces.clf.ExtensionGamma import Gamma
+from aces.clf.ExtensionLog import Log
 
 # Duiker Research-specific ProcessNodes
-from ExtensionGroup import Group
+from aces.clf.ExtensionGroup import Group
 
+from aces.clf.Array import Array

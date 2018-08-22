@@ -66,12 +66,13 @@ __version__ = '.'.join((__major_version__,
                         __change_version__))
 
 import os
-import clf
 
-import Sampling
-import LutFormat
+import aces.clf as clf
+from aces.lutFormats import *
+from aces.lutFormats.Sampling import *
+from aces.lutFormats.LutFormat import *
 
-class LutFormatCLF(LutFormat.LutFormat):
+class LutFormatCLF(LutFormat):
     "A class that implements IO for the Academy / ASC Common LUT Format .clf"
 
     # Descriptions, extensions and capabilities for this class
@@ -79,13 +80,13 @@ class LutFormatCLF(LutFormat.LutFormat):
     formats = [
         ["clf - 1D, 3D or 1D/3D LUT format",
          "clf",
-         [LutFormat.IO_CAPABILITY_WRITE_1D3D1D]
+         [IO_CAPABILITY_WRITE_1D3D1D]
          ]
         ]
 
     def __init__(self): 
         "%s - Initialize the standard class variables" % LutFormatCLF.formatType
-        LutFormat.LutFormat.__init__(self)
+        LutFormat.__init__(self)
     # __init__
 
     @classmethod

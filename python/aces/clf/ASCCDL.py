@@ -52,11 +52,12 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
+import six
 import xml.etree.ElementTree as etree
 
-from ProcessNode import *
-from Common import getFeatureCompatibility, featureSets
-import Errors
+from aces.clf.ProcessNode import *
+from aces.clf.Common import getFeatureCompatibility, featureSets
+from aces.clf.Errors import UnsupportedExtensionError
 
 class ASCCDL(ProcessNode):
     "A Common LUT Format ASC_CDL ProcessNode element"
@@ -106,11 +107,11 @@ class ASCCDL(ProcessNode):
             for child in element:
                 childType = child.tag
                 if childType == 'Slope':
-                    self._values['slope'] = map(float, child.text.split())
+                    self._values['slope'] = list(map(float, child.text.split()))
                 elif childType == 'Offset':
-                    self._values['offset'] = map(float, child.text.split())
+                    self._values['offset'] = list(map(float, child.text.split()))
                 elif childType == 'Power':
-                    self._values['power'] = map(float, child.text.split())
+                    self._values['power'] = list(map(float, child.text.split()))
         elif element.tag == 'SatNode':
             for child in element:
                 childType = child.tag
@@ -139,7 +140,7 @@ class ASCCDL(ProcessNode):
         if (not(getFeatureCompatibility() & featureSets["Autodesk"]) and
             style in ['v1.2_Fwd', 'noClampFwd', 'v1.2_Rev', 'noClampRev']):
                 msg = "Unsupported feature : Autodesk CDL style keyword %s" % style
-                raise Errors.UnsupportedExtensionError(msg)
+                raise UnsupportedExtensionError(msg)
 
         # Node parameters
         slope = [1.0, 1.0, 1.0]
@@ -167,7 +168,7 @@ class ASCCDL(ProcessNode):
         outValues = np.zeros(len(values), dtype=np.float32)
 
         # Support CLF spec and Autodesk CTF style keywords
-        for p in range(len(values)/stride):
+        for p in range(int(len(values)/stride)):
             value = values[p*stride:(p+1)*stride]
             outValue = values[p*stride:(p+1)*stride]
 
@@ -235,7 +236,7 @@ class ASCCDL(ProcessNode):
 
     def printInfoChild(self):
         #print( "ASC_CDL" )
-        for key, value in self._values.iteritems():
+        for key, value in six.iteritems(self._values):
             print( "%20s : %15s : %15s" % ("Value", key, value) )
         '''
         if 'slope' in self._values: 

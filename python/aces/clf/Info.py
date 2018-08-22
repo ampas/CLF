@@ -54,18 +54,18 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 
 import sys
 import os
+import six
 
-from Comment import Comment
-
-from ProcessList import ProcessListChildMeta
+from aces.clf.Comment import Comment
+from aces.clf.ProcessList import ProcessListChildMeta
 
 import xml.etree.ElementTree as etree
 
-class Info:
+class Info(six.with_metaclass(ProcessListChildMeta)):
     "A Common LUT Format Info element"
 
-    # Ensures that this class and children can be written to disk and read back later 
-    __metaclass__ = ProcessListChildMeta
+    # Ensures that this class and children can be written to disk and read back later
+    # __metaclass__ = ProcessListChildMeta
 
     def __init__(self, appRelease='', copyright=''):
         "%s - Initialize the standard class variables" % 'Info'

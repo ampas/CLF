@@ -54,6 +54,8 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 
 import numpy as np
 import struct
+import codecs
+import sys
 
 #
 # Functions to manage which feature sets are supported at run-time
@@ -90,44 +92,57 @@ def mix(value1, value2, mixAmount):
 # Utilities for bit-wise conversion between half-float, float, double and 
 # 16, 32 and 64 bit-integer representations
 def uint16ToHalf(uint16Value):
-    return np.frombuffer(np.getbuffer(np.uint16(uint16Value)), dtype=np.float16)[0]
+    return np.frombuffer(np.uint16(uint16Value), dtype=np.float16)[0]
 
 def halfToUInt16(halfValue):
-    return np.frombuffer(np.getbuffer(np.float16(halfValue)), dtype=np.uint16)[0]
+    return np.frombuffer(np.float16(halfValue), dtype=np.uint16)[0]
 
 # Utilities for bit-wise conversion between float and 32 bit-integer representations
 def uint32ToFloat32(uint32Value):
-    return np.frombuffer(np.getbuffer(np.uint32(uint32Value)), dtype=np.float32)[0]
+    return np.frombuffer(np.uint32(uint32Value), dtype=np.float32)[0]
 
 def float32ToUInt32(float32Value):
-    return np.frombuffer(np.getbuffer(np.float32(float32Value)), dtype=np.uint32)[0]
+    return np.frombuffer(np.float32(float32Value), dtype=np.uint32)[0]
 
 # Utilities for bit-wise conversion between double and 64 bit-integer representations
 def uint64ToDouble(uint64Value):
-    return np.frombuffer(np.getbuffer(np.uint64(uint64Value)), dtype=np.float64)[0]
+    return np.frombuffer(np.uint64(uint64Value), dtype=np.float64)[0]
 
 def doubleToUInt64(doubleValue):
-    return np.frombuffer(np.getbuffer(np.float64(doubleValue)), dtype=np.uint64)[0]
+    return np.frombuffer(np.float64(doubleValue), dtype=np.uint64)[0]
 
 
 # Utilities for bit-wise conversion between half-float, float, double and 
 # 16, 32 and 64 bit-integer representations
+
+def encode_if(val):
+    if sys.version_info >= (3, 0):
+        return codecs.encode(val, encoding="hex")
+    else:
+        return codecs.encode(val, "hex")
+
+def decode_if(val):
+    if sys.version_info >= (3, 0):
+        return codecs.decode(eval(val), 'hex_codec')
+    else:
+        return val.decode("hex")
+
 def halfToHex(halfValue):
     uint16Value = halfToUInt16(halfValue)
-    return struct.pack(">H", uint16Value).encode("hex")
+    return encode_if(struct.pack(">H", uint16Value))
 
 def hexToHalf(hex16Value):
-    uint16Value = struct.unpack(">H", hex16Value.decode("hex"))[0]
+    uint16Value = struct.unpack(">H", decode_if(hex16Value))[0]
     return uint16ToHalf(uint16Value)
 
 def float32ToHex(float32Value):
-    return struct.pack(">f", float32Value).encode("hex")
+    return encode_if(struct.pack(">f", float32Value))
 
 def hexToFloat32(hex32Value):
-    return struct.unpack(">f", hex32Value.decode("hex"))[0]
+    return struct.unpack(">f", decode_if(hex32Value))[0]
 
 def doubleToHex(doubleValue):
-    return struct.pack(">d", doubleValue).encode("hex")
+    return encode_if(struct.pack(">d", doubleValue))
 
 def hexToDouble(hex64Value):
-    return struct.unpack(">d", hex64Value.decode("hex"))[0]
+    return struct.unpack(">d", decode_if(hex64Value))[0]

@@ -53,11 +53,12 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
 import math
+import six
 
 import xml.etree.ElementTree as etree
 
-from Common import *
-from Array import Array
+from aces.clf.Common import *
+from aces.clf.Array import Array
 
 class IndexMap:
     "A Common LUT Format IndexMap element"
@@ -157,20 +158,20 @@ class IndexMap:
         element.set('dim', str(self._dimension))
         # XXX
         # Make this pretty at some point
-        element.text = " ".join(map(lambda a, b: "%s@%s" % (float(a),int(b)), self._values[0], self._values[1]))
+        element.text = " ".join(list(map(lambda a, b: "%s@%s" % (float(a),int(b)), self._values[0], self._values[1])))
 
         return element
     # write
 
     def read(self, element):
         # Store attributes
-        for key, value in element.attrib.iteritems():
+        for key, value in six.iteritems(element.attrib):
             if key == 'dim':
                 self._dimension = int(value)
 
         self._values = []
-        self._values.append( map(lambda p: float(p.split('@')[0]), element.text.split()) )
-        self._values.append( map(lambda p: float(p.split('@')[1]), element.text.split()) )
+        self._values.append( list(map(lambda p: float(p.split('@')[0]), element.text.split())) )
+        self._values.append( list(map(lambda p: float(p.split('@')[1]), element.text.split())) )
     # read
 
     # Process values
@@ -197,7 +198,7 @@ class IndexMap:
         if length < 15:
             print( "\t\tmap : %s" % " ".join(map(lambda a, b: "%s,%s" % (a,b), self._values[0], self._values[1])) )
         else:
-            pairs = map(lambda a, b: "%6.9f, %6.9f" % (a,b), self._values[0], self._values[1])
+            pairs = list(map(lambda a, b: "%6.9f, %6.9f" % (a,b), self._values[0], self._values[1]))
             for n in (range(3)):
                 print( " "*30 + pairs[n] )
 

@@ -66,10 +66,12 @@ __version__ = '.'.join((__major_version__,
                         __change_version__))
 
 import os
-import clf
-import LutFormat
 
-class LutFormatCTL(LutFormat.LutFormat):
+import aces.clf as clf
+from aces.lutFormats import *
+from aces.lutFormats.LutFormat import *
+
+class LutFormatCTL(LutFormat):
     "A class that implements IO for the Academy's Color Transform Language"
 
     # Descriptions, extensions and capabilities for this class
@@ -77,14 +79,14 @@ class LutFormatCTL(LutFormat.LutFormat):
     formats = [
         ["ctl - 1D, 3D or 1D/3D LUT format",
          "ctl",
-         [LutFormat.IO_CAPABILITY_WRITE_1D,
-          LutFormat.IO_CAPABILITY_WRITE_3D]
+         [IO_CAPABILITY_WRITE_1D,
+          IO_CAPABILITY_WRITE_3D]
          ]
         ]
 
     def __init__(self): 
         "%s - Initialize the standard class variables" % LutFormatCTL.formatType
-        LutFormat.LutFormat.__init__(self)
+        LutFormat.__init__(self)
     # __init__
 
     @classmethod

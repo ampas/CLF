@@ -66,10 +66,12 @@ __version__ = '.'.join((__major_version__,
                         __change_version__))
 
 import os
-import clf
-import LutFormat
 
-class LutFormatCSP(LutFormat.LutFormat):
+import aces.clf as clf
+from aces.lutFormats import *
+from aces.lutFormats.LutFormat import *
+
+class LutFormatCSP(LutFormat):
     "A class that implements IO for the Rising Sun Research .csp LUT formats"
 
     # Descriptions, extensions and capabilities for this class
@@ -77,16 +79,16 @@ class LutFormatCSP(LutFormat.LutFormat):
     formats = [
         ["csp - 1D, 3D or 1D/3D LUT format",
          "csp",
-         [LutFormat.IO_CAPABILITY_READ, 
-          LutFormat.IO_CAPABILITY_WRITE_1D,
-          LutFormat.IO_CAPABILITY_WRITE_3D,
-          LutFormat.IO_CAPABILITY_WRITE_1D3D1D]
+         [IO_CAPABILITY_READ,
+          IO_CAPABILITY_WRITE_1D,
+          IO_CAPABILITY_WRITE_3D,
+          IO_CAPABILITY_WRITE_1D3D1D]
          ]
         ]
 
     def __init__(self): 
         "%s - Initialize the standard class variables" % LutFormatCSP.formatType
-        LutFormat.LutFormat.__init__(self)
+        LutFormat.__init__(self)
     # __init__
 
     @classmethod
@@ -289,18 +291,18 @@ class LutFormatCSP(LutFormat.LutFormat):
 
                 # Red Index Map
                 prelutRedResolution = int(lines[dataStart+0])
-                prelutRedInput = map(float, lines[dataStart+1].split())
-                prelutRedOutput = map(float, lines[dataStart+2].split())
+                prelutRedInput = list(map(float, lines[dataStart+1].split()))
+                prelutRedOutput = list(map(float, lines[dataStart+2].split()))
 
                 # Green Index Map
                 prelutGreenResolution = int(lines[dataStart+3])
-                prelutGreenInput = map(float, lines[dataStart+4].split())
-                prelutGreenOutput = map(float, lines[dataStart+5].split())
+                prelutGreenInput = list(map(float, lines[dataStart+4].split()))
+                prelutGreenOutput = list(map(float, lines[dataStart+5].split()))
 
                 # Blue Index Map
                 prelutBlueResolution = int(lines[dataStart+6])
-                prelutBlueInput = map(float, lines[dataStart+7].split())
-                prelutBlueOutput = map(float, lines[dataStart+8].split())
+                prelutBlueInput = list(map(float, lines[dataStart+7].split()))
+                prelutBlueOutput = list(map(float, lines[dataStart+8].split()))
 
                 prelut = [[prelutRedInput, prelutRedOutput],
                     [prelutGreenInput, prelutGreenOutput],
@@ -315,7 +317,7 @@ class LutFormatCSP(LutFormat.LutFormat):
                     #print( "blank line")
                     dataStart += 1
 
-                resolution = map(int, lines[dataStart].split())
+                resolution = list(map(int, lines[dataStart].split()))
                 dataStart += 1
 
                 #print( "lut data starts on line : %d" % dataStart )
@@ -330,15 +332,15 @@ class LutFormatCSP(LutFormat.LutFormat):
                     for line in lines[dataStart:]:
                         # Convert from sample number to LUT index, CSP-style
                         indexR = cspIndex%resolution[0]
-                        indexG = (cspIndex/resolution[0])%resolution[1]
-                        indexB = cspIndex/(resolution[0]*resolution[1])
+                        indexG = (cspIndex//resolution[0])%resolution[1]
+                        indexB = cspIndex//(resolution[0]*resolution[1])
 
                         # Convert from LUT index to sample number, CLF-style
                         clfIndex = (indexR*resolution[0] + indexG)*resolution[1] + indexB
                         clfIndex *= 3
 
                         # Convert from text to float
-                        cspSamples = map(float, line.split())
+                        cspSamples = list(map(float, line.split()))
 
                         # Add to the sample values array
                         if len(cspSamples) == 3:
@@ -360,7 +362,7 @@ class LutFormatCSP(LutFormat.LutFormat):
                         clfIndex *= 3
 
                         # Convert from text to float
-                        cspSamples = map(float, line.split())
+                        cspSamples = list(map(float, line.split()))
 
                         # Add to the sample values array
                         if len(cspSamples) == 3:

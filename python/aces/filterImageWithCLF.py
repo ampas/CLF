@@ -60,7 +60,7 @@ import sys
 import traceback
 import timeit
 
-import clf
+import aces.clf as clf
 import OpenImageIO as oiio
 
 #

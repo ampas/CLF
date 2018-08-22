@@ -54,15 +54,15 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 
 import sys
 import os
+import six
 
 import xml.etree.ElementTree as etree
 
 # General Types
-from Comment import Description
-from Common import *
-import Errors
-
-from ProcessList import ProcessListChildMeta
+from aces.clf.Comment import Description
+from aces.clf.Common import *
+from aces.clf.Errors import UnsupportedExtensionError
+from aces.clf.ProcessList import ProcessListChildMeta
 
 # References for Bit-depth strings
 bitDepths = {
@@ -128,11 +128,11 @@ def bitDepthIsFloatingPoint(bitDepth):
 #
 # ProcessNode
 #
-class ProcessNode():
+class ProcessNode(six.with_metaclass(ProcessListChildMeta)):
     "A Common LUT Format ProcessNode element"
 
-    # Ensures that this class and children can be written to disk and read back later 
-    __metaclass__ = ProcessListChildMeta
+    # Ensures that this class and children can be written to disk and read back later
+    # __metaclass__ = ProcessListChildMeta
 
     def __init__(self, nodeType, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", bypass=False):
         "%s - Initialize the standard class variables" % nodeType
@@ -154,12 +154,12 @@ class ProcessNode():
     def write(self, tree):
         node = etree.SubElement(tree, self._nodeType)
 
-        # Add attributes        
-        for key, value in self._attributes.iteritems():
+        # Add attributes
+        for key, value in six.iteritems(self._attributes):
             node.set(key, "%s" % value)
 
         # Add raw value elements
-        for key, value in self._valueElements.iteritems():
+        for key, value in six.iteritems(self._valueElements):
             valueElement = etree.SubElement(node, key)
             valueElement.text = str(value)
 
@@ -187,7 +187,7 @@ class ProcessNode():
     def read(self, element, strict=False):
         #print( "%s - ProcessNode::read" % element.tag)
         # Store attributes
-        for key, value in element.attrib.iteritems():
+        for key, value in six.iteritems(element.attrib):
             # Convert text to booleans where appropriate
             if value in ["True", "False"]:
                 value = (value == "True")
@@ -207,13 +207,13 @@ class ProcessNode():
             # Read DynamicParameter elements
             elif childType == 'DynamicParameter':
                 if getFeatureCompatibility() & featureSets["Autodesk"]:
-                    for key, value in child.attrib.iteritems():
+                    for key, value in six.iteritems(child.attrib):
                         if key == 'param':
                             self._dynamicParams.append(value)
                 else:
                     msg = "Unsupported feature : DynamicParameter element"
                     if strict:
-                        raise Errors.UnsupportedExtensionError(msg)
+                        raise UnsupportedExtensionError(msg)
                     else:
                         print( "ProcessNode::read - %s" % msg )
 
@@ -231,12 +231,12 @@ class ProcessNode():
     def printInfo(self):
         print( "ProcessNode type : %s" % self._nodeType)
 
-        # Attributes        
-        for key, value in self._attributes.iteritems():
+        # Attributes
+        for key, value in six.iteritems(self._attributes):
             print( "%20s : %15s : %15s" % ("Attribute", key, value))
 
         # Print raw value elements
-        for key, value in self._valueElements.iteritems():
+        for key, value in six.iteritems(self._valueElements):
             print( "%20s : %15s : %15s" % ("Element", key, value))
 
         # Print dynamic parameter elements

@@ -68,7 +68,7 @@ __version__ = '.'.join((__major_version__,
 import os
 import math
 
-import clf
+import aces.clf as clf
 
 # LUT IO capabilities
 IO_CAPABILITY_READ = "read"

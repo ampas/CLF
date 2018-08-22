@@ -52,8 +52,8 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
-import ProcessList
-from ProcessNode import *
+from aces.clf.ProcessList import ProcessList
+from aces.clf.ProcessNode import *
 
 #
 # Autodesk extensions

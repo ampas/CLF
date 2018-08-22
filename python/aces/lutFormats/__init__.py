@@ -74,20 +74,17 @@ __version__ = '.'.join((__major_version__,
 # Needed to make sure that clf is in the sys.path
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 '''
 Having the explicit imports here feels off, but also necessary...
 '''
 
 # General Types
-from Registry import Registry
-from Common import *
-
-# LUT formats
-from LutSPI import LutFormatSPI
-from LutCSP import LutFormatCSP
-from LutCLF import LutFormatCLF
-from LutCTL import LutFormatCTL
-
-
+from aces.lutFormats.Registry import Registry
+from aces.lutFormats.Common import *
+#
+# # LUT formats
+from aces.lutFormats.LutSPI import LutFormatSPI
+from aces.lutFormats.LutCSP import LutFormatCSP
+from aces.lutFormats.LutCLF import LutFormatCLF
+from aces.lutFormats.LutCTL import LutFormatCTL

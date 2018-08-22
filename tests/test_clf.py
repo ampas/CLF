@@ -78,8 +78,8 @@ import math
 import numpy as np
 import tempfile
 
-# Make sure we can import aces.clf
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+# Make sure we can import clf
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'python'))
 
 from aces.clf import *
 
@@ -361,7 +361,7 @@ class TestCLF(unittest.TestCase):
         # Half-float values are used as the index into the LUT
         l1d4 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1d4Id", "Transform5c", rawHalfs=True, halfDomain=True)
         # Creating the identity LUT
-        l1d4.setArray(1, map(Array.uint16ToHalf, range(65536)))
+        l1d4.setArray(1, list(map(Common.uint16ToHalf, range(65536))))
         pl.addProcess(l1d4)
 
 
@@ -649,7 +649,7 @@ class TestCLF(unittest.TestCase):
         rpn0 = Range(value, bitDepths["FLOAT16"], "someId", "Transform0")
         rangePL.addProcess(rpn0)
 
-        processedValue = map(float,value)
+        processedValue = list(map(float,value))
         print( "Input Value  : %s" % processedValue)
 
         # Normalize values

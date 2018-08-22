@@ -54,8 +54,8 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 
 import numpy as np
 
-from ProcessNode import *
-from Array import Array
+from aces.clf.ProcessNode import *
+from aces.clf.Array import Array
 
 class Matrix(ProcessNode):
     "A Common LUT Format Matrix ProcessNode element"
@@ -110,7 +110,7 @@ class Matrix(ProcessNode):
         outValues = np.zeros(len(values), dtype=np.float32)
 
         # For each pixel
-        for p in range(len(values)/stride):
+        for p in range(int(len(values)/stride)):
             value = values[p*stride:(p+1)*stride]
             outValue = np.zeros(stride, dtype=np.float32)
 

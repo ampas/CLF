@@ -66,12 +66,13 @@ __version__ = '.'.join((__major_version__,
                         __change_version__))
 
 import os
-import clf
 
-import Sampling
-import LutFormat
+import aces.clf as clf
+from aces.lutFormats import *
+from aces.lutFormats.Sampling import *
+from aces.lutFormats.LutFormat import *
 
-class LutFormatSPI(LutFormat.LutFormat):
+class LutFormatSPI(LutFormat):
     "A class that implements IO for the Sony .spi1d, spi3d and .spimtx LUT formats"
 
     # Descriptions, extensions and capabilities for this class
@@ -79,10 +80,10 @@ class LutFormatSPI(LutFormat.LutFormat):
     formats = [
         ["spi1d - 1D LUT format",
          "spi1d",
-         [LutFormat.IO_CAPABILITY_READ, LutFormat.IO_CAPABILITY_WRITE_1D]],
+         [IO_CAPABILITY_READ, IO_CAPABILITY_WRITE_1D]],
         ["spi3d - 3D LUT format",
          "spi3d",
-         [LutFormat.IO_CAPABILITY_READ, LutFormat.IO_CAPABILITY_WRITE_3D]],
+         [IO_CAPABILITY_READ, IO_CAPABILITY_WRITE_3D]],
         ["spimtx - matrix format",
          "spimtx",
          []]
@@ -90,7 +91,7 @@ class LutFormatSPI(LutFormat.LutFormat):
 
     def __init__(self): 
         "%s - Initialize the standard class variables" % LutFormatSPI.formatType
-        LutFormat.LutFormat.__init__(self)
+        LutFormat.__init__(self)
     # __init__
 
     @classmethod
@@ -184,7 +185,7 @@ class LutFormatSPI(LutFormat.LutFormat):
             elif tokens[0] in ["{", "}"]:
                 continue
             else:
-                samples.extend(map(float, tokens))
+                samples.extend(list(map(float, tokens)))
             #else:
             #    print( "Skipping line : %s" % tokens )
 
@@ -249,9 +250,9 @@ class LutFormatSPI(LutFormat.LutFormat):
         if tokens[0] == "SPILUT":
             version = float(tokens[1])
             if version == 1.0:
-                tokens = map(int, lines[1].split())
+                tokens = list(map(int, lines[1].split()))
                 if tokens[0] == 3 or tokens[1] == 3:
-                    tokens = map(int, lines[2].split())
+                    tokens = list(map(int, lines[2].split()))
                     resolution = tokens
 
                     # This assumes that the value are printed in order
@@ -260,8 +261,8 @@ class LutFormatSPI(LutFormat.LutFormat):
                     # point to take into account the indices printed as the 
                     # first three values on each line
                     for line in lines[3:]:
-                        tokens = map(float, line.split())
-                        samples.extend(tokens[3:]) 
+                        tokens = list(map(float, line.split()))
+                        samples.extend(tokens[3:])
 
         #
         # Create ProcessNodes

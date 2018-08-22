@@ -61,7 +61,7 @@ import math
 import os
 import sys
 
-import clf
+import aces.clf as clf
 import lutFormats
 
 def main():

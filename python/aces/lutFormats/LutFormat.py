@@ -65,11 +65,12 @@ __version__ = '.'.join((__major_version__,
                         __minor_version__,
                         __change_version__))
 
+import six
 from itertools import chain
 
-from Registry import Registry
-import Sampling
-from Common import *
+from aces.lutFormats.Registry import Registry
+from aces.lutFormats.Sampling import sample1D, sample3D, sample1D3D1D
+from aces.lutFormats.Common import *
 
 class LutFormatMeta(type):
     "Metaclass for LUT formats that will register with LutRegistry"
@@ -82,11 +83,11 @@ class LutFormatMeta(type):
 #
 # LutFormat
 #
-class LutFormat():
+class LutFormat(six.with_metaclass(LutFormatMeta)):
     "The base class for classes that implement LUT Format IO"
 
-    # Ensures that this class and children will show up in the LUT Registry 
-    __metaclass__ = LutFormatMeta
+    # Ensures that this class and children will show up in the LUT Registry
+    # __metaclass__ = LutFormatMeta
 
     # Static class variables
     formatType = "LutFormat base"
@@ -169,7 +170,7 @@ class LutFormat():
 
         if lutStyle == IO_CAPABILITY_WRITE_1D:
             #print( "Sample the CLF ProcessList into a 1D LUT" )
-            samples = Sampling.sample1D(processList,
+            samples = sample1D(processList,
                                       lutResolution1d,
                                       inputMin,
                                       inputMax)
@@ -181,7 +182,7 @@ class LutFormat():
                                inputMax)
         elif lutStyle == IO_CAPABILITY_WRITE_3D:
             #print( "Sample the CLF ProcessList into a 3D LUT" )
-            samples = Sampling.sample3D(processList,
+            samples = sample3D(processList,
                                       expandedlutResolution3d,
                                       inputMin,
                                       inputMax)
@@ -198,7 +199,7 @@ class LutFormat():
              inputMin, inputMax,
              samples3d, 
              samples1dOut,
-             outputMin, outputMax) = Sampling.sample1D3D1D(processList,
+             outputMin, outputMax) = sample1D3D1D(processList,
                                                            expandedlutResolution1d3d1d,
                                                            shaperIn,
                                                            shaperOut)

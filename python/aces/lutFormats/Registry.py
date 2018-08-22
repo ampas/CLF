@@ -67,8 +67,8 @@ __version__ = '.'.join((__major_version__,
 
 import os
 
-import clf
-from Common import *
+import aces.clf as clf
+from aces.lutFormats.Common import *
 
 class Registry:
     "A registry for LUT format IO functionality"

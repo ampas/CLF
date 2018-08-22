@@ -68,8 +68,8 @@ __version__ = '.'.join((__major_version__,
 import os
 import math
 
-import clf
-from clf.Common import halfToUInt16, uint16ToHalf
+import aces.clf as clf
+from aces.clf.Common import halfToUInt16, uint16ToHalf
 
 # Generate an inverse 1D LUT by evaluating and resampling the original 1D LUT
 # Inverse LUTs will have 2x the base LUT's number of entries. This may not be 
@@ -334,7 +334,7 @@ def sample3D(processList,
     #print( "sample3D" )
 
     # Sample all values in 3D range
-    samples = [[[[0.0,0.0,0.0] for i in xrange(lutResolution3d[0])] for i in xrange(lutResolution3d[1])] for i in xrange(lutResolution3d[2])]
+    samples = [[[[0.0,0.0,0.0] for i in range(lutResolution3d[0])] for i in range(lutResolution3d[1])] for i in range(lutResolution3d[2])]
 
     for r in range(lutResolution3d[0]):
         for g in range(lutResolution3d[1]):
@@ -472,7 +472,7 @@ def sample1D3D1D(processList,
     #
     #print( "sampleAndWrite1D3D1D - create 3D LUT" )
 
-    samples3d = [[[[0.0,0.0,0.0] for i in xrange(lutResolution3d[0])] for i in xrange(lutResolution3d[1])] for i in xrange(lutResolution3d[2])]
+    samples3d = [[[[0.0,0.0,0.0] for i in range(lutResolution3d[0])] for i in range(lutResolution3d[1])] for i in range(lutResolution3d[2])]
 
     for r in range(lutResolution3d[0]):
         for g in range(lutResolution3d[1]):

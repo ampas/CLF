@@ -52,7 +52,7 @@ IMPLEMENTATION, OR APPLICATIONS THEREOF, HELD BY PARTIES OTHER THAN A.M.P.A.S.,
 WHETHER DISCLOSED OR UNDISCLOSED.
 """
 
-from ProcessNode import *
+from aces.clf.ProcessNode import *
 
 class Range(ProcessNode):
     "A Common LUT Format Range ProcessNode element"

@@ -62,7 +62,7 @@ import sys
 
 import PyOpenColorIO as OCIO
 
-import clf
+import aces.clf as clf
 import lutFormats
 
 def convertMatrixToProcessNode(matrix, offset, direction):
