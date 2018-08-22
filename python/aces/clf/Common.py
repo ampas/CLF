@@ -59,7 +59,7 @@ import struct
 # Functions to manage which feature sets are supported at run-time
 #
 featureSets = {
-    "CLF"              : 0x0, 
+    "CLF"              : 0x0,
     "Autodesk"         : 0x1,
     "Duiker Research"  : 0x2,
     "All"              : 0xf
@@ -87,7 +87,7 @@ def mix(value1, value2, mixAmount):
     return outValue
 # mix
 
-# Utilities for bit-wise conversion between half-float, float, double and 
+# Utilities for bit-wise conversion between half-float, float, double and
 # 16, 32 and 64 bit-integer representations
 def uint16ToHalf(uint16Value):
     return np.frombuffer(np.getbuffer(np.uint16(uint16Value)), dtype=np.float16)[0]
@@ -110,7 +110,7 @@ def doubleToUInt64(doubleValue):
     return np.frombuffer(np.getbuffer(np.float64(doubleValue)), dtype=np.uint64)[0]
 
 
-# Utilities for bit-wise conversion between half-float, float, double and 
+# Utilities for bit-wise conversion between half-float, float, double and
 # 16, 32 and 64 bit-integer representations
 def halfToHex(halfValue):
     uint16Value = halfToUInt16(halfValue)

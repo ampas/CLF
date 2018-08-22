@@ -59,7 +59,7 @@ from IndexMap import IndexMap
 class LUT3D(ProcessNode):
     "A Common LUT Format LUT 3D ProcessNode element"
 
-    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
+    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="",
         interpolation='trilinear'):
         "%s - Initialize the standard class variables" % 'LUT3D'
         ProcessNode.__init__(self, 'LUT3D', inBitDepth, outBitDepth, id, name)
@@ -72,17 +72,17 @@ class LUT3D(ProcessNode):
 
     def setIndexMaps(self, valuesR, valuesG = None, valuesB = None):
         indexMapR = IndexMap(len(valuesR[0]), valuesR)
-        self._indexMaps.append( indexMapR ) 
+        self._indexMaps.append( indexMapR )
         self.addElement( indexMapR )
-        
+
         # Either one or three indexMaps
         if( valuesG != None and valuesB != None ):
             indexMapG = IndexMap(len(valuesG[0]), valuesG)
-            self._indexMaps.append( indexMapG ) 
+            self._indexMaps.append( indexMapG )
             self.addElement( indexMapG )
 
             indexMapB = IndexMap(len(valuesB[0]), valuesB)
-            self._indexMaps.append( indexMapB ) 
+            self._indexMaps.append( indexMapB )
             self.addElement( indexMapB )
     # setIndexMaps
 
@@ -92,8 +92,8 @@ class LUT3D(ProcessNode):
 
         integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
 
-        self._array = Array(dimensions, 
-            values, 
+        self._array = Array(dimensions,
+            values,
             integers,
             floatEncoding=floatEncoding)
         self.addElement( self._array )
@@ -198,16 +198,16 @@ class LUT3D(ProcessNode):
 #
 # 3D LUT example
 #
-def simple3DLUT(id, 
-    transformId, 
-    resolution, 
-    f=lambda x, y, z: [x, y, z], 
+def simple3DLUT(id,
+    transformId,
+    resolution,
+    f=lambda x, y, z: [x, y, z],
     inBitDepth=bitDepths["FLOAT16"],
     outBitDepth=bitDepths["FLOAT16"]):
 
-    l3d = LUT3D(inBitDepth, 
-        outBitDepth, 
-        id, 
+    l3d = LUT3D(inBitDepth,
+        outBitDepth,
+        id,
         transformId)
 
     channels = 3

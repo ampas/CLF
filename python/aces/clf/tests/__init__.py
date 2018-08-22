@@ -55,7 +55,7 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 """
 Defines unit tests for *CLF*.
 
-These tests aren't particularly meaningful, but 
+These tests aren't particularly meaningful, but
 they do exercise basic IO and color processing.
 
 Usage

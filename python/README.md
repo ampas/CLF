@@ -3,7 +3,7 @@ Academy / ASC Common LUT Format (CLF)
 
 
 Context
---- 
+---
 This bundle contains an implementation of the Academy / ASC Common LUT Format (CLF). The format was developed as part of the Academy's ACES project.
 
 
@@ -19,7 +19,7 @@ The Python implementation of CLF:
 	- A C/C++ implementation is needed
 
 CLF
---- 
+---
 ### Library
 aces/clf/
 
@@ -35,7 +35,7 @@ aces/clf/
 	- Creating a ProcessList and various ProcessNodes
 	- Reading a CLF
 	- Writing a CLF
-	- Processing colors with a CLF 
+	- Processing colors with a CLF
 
 ### Tools
 clfinfo
@@ -44,7 +44,7 @@ clfinfo
 
 filterImageWithCLF
 
-- Reads an image, applies a CLF to the image, writes a new image 
+- Reads an image, applies a CLF to the image, writes a new image
 
 convertLUTtoCLF
 

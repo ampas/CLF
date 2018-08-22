@@ -1,5 +1,5 @@
 # Academy / ASC Common LUT (CLF) Format Sample Implementations #
-# 
+#
 This folder contains sample implementations of the Acadmey / ASC Common LUT
 Format (CLF) intended to be used with the [Academy Color Encoding System
 (ACES)](http://www.oscars.org/aces). The implementations are intended to be
@@ -10,7 +10,7 @@ files located in each implementations subfolder.
 
 
 ## License Terms ##
-## 
+##
 The Academy / ASC Common LUT Format Sample Implementations are provided by the
 Academy under the following terms and conditions:
 

@@ -88,7 +88,7 @@ class LutFormatSPI(LutFormat.LutFormat):
          []]
         ]
 
-    def __init__(self): 
+    def __init__(self):
         "%s - Initialize the standard class variables" % LutFormatSPI.formatType
         LutFormat.LutFormat.__init__(self)
     # __init__
@@ -96,22 +96,22 @@ class LutFormatSPI(LutFormat.LutFormat):
     @classmethod
     def read(cls,
              lutPath,
-             inverse=False, 
+             inverse=False,
              interpolation='linear',
-             inversesUseIndexMaps=True, 
+             inversesUseIndexMaps=True,
              inversesUseHalfDomain=True):
         #print( "%s format read - %s" % (LutFormatSPI.formatType, lutPath) )
         extension = os.path.splitext(lutPath)[1][1:].strip().lower()
 
         if extension == 'spi1d':
             return LutFormatSPI.readSPI1D(lutPath,
-                inverse, 
+                inverse,
                 interpolation,
-                inversesUseIndexMaps, 
+                inversesUseIndexMaps,
                 inversesUseHalfDomain)
         elif extension == 'spi3d':
             return LutFormatSPI.readSPI3D(lutPath,
-                inverse, 
+                inverse,
                 interpolation)
         elif extension == 'spimtx':
             return LutFormatSPI.readSPIMTX(lutPath)
@@ -126,12 +126,12 @@ class LutFormatSPI(LutFormat.LutFormat):
                 inputMin,
                 inputMax):
         #print( "%s format write 1D - %s" % (LutFormatSPI.formatType, lutPath) )
-        return LutFormatSPI.writeSPI1D(lutPath, 
-                                       inputMin, 
-                                       inputMax, 
-                                       samples, 
-                                       lutResolution1d, 
-                                       3, 
+        return LutFormatSPI.writeSPI1D(lutPath,
+                                       inputMin,
+                                       inputMax,
+                                       samples,
+                                       lutResolution1d,
+                                       3,
                                        3)
 
     @classmethod
@@ -142,17 +142,17 @@ class LutFormatSPI(LutFormat.LutFormat):
                 inputMin,
                 inputMax):
         #print( "%s format write 3D - %s" % (LutFormatSPI.formatType, lutPath) )
-        return LutFormatSPI.writeSPI3D(lutPath, 
-                                       inputMin, 
-                                       inputMax, 
-                                       samples, 
+        return LutFormatSPI.writeSPI3D(lutPath,
+                                       inputMin,
+                                       inputMax,
+                                       samples,
                                        lutResolution3d)
 
     @staticmethod
-    def readSPI1D(lutPath, 
-                  inverse=False, 
+    def readSPI1D(lutPath,
+                  inverse=False,
                   interpolation='linear',
-                  inversesUseIndexMaps=True, 
+                  inversesUseIndexMaps=True,
                   inversesUseHalfDomain=True):
         with open(lutPath) as f:
             lines = f.read().splitlines()
@@ -221,7 +221,7 @@ class LutFormatSPI(LutFormat.LutFormat):
                 lutpnInverses = Sampling.generateLUT1DInverseHalfDomain(resolution, samples, minInputValue, maxInputValue, rawHalfs=True)
             else:
                 print( "Generating resampled inverse of 1D LUT")
-                lutpnInverses = Sampling.generateLUT1DInverseResampled(resolution, samples, minInputValue, maxInputValue)            
+                lutpnInverses = Sampling.generateLUT1DInverseResampled(resolution, samples, minInputValue, maxInputValue)
             lutpns.extend(lutpnInverses)
 
         return lutpns
@@ -257,11 +257,11 @@ class LutFormatSPI(LutFormat.LutFormat):
                     # This assumes that the value are printed in order
                     # with blue incrementing fastest like the CLF specification
                     # This is generally true, but should be generalized at some
-                    # point to take into account the indices printed as the 
+                    # point to take into account the indices printed as the
                     # first three values on each line
                     for line in lines[3:]:
                         tokens = map(float, line.split())
-                        samples.extend(tokens[3:]) 
+                        samples.extend(tokens[3:])
 
         #
         # Create ProcessNodes
@@ -277,12 +277,12 @@ class LutFormatSPI(LutFormat.LutFormat):
         return False
 
     @staticmethod
-    def writeSPI1D(filename, 
-                   from_min, 
-                   from_max, 
-                   data, 
-                   entries, 
-                   channels, 
+    def writeSPI1D(filename,
+                   from_min,
+                   from_max,
+                   data,
+                   entries,
+                   channels,
                    components=3):
         """
         Object description.
@@ -322,10 +322,10 @@ class LutFormatSPI(LutFormat.LutFormat):
     # writeSPI1D
 
     @staticmethod
-    def writeSPI3D(filename, 
-                   from_min, 
-                   from_max, 
-                   data, 
+    def writeSPI3D(filename,
+                   from_min,
+                   from_max,
+                   data,
                    resolution):
         """
         Object description.
@@ -347,7 +347,7 @@ class LutFormatSPI(LutFormat.LutFormat):
             fp.write('SPILUT 1.0\n')
             fp.write('3 3\n')
             fp.write('%s\n' % ' '.join(map(str, resolution)) )
-     
+
             for r in range(resolution[0]):
                 for g in range(resolution[1]):
                     for b in range(resolution[2]):

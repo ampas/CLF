@@ -90,7 +90,7 @@ class Group(ProcessNode):
             if isinstance(process, ProcessList.getClass("Reference")):
                 process.setWriteReferencedNodes(writeSelfContained)
             process.write(node)
-        
+
         return node
     # write
 
@@ -126,12 +126,12 @@ class Group(ProcessNode):
             if processNode.getAttribute('bypass') == None:
                 result = processNode.process(result, stride, verbose=verbose)
                 if verbose:
-                    print( "Group - %s (%s) - result value : %s" % 
-                        (processNode.getAttribute('name'), processNode.getNodeType(), 
+                    print( "Group - %s (%s) - result value : %s" %
+                        (processNode.getAttribute('name'), processNode.getNodeType(),
                             " ".join(map(lambda x: "%3.6f" % x, result)) ) )
             else:
                 if verbose:
-                    print( "%s (%s) - bypassing" % 
+                    print( "%s (%s) - bypassing" %
                         (processNode.getAttribute('name'), processNode.getNodeType()))
 
                 # Handle bit-depth mismatches
@@ -148,8 +148,8 @@ class Group(ProcessNode):
                         RangeAdapter = RangeClass(inBitDepth, outBitDepth, "adapter", "adapter", style='noClamp')
                         result = RangeAdapter.process(result, stride, verbose=verbose)
                         if verbose:
-                            print( "%s (%s) - result value : %s, result type : %s" % 
-                                (RangeAdapter.getAttribute('name'), RangeAdapter.getNodeType(), 
+                            print( "%s (%s) - result value : %s, result type : %s" %
+                                (RangeAdapter.getAttribute('name'), RangeAdapter.getNodeType(),
                                     " ".join(map(lambda x: "%3.6f" % x, result)),
                                     type(result) ) )
 

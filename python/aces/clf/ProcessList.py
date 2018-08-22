@@ -68,10 +68,10 @@ class ProcessList:
     def xmlPrettify(document, path):
         # Pretty saving to to disk
         documentString = etree.tostring(document.getroot(), encoding='UTF-8')
-            
+
         from xml.dom import minidom
         prettyString = minidom.parseString(documentString).toprettyxml()
-       
+
         return prettyString
     #xmlPrettify
 
@@ -98,7 +98,7 @@ class ProcessList:
         self._valueElements = {}
         self._elements = []
         self._processes = []
-        
+
         if clfPath != None:
             self.readFile(clfPath, strict)
     # __init__
@@ -107,7 +107,7 @@ class ProcessList:
         return iter(self._processes)
     # __iter__
 
-    def __getitem__(self, key): 
+    def __getitem__(self, key):
         return self._processes[key]
     # __getitem__
 
@@ -122,7 +122,7 @@ class ProcessList:
         else:
             tree = etree.Element('ProcessList')
 
-        # Add attributes        
+        # Add attributes
         for key, value in self._attributes.iteritems():
             tree.set(key, "%s" % value)
 
@@ -141,7 +141,7 @@ class ProcessList:
             if isinstance(process, self.getClass("Reference")):
                 process.setWriteReferencedNodes(writeSelfContained)
             process.write(tree)
-        
+
         document = etree.ElementTree(tree)
 
         return document
@@ -166,7 +166,7 @@ class ProcessList:
         else:
             # Non pretty-saving to disk
             #document.write(scriptPath)
-            
+
             # Pretty saving to to disk
             prettyString = self.xmlPrettify(document, clfPath)
             fp = open(clfPath, 'wb')
@@ -201,7 +201,7 @@ class ProcessList:
                 if issubclass(elementClass, processNodeClass):
                     element.read(child, strict=strict)
 
-                    # Check that a given ProcessNode class is compatible with 
+                    # Check that a given ProcessNode class is compatible with
                     # the current feature set
                     if ( (elementType in ["ExposureContrast", "Gamma", "Log", "Reference"] and
                         not (getFeatureCompatibility() & featureSets["Autodesk"])) or
@@ -275,7 +275,7 @@ class ProcessList:
         self.setAttribute('inverseOf', name)
     def getInverseOf(self):
         return self.getAttribute('inverseOf')
-  
+
     def setCompCLFversion(self, name):
         self.setAttribute('compCLFversion', name)
     def getCompCLFversion(self):
@@ -347,20 +347,20 @@ class ProcessList:
                 not(getFeatureCompatibility() & featureSets["Autodesk"]) ):
                 result = processNode.process(result, stride, verbose=verbose)
                 if verbose:
-                    print( "%s (%s) - result value : %s, result type : %s" % 
-                        (processNode.getAttribute('name'), processNode.getNodeType(), 
+                    print( "%s (%s) - result value : %s, result type : %s" %
+                        (processNode.getAttribute('name'), processNode.getNodeType(),
                             " ".join(map(lambda x: "%3.6f" % x, result)),
                             type(result) ) )
 
                     if (processNode.getAttribute('bypass') != None and
                         not(getFeatureCompatibility() & featureSets["Autodesk"])):
-                        print( "%s (%s) - bypass ignored based on feature compatibility setting." % 
+                        print( "%s (%s) - bypass ignored based on feature compatibility setting." %
                             (processNode.getAttribute('name'), processNode.getNodeType()) )
 
             # Bypass this ProcessNode
             else:
                 if verbose:
-                    print( "%s (%s) - bypassing" % 
+                    print( "%s (%s) - bypassing" %
                         (processNode.getAttribute('name'), processNode.getNodeType()))
 
                 # Handle bit-depth mismatches
@@ -377,8 +377,8 @@ class ProcessList:
                         RangeAdapter = RangeClass(inBitDepth, outBitDepth, "adapter", "adapter", style='noClamp')
                         result = RangeAdapter.process(result, verbose=verbose)
                         if verbose:
-                            print( "%s (%s) - result value : %s, result type : %s" % 
-                                (RangeAdapter.getAttribute('name'), RangeAdapter.getNodeType(), 
+                            print( "%s (%s) - result value : %s, result type : %s" %
+                                (RangeAdapter.getAttribute('name'), RangeAdapter.getNodeType(),
                                     " ".join(map(lambda x: "%3.6f" % x, result)),
                                     type(result) ) )
 
@@ -389,7 +389,7 @@ class ProcessList:
     def printInfo(self):
         print( "ProcessList" )
 
-        # Attributes        
+        # Attributes
         for key, value in self._attributes.iteritems():
             print( "%20s : %15s : %15s" % ("Attribute", key, value))
 
@@ -402,7 +402,7 @@ class ProcessList:
             element.printInfo()
 
         print( "" )
-        
+
         # Process Nodes
         print( "Process Nodes")
         for processNode in self._processes:

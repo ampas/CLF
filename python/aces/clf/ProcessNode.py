@@ -66,11 +66,11 @@ from ProcessList import ProcessListChildMeta
 
 # References for Bit-depth strings
 bitDepths = {
-    "UINT8"   : "8i", 
+    "UINT8"   : "8i",
     "UINT10"  : "10i",
     "UINT12"  : "12i",
-    "UINT16"  : "16i", 
-    "FLOAT16" : "16f", 
+    "UINT16"  : "16i",
+    "FLOAT16" : "16f",
     "FLOAT32" : "32f"
 }
 
@@ -79,7 +79,7 @@ def bitDepthToNormalized(value, bitDepth):
     if( bitDepth == bitDepths["UINT8"] ):
         outValue = value/(pow(2, 8)-1.0)
     elif( bitDepth == bitDepths["UINT10"] ):
-        outValue = value/(pow(2, 10)-1.0)        
+        outValue = value/(pow(2, 10)-1.0)
     elif( bitDepth == bitDepths["UINT12"] ):
         outValue = value/(pow(2, 12)-1.0)
     elif( bitDepth == bitDepths["UINT16"] ):
@@ -94,7 +94,7 @@ def normalizedToBitDepth(value, bitDepth):
     if( bitDepth == bitDepths["UINT8"] ):
         outValue = value*(pow(2, 8)-1.0)
     elif( bitDepth == bitDepths["UINT10"] ):
-        outValue = value*(pow(2, 10)-1.0)        
+        outValue = value*(pow(2, 10)-1.0)
     elif( bitDepth == bitDepths["UINT12"] ):
         outValue = value*(pow(2, 12)-1.0)
     elif( bitDepth == bitDepths["UINT16"] ):
@@ -109,7 +109,7 @@ def bitDepthSize(bitDepth):
     if( bitDepth == bitDepths["UINT8"] ):
         outValue = (pow(2, 8)-1.0)
     elif( bitDepth == bitDepths["UINT10"] ):
-        outValue = (pow(2, 10)-1.0)        
+        outValue = (pow(2, 10)-1.0)
     elif( bitDepth == bitDepths["UINT12"] ):
         outValue = (pow(2, 12)-1.0)
     elif( bitDepth == bitDepths["UINT16"] ):
@@ -131,7 +131,7 @@ def bitDepthIsFloatingPoint(bitDepth):
 class ProcessNode():
     "A Common LUT Format ProcessNode element"
 
-    # Ensures that this class and children can be written to disk and read back later 
+    # Ensures that this class and children can be written to disk and read back later
     __metaclass__ = ProcessListChildMeta
 
     def __init__(self, nodeType, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", bypass=False):
@@ -154,7 +154,7 @@ class ProcessNode():
     def write(self, tree):
         node = etree.SubElement(tree, self._nodeType)
 
-        # Add attributes        
+        # Add attributes
         for key, value in self._attributes.iteritems():
             node.set(key, "%s" % value)
 
@@ -198,7 +198,7 @@ class ProcessNode():
             childType = child.tag
             #print( elementType )
 
-            # Read Description elements 
+            # Read Description elements
             if childType == 'Description':
                 description = Description()
                 description.read(child)
@@ -231,7 +231,7 @@ class ProcessNode():
     def printInfo(self):
         print( "ProcessNode type : %s" % self._nodeType)
 
-        # Attributes        
+        # Attributes
         for key, value in self._attributes.iteritems():
             print( "%20s : %15s : %15s" % ("Attribute", key, value))
 
@@ -246,7 +246,7 @@ class ProcessNode():
         # Print elements
         for element in self._elements:
             element.printInfo()
-        
+
         self.printInfoChild()
 
         print( "" )

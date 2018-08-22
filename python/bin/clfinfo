@@ -81,7 +81,7 @@ def main():
 
     #
     # Get options
-    # 
+    #
     clfPath = options.clf
 
     try:
@@ -92,9 +92,9 @@ def main():
         args = []
 
     print( "command line : \n%s\n" % " ".join(sys.argv) )
- 
+
     #
-    # Run 
+    # Run
     #
     if clfPath:
         pl = clf.ProcessList(clfPath)

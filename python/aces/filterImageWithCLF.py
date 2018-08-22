@@ -90,9 +90,9 @@ def oiioFloatPixelsToNPHalfArray(width, height, channels, oiioFloats):
     return npPixels
 # oiioFloatPixelsToNPHalfArray
 
-# Create an array of 'floats' that OpenImageIO can use to write 
+# Create an array of 'floats' that OpenImageIO can use to write
 # to formats like OpenEXR that support half-float. Starting point
-# is a numpy array of half-float pixels. 
+# is a numpy array of half-float pixels.
 # Each 4 byte 'float' is the binary equivalent of two packed 2-byte half-floats.
 def npHalfArrayToOIIOFloatPixels(width, height, channels, npPixels):
     # Read half-float pixels into a numpy float pixel array
@@ -117,13 +117,13 @@ clfBitDepthToOIIOBitDepth = {
     clf.bitDepths["UINT12"]  : oiio.UINT16,
     clf.bitDepths["UINT16"]  : oiio.UINT16,
     clf.bitDepths["FLOAT16"] : oiio.HALF,
-    clf.bitDepths["FLOAT32"] : oiio.FLOAT 
+    clf.bitDepths["FLOAT32"] : oiio.FLOAT
 }
 
 #
 # Read an image
 #
-def readPixelArray(inputPath, 
+def readPixelArray(inputPath,
     bitDepthOverride="auto"):
     print( "Loading image - path : %s" % inputPath)
 
@@ -170,7 +170,7 @@ def readPixelArray(inputPath,
 
         inputImage.close()
 
-        # Reset integer bit-depth 
+        # Reset integer bit-depth
         if bitShift != 0:
             #print( "Shifting integer values" )
             for i in range(len(sourceData)):
@@ -190,12 +190,12 @@ def readPixelArray(inputPath,
 #
 # Write an image
 #
-def writePixelArray(outputPath, 
-    pixels, 
-    bitDepth, 
-    width, 
-    height, 
-    channels, 
+def writePixelArray(outputPath,
+    pixels,
+    bitDepth,
+    width,
+    height,
+    channels,
     metadata,
     compression=None,
     compressionQuality=0):
@@ -284,9 +284,9 @@ def writePixelArray(outputPath,
     #
     if compression:
         outputSpec.attribute("compression", compression)
-            
+
     if compressionQuality > 0:
-        outputSpec.attribute("CompressionQuality", compressionQuality)        
+        outputSpec.attribute("CompressionQuality", compressionQuality)
 
     #
     # Create, write and close the image
@@ -319,11 +319,11 @@ from multiprocessing import Pool, Lock, cpu_count
 # Filter a single row - one pixel at a time
 #
 # This version processes a single pixel at a time.
-def filterRow_pixel(row, 
+def filterRow_pixel(row,
     width,
-    height, 
-    channels, 
-    pixels, 
+    height,
+    channels,
+    pixels,
     InRange,
     processList,
     OutRange,
@@ -363,11 +363,11 @@ def filterRow_pixel(row,
 #
 # This version processes a row of pixels as a group, using the 'stride' parameter
 # It it marginally faster than processing one pixel at a time.
-def filterRow_stride(row, 
-    width, 
+def filterRow_stride(row,
+    width,
     height,
-    channels, 
-    pixels, 
+    channels,
+    pixels,
     InRange,
     processList,
     OutRange,
@@ -408,11 +408,11 @@ def filterRow_stride(row,
 #
 # This version takes a row of pixels and returns a filtered row of pixels.
 # It is designed to be used with the Pool map_async call.
-def filterRow_parallel(row, 
-    width, 
+def filterRow_parallel(row,
+    width,
     height,
-    channels, 
-    pixels, 
+    channels,
+    pixels,
     InRange,
     processList,
     OutRange,
@@ -444,7 +444,7 @@ def filterRow_parallel(row,
 
     #t1 = timeit.default_timer()
     #elapsed = t1 - t0
-    
+
     #if verbose:
     #    print( "Filtering row %d took %s seconds" % (row, elapsed) )
 
@@ -463,9 +463,9 @@ def filterRow_parallel_splitargs(args):
 #
 # Filter an image
 #
-def filterImageWithCLF(inputPath, 
-    outputPath, 
-    processList, 
+def filterImageWithCLF(inputPath,
+    outputPath,
+    processList,
     verbose=False,
     outBitDepth=None,
     multithreaded=cpu_count(),
@@ -531,11 +531,11 @@ def filterImageWithCLF(inputPath,
 
             #print ( "Creating map_async pool ")
             result = pool.map_async(filterRow_parallel_splitargs,
-                [(x, 
-                    width, 
+                [(x,
+                    width,
                     height,
-                    channels, 
-                    pixels[x*width*channels:x*width*channels+width*channels], 
+                    channels,
+                    pixels[x*width*channels:x*width*channels+width*channels],
                     InRange,
                     processList,
                     OutRange,
@@ -575,7 +575,7 @@ def filterImageWithCLF(inputPath,
             # Using filterRow_stride instead of filterRow_pixel
             # Processing a full row is ~10% faster than processing individual pixels
             filterRow_stride(j,
-                width, height, channels, pixels, 
+                width, height, channels, pixels,
                 InRange, processList, OutRange,
                 processedPixels,
                 verbose)
@@ -635,7 +635,7 @@ def main():
 
     #
     # Get options
-    # 
+    #
     clfPath = options.clf
     inputPath = options.input
     outputPath = options.output
@@ -655,7 +655,7 @@ def main():
 
     if verbose:
         print( "command line : \n%s\n" % " ".join(sys.argv) )
- 
+
     if outputBitDepth and not (outputBitDepth in clf.bitDepths.values()):
         print( "Output bit depth %s is not a valid CLF bit depth. It will be ignored." % outputBitDepth)
         print( "Valid values are %s." % ", ".join(clf.bitDepths.values()) )
@@ -674,9 +674,9 @@ def main():
     # Filter an image
     #
     if processList != None and outputPath != None and inputPath != None:
-        filterImageWithCLF(inputPath, 
-            outputPath, 
-            processList, 
+        filterImageWithCLF(inputPath,
+            outputPath,
+            processList,
             verbose,
             outBitDepth=outputBitDepth,
             multithreaded=multithreaded,

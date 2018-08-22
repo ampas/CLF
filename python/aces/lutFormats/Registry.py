@@ -87,10 +87,10 @@ class Registry:
         return Registry.lutFormats.values()
 
     @staticmethod
-    def read(lutPath, 
-             inverse=False, 
+    def read(lutPath,
+             inverse=False,
              interpolation='linear',
-             inversesUseIndexMaps=True, 
+             inversesUseIndexMaps=True,
              inversesUseHalfDomain=True,
              returnProcessNodes=False):
         extension = os.path.splitext(lutPath)[1][1:].strip().lower()
@@ -108,7 +108,7 @@ class Registry:
                 #print( "Reading lut %s" % lutPath )
 
                 # Call reader class read method
-                lutProcessNodes = cls.read(lutPath, inverse, interpolation, 
+                lutProcessNodes = cls.read(lutPath, inverse, interpolation,
                     inversesUseIndexMaps, inversesUseHalfDomain)
 
                 #print( "Read lut %s" % lutPath )
@@ -201,6 +201,6 @@ class Registry:
 
         print( "Writing LUTs in the %s format is not currently supported" % extension )
         return None
-    # write   
+    # write
 # Registry
 

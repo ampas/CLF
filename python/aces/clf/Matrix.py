@@ -67,8 +67,8 @@ class Matrix(ProcessNode):
 
     def setMatrix(self, dimensions, values, floatEncoding='string'):
         integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
-        values = Array(dimensions, 
-            values, 
+        values = Array(dimensions,
+            values,
             integers,
             floatEncoding=floatEncoding)
         self._array = values

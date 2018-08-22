@@ -82,20 +82,20 @@ class LutFormatCTL(LutFormat.LutFormat):
          ]
         ]
 
-    def __init__(self): 
+    def __init__(self):
         "%s - Initialize the standard class variables" % LutFormatCTL.formatType
         LutFormat.LutFormat.__init__(self)
     # __init__
 
     @classmethod
     def read(cls,
-             lutPath, 
-             inverse=False, 
+             lutPath,
+             inverse=False,
              interpolation='linear',
-             inversesUseIndexMaps=True, 
+             inversesUseIndexMaps=True,
              inversesUseHalfDomain=True):
         return cls.readCTL(lutPath,
-            inverse, 
+            inverse,
             interpolation)
 
     @classmethod
@@ -106,12 +106,12 @@ class LutFormatCTL(LutFormat.LutFormat):
                 inputMin,
                 inputMax):
         #print( "%s format write 1D - %s" % (LutFormatCTL.formatType, lutPath) )
-        return LutFormatCTL.writeCTL1D(lutPath, 
-                                       inputMin, 
-                                       inputMax, 
-                                       samples, 
-                                       lutResolution1d, 
-                                       3, 
+        return LutFormatCTL.writeCTL1D(lutPath,
+                                       inputMin,
+                                       inputMax,
+                                       samples,
+                                       lutResolution1d,
+                                       3,
                                        3)
 
     @classmethod
@@ -122,19 +122,19 @@ class LutFormatCTL(LutFormat.LutFormat):
                 inputMin,
                 inputMax):
         #print( "%s format write 3D - %s" % (LutFormatCTL.formatType, lutPath) )
-        return LutFormatCTL.writeCTL3D(lutPath, 
-                                       inputMin, 
-                                       inputMax, 
-                                       samples, 
+        return LutFormatCTL.writeCTL3D(lutPath,
+                                       inputMin,
+                                       inputMax,
+                                       samples,
                                        lutResolution3d)
 
     @ staticmethod
-    def writeCTL1D(filename, 
-                   from_min, 
-                   from_max, 
-                   data, 
-                   entries, 
-                   channels, 
+    def writeCTL1D(filename,
+                   from_min,
+                   from_max,
+                   data,
+                   entries,
+                   channels,
                    components=3):
         """
         Object description.
@@ -207,7 +207,7 @@ class LutFormatCTL(LutFormat.LutFormat):
             elif components == 3:
               fp.write('  r = lookup1D(lut0, min1d, max1d, r);\n')
               fp.write('  g = lookup1D(lut1, min1d, max1d, g);\n')
-              fp.write('  b = lookup1D(lut2, min1d, max1d, b);\n')          
+              fp.write('  b = lookup1D(lut2, min1d, max1d, b);\n')
             fp.write('\n')
             fp.write('  rOut = r;\n')
             fp.write('  gOut = g;\n')
@@ -219,10 +219,10 @@ class LutFormatCTL(LutFormat.LutFormat):
     # writeCTL1D
 
     @staticmethod
-    def writeCTL3D(filename, 
-                   from_min, 
-                   from_max, 
-                   data, 
+    def writeCTL3D(filename,
+                   from_min,
+                   from_max,
+                   data,
                    resolution):
         """
         Object description.

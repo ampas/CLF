@@ -77,27 +77,27 @@ class LutFormatCSP(LutFormat.LutFormat):
     formats = [
         ["csp - 1D, 3D or 1D/3D LUT format",
          "csp",
-         [LutFormat.IO_CAPABILITY_READ, 
+         [LutFormat.IO_CAPABILITY_READ,
           LutFormat.IO_CAPABILITY_WRITE_1D,
           LutFormat.IO_CAPABILITY_WRITE_3D,
           LutFormat.IO_CAPABILITY_WRITE_1D3D1D]
          ]
         ]
 
-    def __init__(self): 
+    def __init__(self):
         "%s - Initialize the standard class variables" % LutFormatCSP.formatType
         LutFormat.LutFormat.__init__(self)
     # __init__
 
     @classmethod
     def read(cls,
-             lutPath, 
-             inverse=False, 
+             lutPath,
+             inverse=False,
              interpolation='linear',
-             inversesUseIndexMaps=True, 
+             inversesUseIndexMaps=True,
              inversesUseHalfDomain=True):
         return cls.readCSP(lutPath,
-            inverse, 
+            inverse,
             interpolation)
 
     @classmethod
@@ -108,12 +108,12 @@ class LutFormatCSP(LutFormat.LutFormat):
                 inputMin,
                 inputMax):
         #print( "%s format write 1D - %s" % (LutFormatCSP.formatType, lutPath) )
-        return LutFormatCSP.writeCSP1D(lutPath, 
-                                       inputMin, 
-                                       inputMax, 
-                                       samples, 
-                                       lutResolution1d, 
-                                       3, 
+        return LutFormatCSP.writeCSP1D(lutPath,
+                                       inputMin,
+                                       inputMax,
+                                       samples,
+                                       lutResolution1d,
+                                       3,
                                        3)
 
     @classmethod
@@ -124,10 +124,10 @@ class LutFormatCSP(LutFormat.LutFormat):
                 inputMin,
                 inputMax):
         #print( "%s format write 3D - %s" % (LutFormatCSP.formatType, lutPath) )
-        return LutFormatCSP.writeCSP3D(lutPath, 
-                                       inputMin, 
-                                       inputMax, 
-                                       samples, 
+        return LutFormatCSP.writeCSP3D(lutPath,
+                                       inputMin,
+                                       inputMax,
+                                       samples,
                                        lutResolution3d)
 
     @classmethod
@@ -178,7 +178,7 @@ class LutFormatCSP(LutFormat.LutFormat):
         # Find the minimum and maximum input
         # XXX
         # We take the min and max of all three preluts because the Range node
-        # only takes single value, not RGB triples. If the prelut ranges are 
+        # only takes single value, not RGB triples. If the prelut ranges are
         # very different, this could introduce some artifacting
         minInputValue = min(prelutR[0][0], prelutG[0][0], prelutB[0][0])
         maxInputValue = max(prelutR[0][-1], prelutG[0][-1], prelutB[0][-1])
@@ -276,7 +276,7 @@ class LutFormatCSP(LutFormat.LutFormat):
 
                 #print( "metadata : %s" % metadata)
                 dataStart += 1
-                
+
                 while lines[dataStart].rstrip() == '':
                     #print( "blank line")
                     dataStart += 1
@@ -323,7 +323,7 @@ class LutFormatCSP(LutFormat.LutFormat):
                 # 3D LUT data
                 if format == "3D":
                     # CSP incremements LUT samples red, then green, then blue
-                    # CLF incremements LUT samples blue, then green, then red 
+                    # CLF incremements LUT samples blue, then green, then red
                     # so we need to move samples around
                     samples = [0.0]*resolution[0]*resolution[1]*resolution[2]*3
                     cspIndex = 0
@@ -342,7 +342,7 @@ class LutFormatCSP(LutFormat.LutFormat):
 
                         # Add to the sample values array
                         if len(cspSamples) == 3:
-                            #print( "csp sample %d -> lut index : %d, %d, %d -> clf index : %d" % 
+                            #print( "csp sample %d -> lut index : %d, %d, %d -> clf index : %d" %
                             #    (cspIndex, indexR, indexG, indexB, clfIndex))
                             #print( "lut value : %3.6f %3.6f %3.6f" % (cspSamples[0], cspSamples[1], cspSamples[2]) )
 
@@ -364,7 +364,7 @@ class LutFormatCSP(LutFormat.LutFormat):
 
                         # Add to the sample values array
                         if len(cspSamples) == 3:
-                            #print( "csp sample %d -> clf index : %d" % 
+                            #print( "csp sample %d -> clf index : %d" %
                             #    (cspIndex, clfIndex/3))
                             #print( "lut value : %3.6f %3.6f %3.6f" % (cspSamples[0], cspSamples[1], cspSamples[2]) )
 
@@ -397,12 +397,12 @@ class LutFormatCSP(LutFormat.LutFormat):
     # readCSP
 
     @ staticmethod
-    def writeCSP1D(filename, 
-                   from_min, 
-                   from_max, 
-                   data, 
-                   entries, 
-                   channels, 
+    def writeCSP1D(filename,
+                   from_min,
+                   from_max,
+                   data,
+                   entries,
+                   channels,
                    components=3):
         """
         Object description.
@@ -462,10 +462,10 @@ class LutFormatCSP(LutFormat.LutFormat):
     # writeCSP1D
 
     @staticmethod
-    def writeCSP3D(filename, 
-                   from_min, 
-                   from_max, 
-                   data, 
+    def writeCSP3D(filename,
+                   from_min,
+                   from_max,
+                   data,
                    resolution):
         """
         Object description.
@@ -505,7 +505,7 @@ class LutFormatCSP(LutFormat.LutFormat):
             fp.write('\n')
 
             fp.write('%s\n' % ' '.join(map(str, resolution)) )
-     
+
             # Note: CSP increments red fastest
             for b in range(resolution[0]):
                 for g in range(resolution[1]):
@@ -551,7 +551,7 @@ class LutFormatCSP(LutFormat.LutFormat):
             fp.write('\n')
 
             fp.write('%s\n' % ' '.join(map(str, lutResolution3d)) )
-     
+
             # Note: CSP increments red fastest
             for b in range(lutResolution3d[0]):
                 for g in range(lutResolution3d[1]):

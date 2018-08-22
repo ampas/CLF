@@ -63,7 +63,7 @@ from ProcessNode import *
 class Log(ProcessNode):
     "A Common LUT Format Log ProcessNode element"
 
-    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
+    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="",
         style='log10'):
         "%s - Initialize the standard class variables" % 'Log'
         ProcessNode.__init__(self, 'Log', inBitDepth, outBitDepth, id, name)
@@ -170,7 +170,7 @@ class Log(ProcessNode):
                     outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
                     outValue[i] = math.log10(max(outValue[i], FLOAT_MIN))
-                    
+
                     outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
             elif style == 'log2':
@@ -178,7 +178,7 @@ class Log(ProcessNode):
                     outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
                     outValue[i] = math.log10(max(outValue[i], FLOAT_MIN))/math.log10(2.0)
-                    
+
                     outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
             elif style == 'antiLog10':
@@ -186,7 +186,7 @@ class Log(ProcessNode):
                     outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
                     outValue[i] = pow(10.0, outValue[i])
-                    
+
                     outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
             elif style == 'antiLog2':
@@ -194,7 +194,7 @@ class Log(ProcessNode):
                     outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
                     outValue[i] = pow(2.0, outValue[i])
-                    
+
                     outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
 
             elif style == 'logToLin':

@@ -85,7 +85,7 @@ class LutFormatMeta(type):
 class LutFormat():
     "The base class for classes that implement LUT Format IO"
 
-    # Ensures that this class and children will show up in the LUT Registry 
+    # Ensures that this class and children will show up in the LUT Registry
     __metaclass__ = LutFormatMeta
 
     # Static class variables
@@ -141,10 +141,10 @@ class LutFormat():
     # Methods covering reading and writing
     @classmethod
     def read(cls,
-             lutPath, 
-             inverse=False, 
+             lutPath,
+             inverse=False,
              interpolation='linear',
-             inversesUseIndexMaps=True, 
+             inversesUseIndexMaps=True,
              inversesUseHalfDomain=True):
         print( "Format %s can not be read" % self.formatType )
         return False
@@ -194,9 +194,9 @@ class LutFormat():
 
         elif lutStyle == IO_CAPABILITY_WRITE_1D3D1D:
             #print( "Sample the CLF ProcessList into a 1D 3D 1D LUT" )
-            (samples1dIn, 
+            (samples1dIn,
              inputMin, inputMax,
-             samples3d, 
+             samples3d,
              samples1dOut,
              outputMin, outputMax) = Sampling.sample1D3D1D(processList,
                                                            expandedlutResolution1d3d1d,

@@ -58,7 +58,7 @@ CLF Implementation
 
 Usage
 -----
-Common LUT Format files contain a single ProcessList with an arbitrary 
+Common LUT Format files contain a single ProcessList with an arbitrary
 number of ProcessNodes.
 
 The full specification for the format is available here

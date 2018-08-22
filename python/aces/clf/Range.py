@@ -57,7 +57,7 @@ from ProcessNode import *
 class Range(ProcessNode):
     "A Common LUT Format Range ProcessNode element"
 
-    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
+    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="",
         style='', defaultRange=None):
         "%s - Initialize the standard class variables" % 'Range'
         ProcessNode.__init__(self, 'Range', inBitDepth, outBitDepth, id, name)
@@ -105,9 +105,9 @@ class Range(ProcessNode):
         # Node attributes
         clamp = True
         defaultRange = False
-        if 'style' in self._attributes: 
+        if 'style' in self._attributes:
             clamp = (self._attributes['style'] == 'clamp')
-        if 'defaultRange' in self._attributes: 
+        if 'defaultRange' in self._attributes:
             defaultRange = True
 
         # Node parameters
@@ -116,23 +116,23 @@ class Range(ProcessNode):
         minOutValue = None
         maxOutValue = None
 
-        if 'minInValue' in self._valueElements: 
+        if 'minInValue' in self._valueElements:
             minInValue = self._valueElements['minInValue'] / bitDepthSize(inBitDepth)
-        if 'maxInValue' in self._valueElements: 
+        if 'maxInValue' in self._valueElements:
             maxInValue = self._valueElements['maxInValue'] / bitDepthSize(inBitDepth)
-        if 'minOutValue' in self._valueElements: 
+        if 'minOutValue' in self._valueElements:
             minOutValue = self._valueElements['minOutValue'] / bitDepthSize(outBitDepth)
-        if 'maxOutValue' in self._valueElements: 
+        if 'maxOutValue' in self._valueElements:
             maxOutValue = self._valueElements['maxOutValue'] / bitDepthSize(outBitDepth)
 
         if defaultRange:
-            if minInValue == None: 
+            if minInValue == None:
                 minInValue = 0.0
-            if maxInValue == None: 
+            if maxInValue == None:
                 maxInValue = 1.0
-            if minOutValue == None: 
+            if minOutValue == None:
                 minOutValue = 0.0
-            if maxOutValue == None: 
+            if maxOutValue == None:
                 maxOutValue = 1.0
 
         '''
@@ -150,7 +150,7 @@ class Range(ProcessNode):
             outValue[i] = bitDepthToNormalized(outValue[i], inBitDepth)
 
             # All values specified
-            if( minInValue != None and 
+            if( minInValue != None and
                 maxInValue != None and
                 minOutValue != None and
                 maxOutValue != None ):
@@ -160,14 +160,14 @@ class Range(ProcessNode):
                     outValue[i] = min( maxOutValue, max( minOutValue, outValue[i] ) )
 
             # Only minimum values
-            elif( minInValue != None and 
+            elif( minInValue != None and
                 minOutValue != None ):
                 outValue[i] = outValue[i] + minOutValue - minInValue
                 if clamp:
                     outValue[i] = max(minOutValue, outValue[i])
 
             # Only maximum values
-            elif( maxInValue != None and 
+            elif( maxInValue != None and
                 maxOutValue != None ):
                 outValue[i] = outValue[i] + maxOutValue - maxInValue
                 if clamp:

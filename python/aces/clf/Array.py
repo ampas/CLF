@@ -70,10 +70,10 @@ import Errors
 class Array:
     "A Common LUT Format Array element"
 
-    def __init__(self, 
-        dimensions=[], 
-        values=[], 
-        integers=False, 
+    def __init__(self,
+        dimensions=[],
+        values=[],
+        integers=False,
         rawHalfs=False,
         floatEncoding='string',
         elementType='Array'):
@@ -133,7 +133,7 @@ class Array:
     def write(self, tree):
         element = etree.SubElement(tree, self._elementType)
         element.set('dim', " ".join(map(str, self._dimensions)))
-        
+
         # Slightly prettier printing
         element.text = "\n"
 
@@ -157,10 +157,10 @@ class Array:
             # Float Values
             # Floats encoded using bitwise equivalent hex or integer values
             if self._floatEncoding != 'string':
-                # Encoding options: 
+                # Encoding options:
                 # integer16bit, integer32bit, integer64bit, hex16bit, hex32bit, hex64bit
                 if getFeatureCompatibility() & featureSets["Duiker Research"]:
-                    if self._floatEncoding in ['integer16bit', 'integer32bit', 'integer64bit', 
+                    if self._floatEncoding in ['integer16bit', 'integer32bit', 'integer64bit',
                         'hex16bit', 'hex32bit', 'hex64bit']:
                         element.set('floatEncoding', self._floatEncoding)
 
@@ -312,7 +312,7 @@ class Array:
                     #print( output )
 
                     # Create a cubic interpolator using the indices and array values
-                    cubicInterpolator = interp1d(indices, output, 
+                    cubicInterpolator = interp1d(indices, output,
                         kind='cubic', bounds_error=False, fill_value=0.0)
 
                     self._interp1ds.append(cubicInterpolator)
@@ -364,7 +364,7 @@ class Array:
         dimensions = self._dimensions
 
         # In this case, the input values are treated as float32
-        # The nearest float16 value are found and then 
+        # The nearest float16 value are found and then
         # used to as two entries in the LUT
 
         # 16 bit half floats uses code values as follows
@@ -459,7 +459,7 @@ class Array:
             print( "lookup1DHalfDomain - value 1         : %6.9f" % value1 )
             print( "lookup1DHalfDomain - value 2         : %6.9f" % value2 )
             print( "lookup1DHalfDomain - result          : %6.9f" % result )
-            '''                           
+            '''
 
         return result
     # lookup1DHalfDomainInterpolated
@@ -475,7 +475,7 @@ class Array:
             result = self.lookup1DHalfDomainNearest(position, channel)
 
         # In this case, the input values are treated as float32
-        # The nearest float16 value are found and then 
+        # The nearest float16 value are found and then
         # used to as two entries in the LUT
         else:
             result = self.lookup1DHalfDomainInterpolated(position, channel)
@@ -532,7 +532,7 @@ class Array:
         # Corner cases
         index3 = map(lambda a, b: max(0, min(a, b-1)), index3, dimensions)
 
-        index1 = (index3[0]*dimensions[0]*dimensions[1] + index3[1]*dimensions[1] + index3[2])*3 
+        index1 = (index3[0]*dimensions[0]*dimensions[1] + index3[1]*dimensions[1] + index3[2])*3
 
         #result = [values[index1], values[index1+1], values[index1+2]]
         result = values[index1:index1+3]
@@ -583,7 +583,7 @@ class Array:
         enclosingCubeColors[2] = mix(enclosingCubeColors[2], enclosingCubeColors[3], interpB);
         enclosingCubeColors[4] = mix(enclosingCubeColors[4], enclosingCubeColors[5], interpB);
         enclosingCubeColors[6] = mix(enclosingCubeColors[6], enclosingCubeColors[7], interpB);
-    
+
         # Interpolate along the 2 lines in G
         enclosingCubeColors[0] = mix(enclosingCubeColors[0], enclosingCubeColors[2], interpG);
         enclosingCubeColors[4] = mix(enclosingCubeColors[4], enclosingCubeColors[6], interpG);

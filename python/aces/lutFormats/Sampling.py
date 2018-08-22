@@ -72,7 +72,7 @@ import clf
 from clf.Common import halfToUInt16, uint16ToHalf
 
 # Generate an inverse 1D LUT by evaluating and resampling the original 1D LUT
-# Inverse LUTs will have 2x the base LUT's number of entries. This may not be 
+# Inverse LUTs will have 2x the base LUT's number of entries. This may not be
 # enough to characterize the inverse function well.
 def generateLUT1DInverseResampled(resolution, samples, minInputValue, maxInputValue):
     lutpns = []
@@ -96,7 +96,7 @@ def generateLUT1DInverseResampled(resolution, samples, minInputValue, maxInputVa
     # Find the minimum and maximum input
     # XXX
     # We take the min and max of all three preluts because the Range node
-    # only takes single value, not RGB triples. If the prelut ranges are 
+    # only takes single value, not RGB triples. If the prelut ranges are
     # very different, this could introduce some artifacting
     minOutputValue = samples[0]
     for c in range(channels):
@@ -238,10 +238,10 @@ def generateLUT1DInverseHalfDomain(resolution, samples, minInputValue, maxInputV
 
     # Create a 1D LUT with generated sample values
     if rawHalfs:
-        lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], 
+        lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"],
             "inverse_1d_lut", "inverse_1d_lut", rawHalfs=rawHalfs, halfDomain=True)
     else:
-        lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], 
+        lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"],
             "inverse_1d_lut", "inverse_1d_lut", halfDomain=True)
     lutpn.setArray(channels, inverseSamples)
 
@@ -284,7 +284,7 @@ def generateLUT1DInverseIndexMap(resolution, samples, minInputValue, maxInputVal
             inverseSamples[i*channels + c] = v
 
     # Create a 1D LUT with generated index map and sample values
-    lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], 
+    lutpn = clf.LUT1D(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"],
         "inverse_1d_lut", "inverse_1d_lut")
 
     if channels == 3:
@@ -362,7 +362,7 @@ def sample3D(processList,
 def createShaper(shaperType,
                  shaperMin,
                  shaperMax):
-    # 
+    #
     # Create the forward and inverse input shaper ProcessLists
     #
     shaperPL = clf.ProcessList()

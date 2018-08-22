@@ -78,7 +78,7 @@ def convertMatrixToProcessNode(matrix, offset, direction):
 
     if direction == 'forward':
         # Check to see if this is really a 3x3 matrix hidden inside a 4x4
-        if( len(matrix) == 16 and 
+        if( len(matrix) == 16 and
             ( matrix[ 3] == 0.0 and matrix[ 7] == 0.0 and matrix[11 == 0.0] and
                 matrix[12] == 0.0 and matrix[13] == 0.0 and matrix[14 == 0.0] and matrix[15 == 1.0]) ):
 
@@ -122,12 +122,12 @@ def convertLogToProcessNode(base, direction):
             log = clf.Log(clf.bitDepths["FLOAT16"], clf.bitDepths["FLOAT16"], "log", "log", "antiLog2")
     else:
         print( "Log base %s not supported" % (base))
-    
+
     return log
 
-def convertTransformsToProcessNodes( ocioTransform, 
+def convertTransformsToProcessNodes( ocioTransform,
                                      lutSearchPath=None,
-                                     inversesUseIndexMaps=True, 
+                                     inversesUseIndexMaps=True,
                                      inversesUseHalfDomain=True ):
     pns = []
 
@@ -137,7 +137,7 @@ def convertTransformsToProcessNodes( ocioTransform,
         print( "Group Transform" )
         children = ocioTransform.getTransforms()
         for childTransform in children:
-            childpns = convertTransformsToProcessNodes(childTransform, 
+            childpns = convertTransformsToProcessNodes(childTransform,
                 lutSearchPath, inversesUseIndexMaps, inversesUseHalfDomain)
             pns.extend( childpns )
 
@@ -151,8 +151,8 @@ def convertTransformsToProcessNodes( ocioTransform,
             lutPath = os.path.join( lutSearchPath, lutPath )
 
         inverse = direction != 'forward'
-        lutpns = lutFormats.Registry.read(lutPath, inverse, interpolation, 
-            inversesUseIndexMaps=inversesUseIndexMaps, 
+        lutpns = lutFormats.Registry.read(lutPath, inverse, interpolation,
+            inversesUseIndexMaps=inversesUseIndexMaps,
             inversesUseHalfDomain=inversesUseHalfDomain,
             returnProcessNodes=True)
         #print( "Created %d CLF process nodes" % len(lutpns) )
@@ -181,11 +181,11 @@ def convertTransformsToProcessNodes( ocioTransform,
 
     return pns
 
-def convertOCIOtoCLF(configPath, 
-                     sourceColorSpaceNames, 
-                     destColorSpaceNames, 
+def convertOCIOtoCLF(configPath,
+                     sourceColorSpaceNames,
+                     destColorSpaceNames,
                      clfPath,
-                     inversesUseIndexMaps, 
+                     inversesUseIndexMaps,
                      inversesUseHalfDomain):
     # Load the config
     config = OCIO.Config.CreateFromFile(configPath)
@@ -208,7 +208,7 @@ def convertOCIOtoCLF(configPath,
         sourceTransform = sourceColorSpace.getTransform( OCIO.Constants.COLORSPACE_DIR_TO_REFERENCE )
 
         # Convert to CLF ProcessNodes
-        pns = convertTransformsToProcessNodes( sourceTransform, lutSearchPath=configLUTPath, 
+        pns = convertTransformsToProcessNodes( sourceTransform, lutSearchPath=configLUTPath,
             inversesUseIndexMaps=inversesUseIndexMaps, inversesUseHalfDomain=inversesUseHalfDomain )
 
         # Rename and add a description to each ProcessNode
@@ -236,7 +236,7 @@ def convertOCIOtoCLF(configPath,
         destTransform = destColorSpace.getTransform( OCIO.Constants.COLORSPACE_DIR_FROM_REFERENCE )
 
         # Convert to CLF ProcessNodes
-        pns = convertTransformsToProcessNodes( destTransform, lutSearchPath=configLUTPath, 
+        pns = convertTransformsToProcessNodes( destTransform, lutSearchPath=configLUTPath,
             inversesUseIndexMaps=inversesUseIndexMaps, inversesUseHalfDomain=inversesUseHalfDomain )
 
         # Rename and add a description to each ProcessNode
@@ -277,7 +277,7 @@ def convertOCIOtoCLF(configPath,
         print( "Writing CLF : %s" % clfPath)
         pl.writeFile(clfPath)
     else:
-        print( "No ProcessNodes created for this transform. Skipping writing CLF." )        
+        print( "No ProcessNodes created for this transform. Skipping writing CLF." )
 
 def main():
     import optparse
@@ -298,7 +298,7 @@ def main():
 
     #
     # Get options
-    # 
+    #
     configPath = options.config
     sourceColorSpaces = options.source
     destColorSpaces = options.destination
@@ -306,14 +306,14 @@ def main():
     inversesUseHalfDomain = options.inversesUseHalfDomain
     inversesUseIndexMaps = options.inversesUseIndexMaps
 
-    
+
     print( "config    : %s" % configPath )
     print( "output    : %s" % outputPath )
     print( "source    : %s" % sourceColorSpaces )
     print( "dest      : %s" % destColorSpaces )
     print( "half dom. : %s" % inversesUseHalfDomain )
     print( "index map : %s" % inversesUseIndexMaps )
-    
+
 
     try:
         argsStart = sys.argv.index('--') + 1
@@ -323,13 +323,13 @@ def main():
         args = []
 
     #print( "command line : \n%s\n" % " ".join(sys.argv) )
- 
+
     #
-    # Run 
+    # Run
     #
-    if( configPath != None and outputPath != None 
+    if( configPath != None and outputPath != None
         and (sourceColorSpaces != [] or destColorSpaces != [] ) ):
-        convertOCIOtoCLF(configPath, sourceColorSpaces, 
+        convertOCIOtoCLF(configPath, sourceColorSpaces,
             destColorSpaces, outputPath, inversesUseIndexMaps, inversesUseHalfDomain)
 
 # main

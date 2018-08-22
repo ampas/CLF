@@ -61,7 +61,7 @@ import Errors
 class ASCCDL(ProcessNode):
     "A Common LUT Format ASC_CDL ProcessNode element"
 
-    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
+    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="",
         style="Fwd", classLabel="ASC_CDL"):
         "%s - Initialize the standard class variables" % classLabel
         ProcessNode.__init__(self, classLabel, inBitDepth, outBitDepth, id, name)
@@ -147,13 +147,13 @@ class ASCCDL(ProcessNode):
         power = [1.0, 1.0, 1.0]
         saturation = 1.0
 
-        if 'slope' in self._values: 
+        if 'slope' in self._values:
             slope = self._values['slope']
-        if 'offset' in self._values: 
+        if 'offset' in self._values:
             offset = self._values['offset']
-        if 'power' in self._values: 
+        if 'power' in self._values:
             power = self._values['power']
-        if 'saturation' in self._values: 
+        if 'saturation' in self._values:
             saturation = self._values['saturation']
 
         '''
@@ -176,7 +176,7 @@ class ASCCDL(ProcessNode):
                     outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
                     outValue[i] = pow( clamp( outValue[i] * slope[i] + offset[i] ), power[i])
 
-                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
+                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2]
                 for i in range(3):
                     outValue[i] = clamp( luma + saturation * (outValue[i] - luma) )
                     outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
@@ -190,7 +190,7 @@ class ASCCDL(ProcessNode):
                     else:
                         outValue[i] = pow(tmp, power[i])
 
-                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
+                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2]
                 for i in range(3):
                     outValue[i] = luma + saturation * (outValue[i] - luma)
                     outValue[i] = normalizedToBitDepth(outValue[i], outBitDepth)
@@ -200,7 +200,7 @@ class ASCCDL(ProcessNode):
                     outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
                     outValue[i] = clamp( outValue[i] )
 
-                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
+                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2]
                 print( luma )
 
                 for i in range(3):
@@ -213,7 +213,7 @@ class ASCCDL(ProcessNode):
                 for i in range(3):
                     outValue[i] = bitDepthToNormalized(value[i], inBitDepth)
 
-                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
+                luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2]
 
                 for i in range(3):
                     outSat = luma + (1.0/saturation) * (outValue[i] - luma)
@@ -238,13 +238,13 @@ class ASCCDL(ProcessNode):
         for key, value in self._values.iteritems():
             print( "%20s : %15s : %15s" % ("Value", key, value) )
         '''
-        if 'slope' in self._values: 
+        if 'slope' in self._values:
             print( "\tSlope  : %s" % self._values['slope'] )
-        if 'offset' in self._values: 
+        if 'offset' in self._values:
             print( "\tOffset : %s" % self._values['offset'] )
-        if 'power' in self._values: 
+        if 'power' in self._values:
             print( "\tPower  : %s" % self._values['power'] )
-        if 'saturation' in self._values: 
+        if 'saturation' in self._values:
             print( "\tSaturation : %s" % self._values['saturation'] )
         '''
     # printInfoChild
@@ -253,7 +253,7 @@ class ASCCDL(ProcessNode):
 class ColorCorrection(ASCCDL):
     "A Common LUT Format ColorCorrection ProcessNode element"
 
-    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
+    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="",
         style="Fwd", classLabel="ColorCorrection"):
         "%s - Initialize the standard class variables" % 'ColorCorrection'
         ASCCDL.__init__(self, inBitDepth, outBitDepth, id, name, style, "ColorCorrection")

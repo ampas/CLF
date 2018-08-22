@@ -83,7 +83,7 @@ class LutFormatCLF(LutFormat.LutFormat):
          ]
         ]
 
-    def __init__(self): 
+    def __init__(self):
         "%s - Initialize the standard class variables" % LutFormatCLF.formatType
         LutFormat.LutFormat.__init__(self)
     # __init__
@@ -140,7 +140,7 @@ class LutFormatCLF(LutFormat.LutFormat):
                 lutpnInverses = Sampling.generateLUT1DInverseHalfDomain([lutResolution1dIn, 3], samples1dIn, inputMin, inputMax, rawHalfs=True)
             else:
                 #print( "Generating resampled inverse of 1D LUT")
-                lutpnInverses = Sampling.generateLUT1DInverseResampled([lutResolution1dIn, 3], samples1dIn, inputMin, inputMax)            
+                lutpnInverses = Sampling.generateLUT1DInverseResampled([lutResolution1dIn, 3], samples1dIn, inputMin, inputMax)
             lutpns.extend(lutpnInverses)
 
         # Create the 3D LUT
@@ -179,7 +179,7 @@ class LutFormatCLF(LutFormat.LutFormat):
             pl.addProcess(lutpn)
 
         # Write CLF to disk
-        pl.writeFile(lutPath) 
+        pl.writeFile(lutPath)
 
         return True
     # writeCLF1D3D1D

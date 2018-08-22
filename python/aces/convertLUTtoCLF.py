@@ -89,7 +89,7 @@ def main():
 
     #
     # Get options
-    # 
+    #
     lutPath = options.lut
     clfPath = options.clf
     inverse = options.inverse
@@ -104,12 +104,12 @@ def main():
         args = []
 
     #print( "command line : \n%s\n" % " ".join(sys.argv) )
- 
+
     #
-    # Run 
+    # Run
     #
     if lutPath != None and clfPath != None:
-        clf = lutFormats.Registry.read(lutPath, 
+        clf = lutFormats.Registry.read(lutPath,
             inverse=inverse,
             inversesUseIndexMaps=inversesUseIndexMaps,
             inversesUseHalfDomain=inversesUseHalfDomain)

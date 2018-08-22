@@ -57,7 +57,7 @@ WHETHER DISCLOSED OR UNDISCLOSED.
 """
 Defines unit tests for *CLF*.
 
-These tests aren't particularly meaningful, but 
+These tests aren't particularly meaningful, but
 they do exercise basic IO and color processing.
 
 Usage
@@ -125,7 +125,7 @@ class TestCLF(unittest.TestCase):
         # use one of these lines
         # setFeatureCompatibility(featureSets["Autodesk"])
         # setFeatureCompatibility(featureSets["Duiker Research"])
-        # 
+        #
         # The following setting will cause the library to act like a
         # true reference implementation of the CLF spec. Only features included
         # in the specification will be supported
@@ -216,7 +216,7 @@ class TestCLF(unittest.TestCase):
         # Add a 1D lut node
         l1d1 = LUT1D(bitDepths["UINT12"], bitDepths["UINT10"], "someId", "Transform5")
         l1d1.setArray(3, [
-            0, 0, 0, 
+            0, 0, 0,
             1023, 1023, 1023])
         pl.addProcess(l1d1)
 
@@ -233,27 +233,27 @@ class TestCLF(unittest.TestCase):
         #indexMapB = [[0, 64, 512, 1023], [0, 64, 128, 1023]]
         #l3d1.setIndexMaps(indexMapR, indexMapG, indexMapB)
         l3d1.setIndexMaps(indexMapG)
-        l3d1.setArray([2, 2, 2], 
-            [0, 0, 0,  
-            0, 0, 1023,  
-            0, 1023, 0,  
+        l3d1.setArray([2, 2, 2],
+            [0, 0, 0,
+            0, 0, 1023,
+            0, 1023, 0,
             0, 1023, 1023,
-            1023, 0, 0,  
-            1023, 0, 1023,  
-            1023, 1023, 0,  
+            1023, 0, 0,
+            1023, 0, 1023,
+            1023, 1023, 0,
             1023, 1023, 1023])
         pl.addProcess(l3d1)
 
         # Add a 3D lut node, using tetrahedral interpolation
         l3d2 = LUT3D("10i", "10i", "someId", "Transform7", interpolation='tetrahedral')
-        l3d2.setArray([2, 2, 2], 
-            [0, 0, 0,  
-            0, 0, 1023,  
-            0, 1023, 0,  
+        l3d2.setArray([2, 2, 2],
+            [0, 0, 0,
+            0, 0, 1023,
+            0, 1023, 0,
             0, 1023, 1023,
-            1023, 0, 0,  
-            1023, 0, 1023,  
-            1023, 1023, 0,  
+            1023, 0, 0,
+            1023, 0, 1023,
+            1023, 1023, 0,
             1023, 1023, 1023])
         pl.addProcess(l3d2)
 
@@ -337,7 +337,7 @@ class TestCLF(unittest.TestCase):
         #referencePathBase = '/work/client/academy/ocio/configGeneration/examples'
         #referencePath = 'test.xml'
 
-        #ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21", 
+        #ref1 = Reference(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "ref1ID", "Transform21",
         #    referencePath, referencePathBase)
         #pl.addProcess(ref1)
 
@@ -346,7 +346,7 @@ class TestCLF(unittest.TestCase):
         #
 
         # Add a 1D lut node that uses the 'rawHalfs' flag
-        # The half float values are converted to 16 bit integer values when written to disk. 
+        # The half float values are converted to 16 bit integer values when written to disk.
         # The values converted back to half-float on read.
         # The 16 bit integer value '0' maps to the half-float value 0.0
         # The 16 bit integer values '11878' maps to the half-float value 0.1
@@ -411,7 +411,7 @@ class TestCLF(unittest.TestCase):
         pl.addProcess(l3dS1)
 
         #
-        # Duiker Research-specific extensions 
+        # Duiker Research-specific extensions
         #
 
         #
@@ -449,49 +449,49 @@ class TestCLF(unittest.TestCase):
         #
         # Add a matrix node
         mpn10 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
-        mpn10.setMatrix([3, 3, 3], 
+        mpn10.setMatrix([3, 3, 3],
             [2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5],
             floatEncoding='integer16bit')
         pl.addProcess(mpn10)
 
         # Add another matrix node
         mpn11 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
-        mpn11.setMatrix([3, 4, 3], 
+        mpn11.setMatrix([3, 4, 3],
             [0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0, 0.0, 2.0, 0.0],
             floatEncoding='integer32bit')
         pl.addProcess(mpn11)
 
         # Add another matrix node
         mpn12 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
-        mpn12.setMatrix([3, 3, 3], 
+        mpn12.setMatrix([3, 3, 3],
             [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
             floatEncoding='integer64bit')
         pl.addProcess(mpn12)
 
         # Add a matrix node
         mpn13 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
-        mpn13.setMatrix([3, 3, 3], 
+        mpn13.setMatrix([3, 3, 3],
             [2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5],
             floatEncoding='hex16bit')
         pl.addProcess(mpn13)
 
         # Add another matrix node
         mpn14 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
-        mpn14.setMatrix([3, 4, 3], 
+        mpn14.setMatrix([3, 4, 3],
             [0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0, 0.0, 2.0, 0.0],
             floatEncoding='hex32bit')
         pl.addProcess(mpn14)
 
         # Add another matrix node
         mpn15 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
-        mpn15.setMatrix([3, 3, 3], 
+        mpn15.setMatrix([3, 3, 3],
             [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
             floatEncoding='hex64bit')
         pl.addProcess(mpn15)
 
         # Add another matrix node
         mpn16 = Matrix(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "someId", "Transform2")
-        mpn16.setMatrix([3, 3, 3], 
+        mpn16.setMatrix([3, 3, 3],
             [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0])
         pl.addProcess(mpn16)
 
@@ -499,43 +499,43 @@ class TestCLF(unittest.TestCase):
         # All 'floatEncoding' options, with the LUT1D ProcessNode
         #
         l1d10 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
-        l1d10.setArray(1, 
+        l1d10.setArray(1,
             [0.0, 0.25, 0.5, 0.75, 1.0],
             floatEncoding='integer16bit')
         pl.addProcess(l1d10)
 
         l1d11 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
-        l1d11.setArray(1, 
+        l1d11.setArray(1,
             [0.0, 0.25, 0.5, 0.75, 1.0],
             floatEncoding='integer32bit')
         pl.addProcess(l1d11)
 
         l1d12 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
-        l1d12.setArray(1, 
+        l1d12.setArray(1,
             [0.0, 0.25, 0.5, 0.75, 1.0],
             floatEncoding='integer64bit')
         pl.addProcess(l1d12)
 
         l1d13 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
-        l1d13.setArray(1, 
+        l1d13.setArray(1,
             [0.0, 0.25, 0.5, 0.75, 1.0],
             floatEncoding='hex16bit')
         pl.addProcess(l1d13)
 
         l1d14 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
-        l1d14.setArray(1, 
+        l1d14.setArray(1,
             [0.0, 0.25, 0.5, 0.75, 1.0],
             floatEncoding='hex32bit')
         pl.addProcess(l1d14)
 
         l1d15 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
-        l1d15.setArray(1, 
+        l1d15.setArray(1,
             [0.0, 0.25, 0.5, 0.75, 1.0],
             floatEncoding='hex64bit')
         pl.addProcess(l1d15)
 
         l1d16 = LUT1D(bitDepths["FLOAT16"], bitDepths["FLOAT16"], "l1dId", "Transform")
-        l1d16.setArray(1, 
+        l1d16.setArray(1,
             [0.0, 0.25, 0.5, 0.75, 1.0])
         pl.addProcess(l1d16)
 
@@ -543,92 +543,92 @@ class TestCLF(unittest.TestCase):
         # All 'floatEncoding' options, with the LUT3D ProcessNode
         #
         l3d10 = LUT3D("16f", "16f", "someId", "Transform")
-        l3d10.setArray([2, 2, 2], 
-            [0, 0, 0,  
-            0, 0, 1,  
-            0, 1, 0,  
+        l3d10.setArray([2, 2, 2],
+            [0, 0, 0,
+            0, 0, 1,
+            0, 1, 0,
             0, 1, 1,
-            1, 0, 0,  
-            1, 0, 1,  
-            1, 1, 0,  
+            1, 0, 0,
+            1, 0, 1,
+            1, 1, 0,
             1, 1, 1],
             floatEncoding='integer16bit')
         pl.addProcess(l3d10)
 
         l3d11 = LUT3D("16f", "16f", "someId", "Transform")
-        l3d11.setArray([2, 2, 2], 
-            [0, 0, 0,  
-            0, 0, 1,  
-            0, 1, 0,  
+        l3d11.setArray([2, 2, 2],
+            [0, 0, 0,
+            0, 0, 1,
+            0, 1, 0,
             0, 1, 1,
-            1, 0, 0,  
-            1, 0, 1,  
-            1, 1, 0,  
+            1, 0, 0,
+            1, 0, 1,
+            1, 1, 0,
             1, 1, 1],
             floatEncoding='integer32bit')
         pl.addProcess(l3d11)
 
         l3d12 = LUT3D("16f", "16f", "someId", "Transform")
-        l3d12.setArray([2, 2, 2], 
-            [0, 0, 0,  
-            0, 0, 1,  
-            0, 1, 0,  
+        l3d12.setArray([2, 2, 2],
+            [0, 0, 0,
+            0, 0, 1,
+            0, 1, 0,
             0, 1, 1,
-            1, 0, 0,  
-            1, 0, 1,  
-            1, 1, 0,  
+            1, 0, 0,
+            1, 0, 1,
+            1, 1, 0,
             1, 1, 1],
             floatEncoding='integer64bit')
         pl.addProcess(l3d12)
 
         l3d13 = LUT3D("16f", "16f", "someId", "Transform")
-        l3d13.setArray([2, 2, 2], 
-            [0, 0, 0,  
-            0, 0, 1,  
-            0, 1, 0,  
+        l3d13.setArray([2, 2, 2],
+            [0, 0, 0,
+            0, 0, 1,
+            0, 1, 0,
             0, 1, 1,
-            1, 0, 0,  
-            1, 0, 1,  
-            1, 1, 0,  
+            1, 0, 0,
+            1, 0, 1,
+            1, 1, 0,
             1, 1, 1],
             floatEncoding='hex16bit')
         pl.addProcess(l3d13)
 
         l3d14 = LUT3D("16f", "16f", "someId", "Transform")
-        l3d14.setArray([2, 2, 2], 
-            [0, 0, 0,  
-            0, 0, 1,  
-            0, 1, 0,  
+        l3d14.setArray([2, 2, 2],
+            [0, 0, 0,
+            0, 0, 1,
+            0, 1, 0,
             0, 1, 1,
-            1, 0, 0,  
-            1, 0, 1,  
-            1, 1, 0,  
+            1, 0, 0,
+            1, 0, 1,
+            1, 1, 0,
             1, 1, 1],
             floatEncoding='hex32bit')
         pl.addProcess(l3d14)
 
         l3d15 = LUT3D("16f", "16f", "someId", "Transform")
-        l3d15.setArray([2, 2, 2], 
-            [0, 0, 0,  
-            0, 0, 1,  
-            0, 1, 0,  
+        l3d15.setArray([2, 2, 2],
+            [0, 0, 0,
+            0, 0, 1,
+            0, 1, 0,
             0, 1, 1,
-            1, 0, 0,  
-            1, 0, 1,  
-            1, 1, 0,  
+            1, 0, 0,
+            1, 0, 1,
+            1, 1, 0,
             1, 1, 1],
             floatEncoding='hex64bit')
         pl.addProcess(l3d15)
 
         l3d16 = LUT3D("16f", "16f", "someId", "Transform")
-        l3d16.setArray([2, 2, 2], 
-            [0, 0, 0,  
-            0, 0, 1,  
-            0, 1, 0,  
+        l3d16.setArray([2, 2, 2],
+            [0, 0, 0,
+            0, 0, 1,
+            0, 1, 0,
             0, 1, 1,
-            1, 0, 0,  
-            1, 0, 1,  
-            1, 1, 0,  
+            1, 0, 0,
+            1, 0, 1,
+            1, 1, 0,
             1, 1, 1])
         pl.addProcess(l3d16)
 
@@ -639,7 +639,7 @@ class TestCLF(unittest.TestCase):
         # Write
         pl.writeFile(clfPath)
 
-        return pl        
+        return pl
     #createCLF
 
     def processExample(self, processList, value, stride, bitDepth):
@@ -653,7 +653,7 @@ class TestCLF(unittest.TestCase):
         print( "Input Value  : %s" % processedValue)
 
         # Normalize values
-        processedValue = rangePL.process(processedValue, stride, verbose=True)    
+        processedValue = rangePL.process(processedValue, stride, verbose=True)
 
         # Run through processList
         processedValue = processList.process(processedValue, stride, verbose=True)

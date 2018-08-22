@@ -64,7 +64,7 @@ import xml.etree.ElementTree as etree
 class Info:
     "A Common LUT Format Info element"
 
-    # Ensures that this class and children can be written to disk and read back later 
+    # Ensures that this class and children can be written to disk and read back later
     __metaclass__ = ProcessListChildMeta
 
     def __init__(self, appRelease='', copyright=''):

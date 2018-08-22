@@ -75,7 +75,7 @@ def convertCLFtoLUT(clfPath,
                     inputMax=1.0,
                     shaperIn=['linear',0.0,1.0],
                     shaperOut=['linear',0.0,1.0]):
-    
+
     # Load CLF
     print( "Reading CLF : %s" % clfPath )
     processList = clf.ProcessList(clfPath)
@@ -144,7 +144,7 @@ def main():
     p.add_option('--lut', '-l', default=None)
     p.add_option('--lutResolution1d', '', type='int', default=1024)
     p.add_option('--lutResolution3d', '', type='int', default=33)
-    p.add_option('--lutResolution1d3d1d', '', type='int', nargs=3, 
+    p.add_option('--lutResolution1d3d1d', '', type='int', nargs=3,
         action='append')
     p.add_option('--inputMinValue', '', type='float', default=0.0)
     p.add_option('--inputMaxValue', '', type='float', default=1.0)
@@ -162,7 +162,7 @@ def main():
 
     #
     # Get options
-    # 
+    #
     clfPath = options.clf
     lutPath = options.lut
     lutFileFormat = options.format
@@ -215,7 +215,7 @@ def main():
         args = []
 
     print( "command line : \n%s\n" % " ".join(sys.argv) )
- 
+
     print( "%25s : %s" % ("clf", clfPath))
     print( "%25s : %s" % ("lut", lutPath))
     print( "%25s : %s" % ("file format", lutFileFormat))
@@ -229,7 +229,7 @@ def main():
     print( "%25s : %s" % ("shaper out", "%s, %s, %s" % (shaperOutType, shaperOutMin, shaperOutMax)))
 
     #
-    # Run 
+    # Run
     #
     if clfPath != None and lutPath != None:
         convertCLFtoLUT(clfPath,

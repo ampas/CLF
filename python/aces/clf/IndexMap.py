@@ -180,7 +180,7 @@ class IndexMap:
             if self._processCached == None:
                 self._createCachedProcess()
             result = self._processCached.lookup1DHalfDomainInterpolated(value, 0)
-        # Evaluate with base IndexMap values 
+        # Evaluate with base IndexMap values
         else:
             result = self._processRaw(value, verbose)
         return result

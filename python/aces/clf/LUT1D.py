@@ -60,7 +60,7 @@ from Common import uint16ToHalf, halfToUInt16
 class LUT1D(ProcessNode):
     "A Common LUT Format LUT 1D ProcessNode element"
 
-    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="", 
+    def __init__(self, inBitDepth=bitDepths["FLOAT16"], outBitDepth=bitDepths["FLOAT16"], id="", name="",
         interpolation='linear', rawHalfs='', halfDomain=''):
         "%s - Initialize the standard class variables" % 'LUT1D'
         ProcessNode.__init__(self, 'LUT1D', inBitDepth, outBitDepth, id, name)
@@ -78,17 +78,17 @@ class LUT1D(ProcessNode):
 
     def setIndexMaps(self, valuesR, valuesG = None, valuesB = None):
         indexMapR = IndexMap(len(valuesR[0]), valuesR)
-        self._indexMaps.append( indexMapR ) 
+        self._indexMaps.append( indexMapR )
         self.addElement( indexMapR )
-        
+
         # Either one or three indexMaps
         if( valuesG != None and valuesB != None ):
             indexMapG = IndexMap(len(valuesG[0]), valuesG)
-            self._indexMaps.append( indexMapG ) 
+            self._indexMaps.append( indexMapG )
             self.addElement( indexMapG )
 
             indexMapB = IndexMap(len(valuesB[0]), valuesB)
-            self._indexMaps.append( indexMapB ) 
+            self._indexMaps.append( indexMapB )
             self.addElement( indexMapB )
     # setIndexMaps
 
@@ -98,9 +98,9 @@ class LUT1D(ProcessNode):
         integers = bitDepthIsInteger(self.getAttribute('outBitDepth'))
         rawHalfs = not (self.getAttribute('rawHalfs') in [None, False])
 
-        self._array = Array(dimensions, 
-            values, 
-            rawHalfs=rawHalfs, 
+        self._array = Array(dimensions,
+            values,
+            rawHalfs=rawHalfs,
             integers=integers,
             floatEncoding=floatEncoding)
         self.addElement( self._array )
@@ -146,7 +146,7 @@ class LUT1D(ProcessNode):
 
         rawHalfs = not (self.getAttribute('rawHalfs') in [None, False])
         halfDomain = not (self.getAttribute('halfDomain') in [None, False])
-        
+
         '''
         print( "interpolation  : %s" % interpolation )
         print( "raw halfs      : %s" % rawHalfs )
@@ -216,17 +216,17 @@ class LUT1D(ProcessNode):
 #
 # Create a 1D lut based on sampling a function
 #
-def simpleSampledLUT(id, 
-    transformId, 
-    channels, 
-    resolution, 
-    f=lambda x: x, 
+def simpleSampledLUT(id,
+    transformId,
+    channels,
+    resolution,
+    f=lambda x: x,
     inBitDepth=bitDepths["FLOAT16"],
     outBitDepth=bitDepths["FLOAT16"]):
 
-    l1d = LUT1D(inBitDepth, 
-        outBitDepth, 
-        id, 
+    l1d = LUT1D(inBitDepth,
+        outBitDepth,
+        id,
         transformId)
 
     lutValues = [0.0]*resolution*channels
@@ -244,17 +244,17 @@ def simpleSampledLUT(id,
 #
 # Create a 1D lut based on sampling a function, for all possible half-float values
 #
-def simpleSampledLUTHalfDomain(id, 
-    transformId, 
-    channels, 
-    f=lambda x: x, 
-    rawHalfs=False, 
+def simpleSampledLUTHalfDomain(id,
+    transformId,
+    channels,
+    f=lambda x: x,
+    rawHalfs=False,
     inBitDepth=bitDepths["FLOAT16"],
     outBitDepth=bitDepths["FLOAT16"]):
 
-    l1dH = LUT1D(inBitDepth, 
-        outBitDepth, 
-        id, 
+    l1dH = LUT1D(inBitDepth,
+        outBitDepth,
+        id,
         transformId,
         halfDomain=True,
         rawHalfs=rawHalfs)
