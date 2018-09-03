@@ -80,7 +80,7 @@ Extensions
 - Duiker Research extensions
 	- Group ProcessNode
 		- Useful for organizing list of nodes that represent a single filter/transform
-	- 'floatEncoding' Array Attribute and associated behavior
+	- 'floatEncoding' Array Attribute and associated behavior to allow for exact floating-point value storage and transmission, i.e. without converting to a potentially ambiguous decimal representation
 	- gzipped reading and writing
 
 Would be nice to have
