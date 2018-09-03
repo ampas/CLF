@@ -118,7 +118,8 @@ class LUT1D(ProcessNode):
 
     def readChild(self, element):
         child = None
-        if element.tag == 'Array':
+        elementType = self.getElementType(element.tag)
+        if elementType == 'Array':
             rawHalfs = not (self.getAttribute('rawHalfs') in [None, False])
 
             child = Array(rawHalfs=rawHalfs)

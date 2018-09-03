@@ -184,6 +184,13 @@ class ProcessNode():
     def readInitialize(self):
         return None
 
+    def getElementType(self, tag):
+        # ..find('}') allows us to strip out namespaces
+        elementType = tag[tag.find('}')+1:]
+        elementType = elementType.replace('-', '')
+        elementType = elementType.replace('_', '')
+        return elementType
+
     def read(self, element, strict=False):
         #print( "%s - ProcessNode::read" % element.tag)
         # Store attributes
@@ -193,10 +200,12 @@ class ProcessNode():
                 value = (value == "True")
             self.setAttribute(key, value)
 
+        elementType = self.getElementType(element.tag)
+
         # Read child elements
         for child in element:
-            childType = child.tag
-            #print( elementType )
+            childType = self.getElementType(child.tag)
+            #print( childType )
 
             # Read Description elements 
             if childType == 'Description':
@@ -219,7 +228,7 @@ class ProcessNode():
 
             # Otherwise, allow the subclasses to read elements
             else:
-                #print( "%s - ProcessNode::read child - %s" % (element.tag, child.tag))
+                #print( "%s - ProcessNode::read child - %s" % (elementType, childType))
                 childElement = self.readChild(child)
                 if childElement != None:
                     self.addElement( childElement )

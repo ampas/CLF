@@ -176,6 +176,14 @@ class ProcessList:
         return True
     # writeFile
 
+    def getElementType(self, tag):
+        # ..find('}') allows us to strip out namespaces
+        elementType = tag[tag.find('}')+1:]
+        elementType = elementType.replace('-', '')
+        elementType = elementType.replace('_', '')
+        return elementType
+    # getElementType
+
     def read(self, element, strict=False):
         root = element
 
@@ -185,12 +193,10 @@ class ProcessList:
 
         # Read child elements
         for child in root:
-
             # Find the Python class associated with this XML element tag
-            elementType = child.tag.replace('-', '')
-            elementType = child.tag.replace('_', '')
+            elementType = self.getElementType(child.tag)
             elementClass = self.getClass(elementType)
-            #print( elementType, elementClass )
+            #print( child.tag, elementType, elementClass )
 
             if elementClass != None:
                 # Instantiate the class and read XML data

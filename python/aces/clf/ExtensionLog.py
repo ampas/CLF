@@ -92,7 +92,8 @@ class Log(ProcessNode):
     # write
 
     def readChild(self, element):
-        if element.tag == 'LogParams':
+        elementType = self.getElementType(element.tag)
+        if elementType == 'LogParams':
             param = [0.6, 685.0, 95.0, 1.0, 0.0, None]
             for key, value in element.attrib.iteritems():
                 if key == 'gamma':

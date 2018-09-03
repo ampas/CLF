@@ -111,7 +111,8 @@ class LUT3D(ProcessNode):
 
     def readChild(self, element):
         child = None
-        if element.tag == 'Array':
+        elementType = self.getElementType(element.tag)
+        if elementType == 'Array':
             child = Array()
             child.read(element)
 

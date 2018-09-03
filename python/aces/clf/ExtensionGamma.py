@@ -88,7 +88,8 @@ class Gamma(ProcessNode):
     # write
 
     def readChild(self, element):
-        if element.tag == 'GammaParams':
+        elementType = self.getElementType(element.tag)
+        if elementType == 'GammaParams':
             param = [0.0, 0.0, None]
             for key, value in element.attrib.iteritems():
                 if key == 'gamma':

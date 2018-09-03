@@ -86,7 +86,8 @@ class ExposureContrast(ProcessNode):
     # write
 
     def readChild(self, element):
-        if element.tag == 'ECParams':
+        elementType = self.getElementType(element.tag)
+        if elementType == 'ECParams':
             param = [0.0, 1.0, 1.0]
             for key, value in element.attrib.iteritems():
                 if key == 'exposure':

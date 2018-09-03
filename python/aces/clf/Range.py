@@ -86,13 +86,14 @@ class Range(ProcessNode):
             del self._attributes['defaultRange']
 
     def readChild(self, element):
-        if element.tag == 'minInValue':
+        elementType = self.getElementType(element.tag)
+        if elementType == 'minInValue':
             self._valueElements['minInValue'] = float(element.text)
-        elif element.tag == 'maxInValue':
+        elif elementType == 'maxInValue':
             self._valueElements['maxInValue'] = float(element.text)
-        elif element.tag == 'minOutValue':
+        elif elementType == 'minOutValue':
             self._valueElements['minOutValue'] = float(element.text)
-        elif element.tag == 'maxOutValue':
+        elif elementType == 'maxOutValue':
             self._valueElements['maxOutValue'] = float(element.text)
         return None
     # readChild

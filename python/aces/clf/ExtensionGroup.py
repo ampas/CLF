@@ -95,8 +95,7 @@ class Group(ProcessNode):
     # write
 
     def readChild(self, child):
-        elementType = child.tag.replace('-', '')
-        elementType = child.tag.replace('_', '')
+        elementType = self.getElementType(child.tag)
         elementClass = ProcessList.getClass(elementType)
         #print( elementType, elementClass )
 

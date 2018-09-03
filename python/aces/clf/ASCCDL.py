@@ -102,7 +102,8 @@ class ASCCDL(ProcessNode):
     # write
 
     def readChild(self, element):
-        if element.tag == 'SOPNode':
+        elementType = self.getElementType(element.tag)
+        if elementType == 'SOPNode':
             for child in element:
                 childType = child.tag
                 if childType == 'Slope':
@@ -111,7 +112,7 @@ class ASCCDL(ProcessNode):
                     self._values['offset'] = map(float, child.text.split())
                 elif childType == 'Power':
                     self._values['power'] = map(float, child.text.split())
-        elif element.tag == 'SatNode':
+        elif elementType == 'SatNode':
             for child in element:
                 childType = child.tag
                 if childType == 'Saturation':
