@@ -129,7 +129,7 @@ class LUT1D(ProcessNode):
             child.setValuesAreIntegers(integers)
 
             self._array = child
-        elif element.tag == 'IndexMap':
+        elif elementType == 'IndexMap':
             child = IndexMap()
             child.read(element)
             self._indexMaps.append( child )
@@ -169,12 +169,12 @@ class LUT1D(ProcessNode):
             outValue = values[p*stride:(p+1)*stride]
 
             for i in range(min(3, stride)):
-                # Run through single Index Map then normalize
+                # Run through per-channel Index Map then normalize
                 if len(self._indexMaps) > 1:
                     outValue[i] = self._indexMaps[i].process(outValue[i])
                     outValue[i] /= float(dimensions[0]-1)
 
-                # Run through per-channel Index Map then normalize
+                # Run through single Index Map then normalize
                 elif len(self._indexMaps) > 0:
                     outValue[i] = self._indexMaps[0].process(outValue[i])
                     outValue[i] /= float(dimensions[0]-1)

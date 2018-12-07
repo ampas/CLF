@@ -272,6 +272,11 @@ class ProcessList:
     def getName(self):
         return self.getAttribute('name')
 
+    def setNamespace(self, name):
+        self.setAttribute('xmlns', name)
+    def getNamespace(self):
+        return self.getAttribute('xmlns')
+
     def setID(self, name):
         self.setAttribute('id', name)
     def getID(self):
