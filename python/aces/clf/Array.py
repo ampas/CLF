@@ -488,14 +488,20 @@ class Array:
         dimensions = self._dimensions
 
         index = position*(dimensions[0]-1)
-        indexLow  = int(math.floor(index))
-        indexHigh = int(math.ceil(index))
-        interp = index - indexLow
 
-        value1 = self.lookup1D(indexLow, channel)
-        value2 = self.lookup1D(indexHigh, channel)
+        # NaNs, Infs
+        if np.isnan(index) or np.isinf(index):
+            result = index
+        # Normal values
+        else:
+            indexLow  = int(math.floor(index))
+            indexHigh = int(math.ceil(index))
+            interp = index - indexLow
 
-        result = (1-interp)*value1 + interp*value2
+            value1 = self.lookup1D(indexLow, channel)
+            value2 = self.lookup1D(indexHigh, channel)
+
+            result = (1-interp)*value1 + interp*value2
 
         return result
     # lookup1DLinear

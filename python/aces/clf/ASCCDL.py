@@ -103,18 +103,18 @@ class ASCCDL(ProcessNode):
 
     def readChild(self, element):
         elementType = self.getElementType(element.tag)
-        if elementType == 'SOPNode':
+        if elementType.lower() == 'sopnode':
             for child in element:
-                childType = child.tag
+                childType = self.getElementType(child.tag)
                 if childType == 'Slope':
                     self._values['slope'] = map(float, child.text.split())
                 elif childType == 'Offset':
                     self._values['offset'] = map(float, child.text.split())
                 elif childType == 'Power':
                     self._values['power'] = map(float, child.text.split())
-        elif elementType == 'SatNode':
+        elif elementType.lower() == 'satnode':
             for child in element:
-                childType = child.tag
+                childType = self.getElementType(child.tag)
                 if childType == 'Saturation':
                     self._values['saturation'] = float(child.text)
         return None
@@ -202,7 +202,6 @@ class ASCCDL(ProcessNode):
                     outValue[i] = clamp( outValue[i] )
 
                 luma = 0.2126 * outValue[0] + 0.7152 * outValue[1] + 0.0722 * outValue[2] 
-                print( luma )
 
                 for i in range(3):
                     outSat = luma + (1.0/saturation) * (outValue[i] - luma)

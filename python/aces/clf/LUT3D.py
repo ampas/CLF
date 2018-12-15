@@ -120,7 +120,7 @@ class LUT3D(ProcessNode):
             child.setValuesAreIntegers(integers)
 
             self._array = child
-        elif element.tag == 'IndexMap':
+        elif elementType == 'IndexMap':
             child = IndexMap()
             child.read(element)
             self._indexMaps.append( child )
@@ -156,12 +156,12 @@ class LUT3D(ProcessNode):
 
             # Run each channel through the index map, or base normalization
             for i in range(min(3, len(value))):
-                # Run through single Index Map then normalize
+                # Run through per-channel Index Map then normalize
                 if len(self._indexMaps) > 1:
                     outValue[i] = self._indexMaps[i].process(outValue[i])
                     outValue[i] /= float(dimensions[i]-1)
 
-                # Run through per-channel Index Map then normalize
+                # Run through single Index Map then normalize
                 elif len(self._indexMaps) > 0:
                     outValue[i] = self._indexMaps[0].process(outValue[i])
                     outValue[i] /= float(dimensions[i]-1)

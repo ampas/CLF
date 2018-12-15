@@ -84,8 +84,13 @@ def halfsToFloat(half1, half2):
 # 'floats' read from OpenImageIO.
 # Each 4 byte 'float' is the binary equivalent of two packed 2-byte half-floats.
 def oiioFloatPixelsToNPHalfArray(width, height, channels, oiioFloats):
-    # Read float pixels into a numpy half-float pixel array
-    npPixels = np.frombuffer(np.getbuffer(np.float32(oiioFloats)), dtype=np.float16)
+
+    if oiio.VERSION < 10800:
+        # Read float pixels into a numpy half-float pixel array
+        npPixels = np.frombuffer(np.getbuffer(np.float32(oiioFloats)), dtype=np.float16)
+    else:
+        # Convert uint16 values into a numpy half-float pixel array
+        npPixels = np.frombuffer(np.getbuffer(np.uint16(oiioFloats)), dtype=np.float16)
 
     return npPixels
 # oiioFloatPixelsToNPHalfArray
@@ -95,8 +100,12 @@ def oiioFloatPixelsToNPHalfArray(width, height, channels, oiioFloats):
 # is a numpy array of half-float pixels. 
 # Each 4 byte 'float' is the binary equivalent of two packed 2-byte half-floats.
 def npHalfArrayToOIIOFloatPixels(width, height, channels, npPixels):
-    # Read half-float pixels into a numpy float pixel array
-    oiioFloatsArray = np.frombuffer(np.getbuffer(np.float16(npPixels)), dtype=np.float32)
+    if oiio.VERSION < 10800:
+        # Read half-float pixels into a numpy float pixel array
+        oiioFloatsArray = np.frombuffer(np.getbuffer(np.float16(npPixels)), dtype=np.float32)
+    else:
+        # Read half-float pixels into a numpy float pixel array
+        oiioFloatsArray = np.frombuffer(np.getbuffer(np.float16(npPixels)), dtype=np.uint16)
 
     return oiioFloatsArray
 # npHalfArrayToOIIOFloatPixels
@@ -136,10 +145,13 @@ def readPixelArray(inputPath,
         width = inputImageSpec.width
         height = inputImageSpec.height
         channels = inputImageSpec.nchannels
+        channelnames = inputImageSpec.channelnames
         metadata = inputImageSpec.extra_attribs
         metanames = [attr.name for attr in metadata]
 
         bitShift = 0
+
+        print( "Loading image - spects : %d x %d - %d channels, %s bit depth, %s" % (width, height, channels, type, channelnames))
 
         # Handle automatic bit-depth conversions
         if bitDepthOverride:
@@ -176,15 +188,15 @@ def readPixelArray(inputPath,
             for i in range(len(sourceData)):
                 sourceData[i] = sourceData[i] >> bitShift
 
-        # OIIO doesn't return half-float values directly, so this will
-        # convert from the packed representation to half-floats
+        # OIIO versions < 1.8 didn't return half-float values directly
+        # so this will convert from the packed representation to half-floats
         if type == oiio.HALF:
             print( "Unpacking half-float values" )
             sourceData = oiioFloatPixelsToNPHalfArray(width, height, channels, sourceData)
     else:
-        (sourceData, bitDepth, width, height, channels, metadata) = (None, clf.bitDepths["UINT10"], 0, 0, 0, None)
+        (sourceData, bitDepth, width, height, channels, metadata) = (None, clf.bitDepths["UINT10"], 0, 0, 0, None, None)
 
-    return (sourceData, bitDepth, width, height, channels, metadata)
+    return (sourceData, bitDepth, width, height, channels, metadata, channelnames)
 # readPixelArray
 
 #
@@ -197,6 +209,7 @@ def writePixelArray(outputPath,
     height, 
     channels, 
     metadata,
+    channelnames,
     compression=None,
     compressionQuality=0):
     print( "Writing image - path : %s" % outputPath)
@@ -251,6 +264,7 @@ def writePixelArray(outputPath,
     outputSpec.width = width
     outputSpec.height = height
     outputSpec.nchannels = channels
+    outputSpec.channelnames = channelnames
 
     # Mapping between bit depth and 'oiio:BitsPerSample' metadata value
     bitDepthValue = {
@@ -389,7 +403,7 @@ def filterRow_stride(row,
 
     # Process values
     #print( "Processing %04d, %04d : %s" % (i, j, ovalue))
-    pvalue = processList.process(pvalue, stride=channels)
+    pvalue = processList.process(pvalue, stride=channels, verbose=verbose)
 
     # Reset values if output image and CLF output bit depths don't match
     if OutRange:
@@ -477,7 +491,7 @@ def filterImageWithCLF(inputPath,
     #
     t0 = timeit.default_timer()
 
-    pixels, inBitDepth, width, height, channels, metadata = readPixelArray(inputPath)
+    pixels, inBitDepth, width, height, channels, metadata, channelnames = readPixelArray(inputPath)
     if pixels == None:
         print( "\nImage %s could not be opened. Filtering aborted.\n" % inputPath )
         return
@@ -571,7 +585,9 @@ def filterImageWithCLF(inputPath,
     else:
         print( "Filtering image - single threaded" )
 
-        for j in range(height):
+        #for j in range(height):
+        j = 5
+        if True:
             # Using filterRow_stride instead of filterRow_pixel
             # Processing a full row is ~10% faster than processing individual pixels
             filterRow_stride(j,
@@ -590,7 +606,7 @@ def filterImageWithCLF(inputPath,
     t0 = timeit.default_timer()
 
     writePixelArray(outputPath, processedPixels, outBitDepth, width, height, channels, metadata,
-        compression, compressionQuality)
+        channelnames, compression, compressionQuality)
 
     t1 = timeit.default_timer()
     elapsed = t1 - t0

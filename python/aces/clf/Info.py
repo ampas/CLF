@@ -84,10 +84,17 @@ class Info:
         return element
     # write
 
+    def getElementType(self, tag):
+        # ..find('}') allows us to strip out namespaces
+        elementType = tag[tag.find('}')+1:]
+        elementType = elementType.replace('-', '')
+        elementType = elementType.replace('_', '')
+        return elementType
+
     def read(self, element):
         # Read child elements
         for child in element:
-            elementType = child.tag
+            elementType = self.getElementType(child.tag)
 
             if elementType == 'AppRelease':
                 self._children.append( Comment(child.text, 'AppRelease') )

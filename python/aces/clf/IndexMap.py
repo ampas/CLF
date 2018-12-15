@@ -62,7 +62,7 @@ from Array import Array
 class IndexMap:
     "A Common LUT Format IndexMap element"
 
-    def __init__(self, dimension=[], values=[], elementType='IndexMap', useCachedProcess=True):
+    def __init__(self, dimension=[], values=[], elementType='IndexMap', useCachedProcess=False):
         "%s - Initialize the standard class variables" % elementType
         self._dimension = dimension
         self._values = values
