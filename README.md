@@ -1,3 +1,17 @@
+---
+
+#### The code in this repository implements an old version of the Common LUT Format Specification.
+
+#### All code and links in this repository should be considered out-of-date.    Do not use this code or refer to linked documents if you're trying to implement the Common LUT Format.  This repository has been archived for historical documentation reasons only.
+
+#### For the latest CLF documentation, please visit [https://docs.acescentral.com](https://docs.acescentral.com).
+
+#### For an up-to-date impelmentation and tools, visit [https://github.com/AcademySoftwareFoundation/OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO)
+
+---
+
+
+
 # Academy / ASC Common LUT (CLF) Format Sample Implementations #
 # 
 This folder contains sample implementations of the Academy / ASC Common LUT
