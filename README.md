@@ -1,5 +1,20 @@
-# Academy / ASC Common LUT (CLF) Format Sample Implementations #
-# 
+# !! Note !! *This repository has been archived for the purpose of historical documentation and is superceded by the CLF v3 Specification and Implementation Guide.*
+
+The python implementation code contained in this repository implements CLF up to version 2 of the Common LUT Format (CLF) Specification. A version 3 of the CLF Specification was published in early 2022. 
+
+Therefore, all code and links in the body of this repository should be considered out-of-date.
+
+Do _not_ use this code or refer to linked documents if trying to make a new implemention of the Common LUT Format.
+
+Documentation for CLF v3, including the [Specification](https://docs.acescentral.com/specifications/clf/) and an [Implementation Guide](https://docs.acescentral.com/guides/clf/), is available at: [https://docs.acescentral.com](https://docs.acescentral.com)
+
+The [CLF Implementation Guide](https://docs.acescentral.com/guides/clf/) refers to the implementation of CLF built in to [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) as the most up-to-date reference implementation and accompanying tests and tools.
+
+---
+*This repository has been archived for the purpose of historical documentation and is superceded by the CLF v3 Specification and Implementation Guide.*
+
+
+# Academy / ASC Common LUT (CLF) Format #
 This folder contains sample implementations of the Academy / ASC Common LUT
 Format (CLF) intended to be used with the [Academy Color Encoding System
 (ACES)](http://www.oscars.org/aces). The implementations are intended to be
@@ -10,7 +25,6 @@ files located in each implementations subfolder.
 
 
 ## License Terms ##
-## 
 The Academy / ASC Common LUT Format Sample Implementations are provided by the
 Academy under the following terms and conditions:
 
