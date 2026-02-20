@@ -1,3 +1,11 @@
+> [!CAUTION]
+> **DEPRECATED:** This repository is no longer maintained and does not align with the most recent CLF revisions. 
+> 
+> Common LUT Format is standardized in SMPTE ST 2136-1.
+> 
+> This code is preserved for historical reference only and should **not** be used in production environments.
+
+
 # Academy / ASC Common LUT (CLF) Format Sample Implementations #
 # 
 This folder contains sample implementations of the Academy / ASC Common LUT
