@@ -1,12 +1,13 @@
-![Status](https://img.shields.io/badge/status-deprecated-red)
+![Status](https://img.shields.io/badge/status-obsolete-red)
+
+# Common LUT Format (CLF) Reference
 
 > [!CAUTION]
-> **DEPRECATED:** This repository is no longer maintained and does not align with the most recent CLF revisions. 
-> 
-> Common LUT Format is standardized in SMPTE ST 2136-1.
-> 
-> This code is preserved for historical reference only and should **not** be used in production environments.
-
+> **OBSOLETE:** This repository is not in sync with more current CLF specifications and should **not** be used in production environments
+>
+> As of 2026, SMPTE ST 2136-1 standardizes the Common LUT Format. The standard supercedes any previous Academy specifications.
+>  
+> This implementation has been superseded by the official ACES/ASWF standards. For the current specification and tools, please visit the [Academy Software Foundation](https://github.com/AcademySoftwareFoundation).
 
 # Academy / ASC Common LUT (CLF) Format Sample Implementations #
 # 
