@@ -1,3 +1,5 @@
+![Status](https://img.shields.io/badge/status-deprecated-red)
+
 > [!CAUTION]
 > **DEPRECATED:** This repository is no longer maintained and does not align with the most recent CLF revisions. 
 > 
